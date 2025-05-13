@@ -13,7 +13,7 @@ Terraform 1.10 or newer. We recommend running the [latest version](https://devel
 terraform {
   required_providers {
     cofide = {
-      source  = "local/cofide/cofide"
+      source  = "cofide/cofide"
       version = "0.1.0"
     }
   }
@@ -60,7 +60,7 @@ To use this provider locally:
 
    provider "cofide" {
      api_token   = "your_api_token"
-     connect_url = "stg.cofide.dev:8443"
+     connect_url = "connect.cofide.security:8443"
    }
    ```
 
@@ -70,8 +70,6 @@ To use this provider locally:
    ```
    <connect-api-load-balancer-service-ip> connect.cofide.security
    ```
-
-   If you wish to use the provider against the Connect instance running in `staging`, you'll need to update the `connect_url` to `stg.cofide.dev:8443`.
 
 4. Initialize your Terraform project as normal:
    ```bash
