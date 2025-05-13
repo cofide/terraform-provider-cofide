@@ -1,5 +1,7 @@
 # Cofide Terraform Provider
 
+This is the repository for the Cofide Terraform Provider. Learn more about the Cofide Connect workload identity platform at https://www.cofide.io/.
+
 ## Requirements
 
 Terraform 1.10 or newer. We recommend running the [latest version](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform) for optimal compatibility with the Cofide provider.
@@ -13,7 +15,7 @@ Terraform 1.10 or newer. We recommend running the [latest version](https://devel
 terraform {
   required_providers {
     cofide = {
-      source  = "local/cofide/cofide"
+      source  = "cofide/cofide"
       version = "0.1.0"
     }
   }
@@ -60,9 +62,11 @@ To use this provider locally:
 
    provider "cofide" {
      api_token   = "your_api_token"
-     connect_url = "stg.cofide.dev:8443"
+     connect_url = "foo.cofide.dev:8443"
    }
    ```
+
+   The `connect_url` will be provided to you by Cofide.
 
    Instead of using the `connect_url` attribute, you can also set the `COFIDE_CONNECT_URL` environment variable. As an alternative to setting the `api_token` attribute, you can use the `COFIDE_API_TOKEN` environment variable instead. To retrieve an API token, you must authenticate with Connect in the usual way via the `cofidectl connect login` command. The API token can be extracted from the generated `~/.cofide/credentials` file.
 
@@ -70,8 +74,6 @@ To use this provider locally:
    ```
    <connect-api-load-balancer-service-ip> connect.cofide.security
    ```
-
-   If you wish to use the provider against the Connect instance running in `staging`, you'll need to update the `connect_url` to `stg.cofide.dev:8443`.
 
 4. Initialize your Terraform project as normal:
    ```bash
