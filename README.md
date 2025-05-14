@@ -42,10 +42,10 @@ Initialize your project by running `terraform init` in the directory.
 
 To use this provider locally:
 
-1. **Build and install the provider locally:**
+1. **Build the provider locally:**
 
    ```bash
-   just install
+   just build
    ```
    This will:
    - Build the provider and install it in `bin/terraform-provider-cofide`
@@ -58,6 +58,7 @@ To use this provider locally:
      dev_overrides {
        "cofide/cofide" = "/<PATH-TO-REPO>/terraform-provider-cofide/bin"
      }
+
      direct {}
    }
    ```
@@ -93,14 +94,14 @@ To use this provider locally:
 4. **Initialize your Terraform project:**
 
    ```bash
-   terraform init
+   TF_CLI_CONFIG_FILE=./dev.tfrc terraform init
    ```
 
 5. **Use the provider as normal:**
 
    ```bash
-   terraform plan
-   terraform apply
+   TF_CLI_CONFIG_FILE=./dev.tfrc terraform plan
+   TF_CLI_CONFIG_FILE=./dev.tfrc terraform apply
    ```
 
 To generate or update documentation for the provider, run the following command from the project root:
