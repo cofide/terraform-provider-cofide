@@ -16,7 +16,7 @@ This project is the official Terraform provider for Cofide.
 terraform {
   required_providers {
     cofide = {
-      source  = "local/cofide/cofide"
+      source  = "cofide/cofide"
       version = "0.1.0"
     }
   }
