@@ -41,45 +41,72 @@ Initialize your project by running `terraform init` in the directory.
 
 To use this provider locally:
 
-1. Build and install the provider locally:
+1. **Build and install the provider locally:**
+
    ```bash
    just install
    ```
    This will:
-   - Build the provider
-   - Install it to `~/.terraform.d/plugins/local/cofide/cofide/0.1.0/<os>_<arch>`
+   - Build the provider and install it in `bin/terraform-provider-cofide`
 
-3. In your Terraform configuration, use the local provider:
+2. **Create a `dev.tfrc` file to enable local provider development**  
+   (see [Terraform docs](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers) for more info):
+
+   ```
+   provider_installation {
+     dev_overrides {
+       "cofide/cofide" = "/<PATH-TO-REPO>/terraform-provider-cofide/bin"
+     }
+     direct {}
+   }
+   ```
+
+3. **Configure your Terraform project:**
+
    ```hcl
    terraform {
      required_providers {
        cofide = {
-         source  = "local/cofide/cofide"
+         source  = "cofide/cofide"
          version = "0.1.0"
        }
      }
    }
 
    provider "cofide" {
-     api_token   = "your_api_token"
-     connect_url = "foo.cofide.dev:8443"
+     api_token            = "your_api_token"
+     connect_url          = "https://localhost:8443" # or your local instance URL
+     insecure_skip_verify = true                     # Only use this for local development
    }
    ```
 
-   The `connect_url` will be provided to you by Cofide.
+   - The `connect_url` will be provided to you by Cofide, or use your local instance URL for development.
+   - Instead of using the `connect_url` and `api_token` attributes, you can set the `COFIDE_CONNECT_URL` and `COFIDE_API_TOKEN` environment variables.
+   - To retrieve an API token, authenticate with Connect using `cofidectl connect login`. The token can be found in `~/.cofide/credentials`.
 
-   Instead of using the `connect_url` attribute, you can also set the `COFIDE_CONNECT_URL` environment variable. As an alternative to setting the `api_token` attribute, you can use the `COFIDE_API_TOKEN` environment variable instead. To retrieve an API token, you must authenticate with Connect in the usual way via the `cofidectl connect login` command. The API token can be extracted from the generated `~/.cofide/credentials` file.
+   - If you are running a local instance of Connect, update your `/etc/hosts` file to include:
+     ```
+     <connect-api-load-balancer-service-ip> connect.cofide.security
+     ```
 
-   If you are running a local instance of Connect, you'll need to update your `etc/hosts` file to include the following:
-   ```
-   <connect-api-load-balancer-service-ip> connect.cofide.security
-   ```
+4. **Initialize your Terraform project:**
 
-4. Initialize your Terraform project as normal:
    ```bash
    terraform init
    ```
-   
-5. Now you can use the provider with `terraform plan` and `terraform apply` as normal.
 
-To generate or update documentation for the provider, run `just generate` from the project root.
+5. **Use the provider as normal:**
+
+   ```bash
+   terraform plan
+   terraform apply
+   ```
+
+---
+
+To generate or update documentation for the provider, run:
+
+```bash
+just generate
+```
+from the project root.
