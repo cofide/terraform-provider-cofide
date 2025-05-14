@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -97,6 +98,15 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		connectURL = os.Getenv(consts.ConnectURLEnvVarKey)
 	}
 
+	insecureSkipVerify := config.InsecureSkipVerify.ValueBool()
+	if config.InsecureSkipVerify.IsNull() || config.InsecureSkipVerify.IsUnknown() {
+		if envVal, ok := os.LookupEnv(consts.InsecureSkipVerifyEnvVar); ok {
+			if parsed, err := strconv.ParseBool(envVal); err == nil {
+				insecureSkipVerify = parsed
+			}
+		}
+	}
+
 	if apiToken == "" {
 		resp.Diagnostics.AddError(
 			"Missing API Token Configuration",
@@ -116,9 +126,6 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	log := hclog.New(&hclog.LoggerOptions{
 		Name: "cofide",
 	})
-
-	// Defaults to false if not set.
-	insecureSkipVerify := config.InsecureSkipVerify.ValueBool()
 
 	client, err := client.NewTLSClient(connectURL, apiToken, insecureSkipVerify, log)
 	if err != nil {

@@ -23,7 +23,8 @@ terraform {
 
 # Initialize the provider
 provider "cofide" {
-  api_token = "your_api_token"
+  api_token   = "your_api_token"
+  connect_url = "foo.cofide.dev:8443"
 }
 
 # Configure a resource
@@ -75,7 +76,7 @@ To use this provider locally:
 
    provider "cofide" {
      api_token            = "your_api_token"
-     connect_url          = "https://localhost:8443" # or your local instance URL
+     connect_url          = "foo.cofide.dev:8443"
      insecure_skip_verify = true                     # Only use this for local development
    }
    ```
@@ -102,11 +103,8 @@ To use this provider locally:
    terraform apply
    ```
 
----
-
-To generate or update documentation for the provider, run:
+To generate or update documentation for the provider, run the following command from the project root:
 
 ```bash
 just generate
 ```
-from the project root.
