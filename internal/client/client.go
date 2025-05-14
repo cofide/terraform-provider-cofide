@@ -14,41 +14,33 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+// jwtCredentials implements the grpc.PerRPCCredentials interface.
 type jwtCredentials struct {
 	token string
 }
 
+// GetRequestMetadata implements the grpc.PerRPCCredentials interface.
 func (j *jwtCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	return map[string]string{
 		"Authorization": "Bearer " + j.token,
 	}, nil
 }
 
+// RequireTransportSecurity implements the grpc.PerRPCCredentials interface.
 func (j *jwtCredentials) RequireTransportSecurity() bool {
 	return true
 }
 
-func NewTLSClient(baseAddr string, jwtToken string, devMode bool, logger hclog.Logger) (sdkclient.ClientSet, error) {
+// NewTLSClient creates a new gPRC client with TLS credentials.
+func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, logger hclog.Logger) (sdkclient.ClientSet, error) {
 	serverName, err := getServerName(baseAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	var tlsConfig *tls.Config
-	if !devMode {
-		systemRoots, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, fmt.Errorf("failed to load system root CA: %v", err)
-		}
-		tlsConfig = &tls.Config{
-			RootCAs:    systemRoots,
-			ServerName: serverName,
-		}
-	} else {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         serverName,
-		}
+	tlsConfig, err := newTLSConfig(serverName, insecureSkipVerify)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS config: %v", err)
 	}
 
 	// We sometimes see auth errors such as 'Jwks remote fetch is failed', as
@@ -80,15 +72,36 @@ func NewTLSClient(baseAddr string, jwtToken string, devMode bool, logger hclog.L
 		return nil, fmt.Errorf("error connecting to Connect gRPC server: %w", err)
 	}
 
-	logger.Info("Connecting to Connect instance", "server", connectUri)
+	logger.Info("Connecting to Connect gRPC server", "server", connectUri)
 
 	return sdkclient.New(grpcConn), nil
 }
 
+// getServerName extracts the server host from the base address.
 func getServerName(baseAddr string) (string, error) {
 	serverHost, _, err := net.SplitHostPort(baseAddr)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s.%s", consts.ServerAuthoritySubdomain, serverHost), nil
+}
+
+// newTLSConfig creates a new TLS config based on the provided server name and insecure skip verify option.
+func newTLSConfig(serverName string, insecureSkipVerify bool) (*tls.Config, error) {
+	if insecureSkipVerify {
+		return &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         serverName,
+		}, nil
+	}
+
+	systemRoots, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load system root CA: %v", err)
+	}
+
+	return &tls.Config{
+		RootCAs:    systemRoots,
+		ServerName: serverName,
+	}, nil
 }

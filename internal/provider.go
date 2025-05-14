@@ -41,8 +41,9 @@ type CofideProvider struct {
 
 // CofideProviderModel describes the provider data model.
 type CofideProviderModel struct {
-	APIToken   types.String `tfsdk:"api_token"`
-	ConnectURL types.String `tfsdk:"connect_url"`
+	APIToken           types.String `tfsdk:"api_token"`
+	ConnectURL         types.String `tfsdk:"connect_url"`
+	InsecureSkipVerify types.Bool   `tfsdk:"insecure_skip_verify"`
 }
 
 func (p *CofideProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -61,6 +62,10 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			},
 			"connect_url": schema.StringAttribute{
 				Description: fmt.Sprintf("Cofide Connect service URL. Alternatively, can be configured using the `%s` environment variable.", consts.ConnectURLEnvVarKey),
+				Optional:    true,
+			},
+			"insecure_skip_verify": schema.BoolAttribute{
+				Description: fmt.Sprintf("Skip TLS certificate verification (should only be used for local testing). Alternatively, can be configured using the `%s` environment variable.", consts.InsecureSkipVerifyEnvVar),
 				Optional:    true,
 			},
 		},
@@ -112,12 +117,10 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		Name: "cofide",
 	})
 
-	devMode := false
-	if p.version == "dev" {
-		devMode = true
-	}
+	// Defaults to false if not set.
+	insecureSkipVerify := config.InsecureSkipVerify.ValueBool()
 
-	client, err := client.NewTLSClient(connectURL, apiToken, devMode, log)
+	client, err := client.NewTLSClient(connectURL, apiToken, insecureSkipVerify, log)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create TLS client", err.Error())
 		return
