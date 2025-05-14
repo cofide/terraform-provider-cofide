@@ -59,8 +59,8 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 				Optional:    true,
 			},
 			"connect_url": schema.StringAttribute{
-				Description: "Cofide Connect service URL.",
-				Required:    true,
+				Description: fmt.Sprintf("Cofide Connect service URL. Alternatively, can be configured using the `%s` environment variable.", consts.ConnectURLEnvVarKey),
+				Optional:    true,
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if connectURL == "" {
 		resp.Diagnostics.AddError(
 			"Missing Connect URL Configuration",
-			"Connect URL must be specified in provider configuration",
+			"Connect URL must be specified in provider configuration or via the COFIDE_CONNECT_URL environment variable",
 		)
 		return
 	}
