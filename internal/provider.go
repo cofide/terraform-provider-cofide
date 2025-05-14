@@ -57,6 +57,7 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			"api_token": schema.StringAttribute{
 				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Alternatively, can be configured using the `%s` environment variable.", consts.APITokenEnvVarKey),
 				Optional:    true,
+				Sensitive:   true,
 			},
 			"connect_url": schema.StringAttribute{
 				Description: fmt.Sprintf("Cofide Connect service URL. Alternatively, can be configured using the `%s` environment variable.", consts.ConnectURLEnvVarKey),
