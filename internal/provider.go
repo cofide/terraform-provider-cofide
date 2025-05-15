@@ -127,7 +127,7 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		Name: "cofide",
 	})
 
-	client, err := client.NewTLSClient(connectURL, apiToken, insecureSkipVerify, log)
+	client, err := client.NewTLSClient(connectURL, apiToken, insecureSkipVerify, log, p.version)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create TLS client", err.Error())
 		return
