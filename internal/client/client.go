@@ -32,7 +32,7 @@ func (j *jwtCredentials) RequireTransportSecurity() bool {
 }
 
 // NewTLSClient creates a new gPRC client with TLS credentials.
-func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, logger hclog.Logger) (sdkclient.ClientSet, error) {
+func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, logger hclog.Logger, version string) (sdkclient.ClientSet, error) {
 	serverName, err := getServerName(baseAddr)
 	if err != nil {
 		return nil, err
@@ -63,6 +63,7 @@ func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, log
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(&jwtCredentials{token: jwtToken}),
 		grpc.WithDefaultServiceConfig(retryPolicy),
+		grpc.WithUserAgent(fmt.Sprintf("terraform-provider-cofide/%s", version)),
 	}
 
 	connectUri := fmt.Sprintf("dns:///%s.%s", consts.ServerAuthoritySubdomain, baseAddr)
