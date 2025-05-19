@@ -3,7 +3,7 @@ module github.com/cofide/terraform-provider-cofide
 go 1.23.8
 
 require (
-	github.com/cofide/cofide-api-sdk v0.19.0
+	github.com/cofide/cofide-api-sdk v0.20.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/terraform-plugin-docs v0.21.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
