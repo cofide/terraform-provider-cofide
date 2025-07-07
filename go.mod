@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.21.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/spiffe/spire-api-sdk v1.12.0
+	github.com/spiffe/spire-api-sdk v1.12.4
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
