@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -73,7 +74,16 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
-		cluster.OidcIssuerCaCert = []byte(plan.OidcIssuerCaCert.ValueString())
+		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding oidc_issuer_ca_cert",
+				fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err),
+			)
+
+			return
+		}
+		cluster.OidcIssuerCaCert = decodedCert
 	}
 
 	trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
@@ -127,7 +137,7 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if len(createResp.GetOidcIssuerCaCert()) > 0 {
-		plan.OidcIssuerCaCert = tftypes.StringValue(string(createResp.GetOidcIssuerCaCert()))
+		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(createResp.GetOidcIssuerCaCert()))
 	} else {
 		plan.OidcIssuerCaCert = tftypes.StringNull()
 	}
@@ -208,7 +218,15 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		cluster.OidcIssuerUrl = &url
 	}
 	if !plan.OidcIssuerCaCert.IsNull() {
-		cluster.OidcIssuerCaCert = []byte(plan.OidcIssuerCaCert.ValueString())
+		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding oidc_issuer_ca_cert",
+				fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err),
+			)
+			return
+		}
+		cluster.OidcIssuerCaCert = decodedCert
 	} else {
 		cluster.OidcIssuerCaCert = nil
 	}
@@ -270,7 +288,7 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if len(updateResp.GetOidcIssuerCaCert()) > 0 {
-		plan.OidcIssuerCaCert = tftypes.StringValue(string(updateResp.GetOidcIssuerCaCert()))
+		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(updateResp.GetOidcIssuerCaCert()))
 	} else {
 		plan.OidcIssuerCaCert = tftypes.StringNull()
 	}
