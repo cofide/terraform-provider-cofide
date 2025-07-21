@@ -195,13 +195,13 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
 	}
 
-	if !plan.KubernetesContext.IsNull() && plan.KubernetesContext.ValueString() != "" {
+	if !plan.KubernetesContext.IsNull() {
 		cluster.KubernetesContext = plan.KubernetesContext.ValueStringPointer()
 	} else {
 		cluster.KubernetesContext = state.KubernetesContext.ValueStringPointer()
 	}
 
-	if !plan.Profile.IsNull() && plan.Profile.ValueString() != "" {
+	if !plan.Profile.IsNull() {
 		cluster.Profile = plan.Profile.ValueStringPointer()
 	} else {
 		cluster.Profile = state.Profile.ValueStringPointer()
@@ -213,12 +213,21 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		cluster.ExternalServer = state.ExternalServer.ValueBoolPointer()
 	}
 
-	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
-		url := plan.OidcIssuerURL.ValueString()
-		cluster.OidcIssuerUrl = &url
+	if !plan.OidcIssuerURL.IsNull() {
+		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
+	} else {
+		cluster.OidcIssuerUrl = state.OidcIssuerURL.ValueStringPointer()
 	}
+
+	var certToDecode tftypes.String
 	if !plan.OidcIssuerCaCert.IsNull() {
-		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
+		certToDecode = plan.OidcIssuerCaCert
+	} else {
+		certToDecode = state.OidcIssuerCaCert
+	}
+
+	if !certToDecode.IsNull() && certToDecode.ValueString() != "" {
+		decodedCert, err := base64.StdEncoding.DecodeString(certToDecode.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error decoding oidc_issuer_ca_cert",
@@ -228,25 +237,25 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 		cluster.OidcIssuerCaCert = decodedCert
 	} else {
-		cluster.OidcIssuerCaCert = nil
+		cluster.OidcIssuerCaCert = []byte{}
 	}
 
-	if !plan.TrustProvider.Kind.IsNull() && plan.TrustProvider.Kind.ValueString() != "" {
+	if !plan.TrustProvider.Kind.IsNull() {
 		trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error updating trust provider",
 				fmt.Sprintf("Failed to create trust provider: %s", err),
 			)
+
 			return
 		}
 
 		cluster.TrustProvider = trustProvider
 	} else {
-		trustProviderKind := state.TrustProvider.Kind.ValueString()
-		cluster.TrustProvider = &trustproviderpb.TrustProvider{
-			Kind: &trustProviderKind,
-		}
+		// TrustProvider is required, so if it's not in the plan, it must be in the state.
+		trustProvider, _ := newTrustProvider(state.TrustProvider.Kind.ValueString())
+		cluster.TrustProvider = trustProvider
 	}
 
 	if !plan.ExtraHelmValues.IsNull() {
@@ -260,6 +269,17 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 
+		cluster.ExtraHelmValues = parsedHelmValues
+	} else {
+		parsedHelmValues, err := parseExtraHelmValues(state.ExtraHelmValues)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error parsing extra_helm_values from state",
+				fmt.Sprintf("Failed to parse extra_helm_values: %s", err),
+			)
+
+			return
+		}
 		cluster.ExtraHelmValues = parsedHelmValues
 	}
 
