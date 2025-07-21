@@ -55,6 +55,15 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Description: "Whether or not the SPIRE server runs externally.",
 				Required:    true,
 			},
+			"oidc_issuer_url": schema.StringAttribute{
+				Description: "The OIDC issuer URL of the cluster.",
+				Optional:    true,
+			},
+			"oidc_issuer_ca_cert": schema.StringAttribute{
+				Description: "The OIDC issuer CA certificate of the cluster.",
+				Optional:    true,
+				Sensitive:   true,
+			},
 		},
 	}
 }

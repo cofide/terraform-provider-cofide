@@ -94,9 +94,11 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		TrustProvider: &TrustProviderModel{
 			Kind: types.StringValue(cluster.GetTrustProvider().GetKind()),
 		},
-		ExtraHelmValues: types.StringValue(cluster.GetExtraHelmValues().String()),
-		Profile:         types.StringValue(cluster.GetProfile()),
-		ExternalServer:  types.BoolValue(cluster.GetExternalServer()),
+		ExtraHelmValues:  types.StringValue(cluster.GetExtraHelmValues().String()),
+		Profile:          types.StringValue(cluster.GetProfile()),
+		ExternalServer:   types.BoolValue(cluster.GetExternalServer()),
+		OidcIssuerURL:    types.StringValue(cluster.GetOidcIssuerUrl()),
+		OidcIssuerCaCert: types.StringValue(string(cluster.GetOidcIssuerCaCert())),
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

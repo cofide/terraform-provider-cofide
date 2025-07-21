@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	clusterpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cluster/v1alpha1"
 	trustproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_provider/v1alpha1"
@@ -68,6 +69,15 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
+	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+		url := plan.OidcIssuerURL.ValueString()
+		cluster.OidcIssuerUrl = &url
+	}
+
+	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
+		cluster.OidcIssuerCaCert = []byte(plan.OidcIssuerCaCert.ValueString())
+	}
+
 	trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -111,6 +121,20 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.KubernetesContext = tftypes.StringValue(createResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(createResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(createResp.GetExternalServer())
+
+	slog.Info(createResp.String())
+
+	if createResp.GetOidcIssuerUrl() != "" {
+		plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())
+	} else {
+		plan.OidcIssuerURL = tftypes.StringNull()
+	}
+
+	if len(createResp.GetOidcIssuerCaCert()) > 0 {
+		plan.OidcIssuerCaCert = tftypes.StringValue(string(createResp.GetOidcIssuerCaCert()))
+	} else {
+		plan.OidcIssuerCaCert = tftypes.StringNull()
+	}
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
@@ -183,6 +207,16 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		cluster.ExternalServer = state.ExternalServer.ValueBoolPointer()
 	}
 
+	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+		url := plan.OidcIssuerURL.ValueString()
+		cluster.OidcIssuerUrl = &url
+	}
+	if !plan.OidcIssuerCaCert.IsNull() {
+		cluster.OidcIssuerCaCert = []byte(plan.OidcIssuerCaCert.ValueString())
+	} else {
+		cluster.OidcIssuerCaCert = nil
+	}
+
 	if !plan.TrustProvider.Kind.IsNull() && plan.TrustProvider.Kind.ValueString() != "" {
 		trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 		if err != nil {
@@ -232,6 +266,18 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	plan.KubernetesContext = tftypes.StringValue(updateResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(updateResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(updateResp.GetExternalServer())
+
+	if updateResp.GetOidcIssuerUrl() != "" {
+		plan.OidcIssuerURL = tftypes.StringValue(updateResp.GetOidcIssuerUrl())
+	} else {
+		plan.OidcIssuerURL = tftypes.StringNull()
+	}
+
+	if len(updateResp.GetOidcIssuerCaCert()) > 0 {
+		plan.OidcIssuerCaCert = tftypes.StringValue(string(updateResp.GetOidcIssuerCaCert()))
+	} else {
+		plan.OidcIssuerCaCert = tftypes.StringNull()
+	}
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),

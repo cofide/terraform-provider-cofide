@@ -12,6 +12,8 @@ type ClusterModel struct {
 	ExtraHelmValues   types.String        `tfsdk:"extra_helm_values"`
 	Profile           types.String        `tfsdk:"profile"`
 	ExternalServer    types.Bool          `tfsdk:"external_server"`
+	OidcIssuerURL     types.String        `tfsdk:"oidc_issuer_url"`
+	OidcIssuerCaCert  types.String        `tfsdk:"oidc_issuer_ca_cert"`
 }
 
 type TrustProviderModel struct {

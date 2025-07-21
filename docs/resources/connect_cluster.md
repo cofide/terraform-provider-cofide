@@ -28,6 +28,8 @@ Provides a cluster resource.
 ### Optional
 
 - `extra_helm_values` (String) The extra Helm values to provide to the cluster.
+- `oidc_issuer_ca_cert` (String, Sensitive) The OIDC issuer CA certificate of the cluster.
+- `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
 
 ### Read-Only
 

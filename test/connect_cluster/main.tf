@@ -30,6 +30,9 @@ resource "cofide_connect_cluster" "cluster" {
 
   external_server = true
 
+  oidc_issuer_url     = "https://oidc.example.com"
+  oidc_issuer_ca_cert = "DUMMY_CERTIFICATE_DATA"
+
   depends_on = [
     cofide_connect_trust_zone.trust_zone
   ]
@@ -50,4 +53,13 @@ output "cluster_id" {
 
 output "cluster_trust_provider_kind" {
   value = data.cofide_connect_cluster.cluster.trust_provider.kind
+}
+
+output "cluster_oidc_issuer_url" {
+  value = data.cofide_connect_cluster.cluster.oidc_issuer_url
+}
+
+output "cluster_oidc_issuer_ca_cert" {
+  value     = data.cofide_connect_cluster.cluster.oidc_issuer_ca_cert
+  sensitive = true
 }
