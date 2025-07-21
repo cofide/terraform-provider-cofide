@@ -62,7 +62,6 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 			"oidc_issuer_ca_cert": schema.StringAttribute{
 				Description: "The OIDC issuer CA certificate of the cluster.",
 				Computed:    true,
-				Sensitive:   true,
 			},
 		},
 	}

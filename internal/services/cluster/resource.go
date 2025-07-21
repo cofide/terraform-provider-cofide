@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 
 	clusterpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cluster/v1alpha1"
 	trustproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_provider/v1alpha1"
@@ -120,8 +119,6 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.KubernetesContext = tftypes.StringValue(createResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(createResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(createResp.GetExternalServer())
-
-	slog.Info(createResp.String())
 
 	if createResp.GetOidcIssuerUrl() != "" {
 		plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())

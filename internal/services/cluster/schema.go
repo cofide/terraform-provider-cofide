@@ -62,7 +62,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"oidc_issuer_ca_cert": schema.StringAttribute{
 				Description: "The OIDC issuer CA certificate of the cluster.",
 				Optional:    true,
-				Sensitive:   true,
 			},
 		},
 	}
