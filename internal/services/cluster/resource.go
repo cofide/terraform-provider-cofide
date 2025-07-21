@@ -386,7 +386,7 @@ func validateHelmValues(planValues tftypes.String, responseValues *structpb.Stru
 	}
 
 	if string(planValuesJSON) != string(responseValuesJSON) {
-		return fmt.Errorf("Helm values mismatch: plan values don't match response values")
+		return fmt.Errorf("a Helm values mismatch: plan values don't match response values")
 	}
 
 	return nil
