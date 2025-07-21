@@ -70,8 +70,7 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
-		url := plan.OidcIssuerURL.ValueString()
-		cluster.OidcIssuerUrl = &url
+		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
 
 	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
