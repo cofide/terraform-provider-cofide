@@ -55,6 +55,14 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				Description: "Whether or not the SPIRE server runs externally.",
 				Computed:    true,
 			},
+			"oidc_issuer_url": schema.StringAttribute{
+				Description: "The OIDC issuer URL of the cluster.",
+				Computed:    true,
+			},
+			"oidc_issuer_ca_cert": schema.StringAttribute{
+				Description: "The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.",
+				Computed:    true,
+			},
 		},
 	}
 }

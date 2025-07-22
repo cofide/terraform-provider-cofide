@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -68,6 +69,23 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
+	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
+	}
+
+	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
+		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding oidc_issuer_ca_cert",
+				fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err),
+			)
+
+			return
+		}
+		cluster.OidcIssuerCaCert = decodedCert
+	}
+
 	trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -111,6 +129,18 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.KubernetesContext = tftypes.StringValue(createResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(createResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(createResp.GetExternalServer())
+
+	if createResp.GetOidcIssuerUrl() != "" {
+		plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())
+	} else {
+		plan.OidcIssuerURL = tftypes.StringNull()
+	}
+
+	if len(createResp.GetOidcIssuerCaCert()) > 0 {
+		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(createResp.GetOidcIssuerCaCert()))
+	} else {
+		plan.OidcIssuerCaCert = tftypes.StringNull()
+	}
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
@@ -165,13 +195,13 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
 	}
 
-	if !plan.KubernetesContext.IsNull() && plan.KubernetesContext.ValueString() != "" {
+	if !plan.KubernetesContext.IsNull() {
 		cluster.KubernetesContext = plan.KubernetesContext.ValueStringPointer()
 	} else {
 		cluster.KubernetesContext = state.KubernetesContext.ValueStringPointer()
 	}
 
-	if !plan.Profile.IsNull() && plan.Profile.ValueString() != "" {
+	if !plan.Profile.IsNull() {
 		cluster.Profile = plan.Profile.ValueStringPointer()
 	} else {
 		cluster.Profile = state.Profile.ValueStringPointer()
@@ -183,22 +213,49 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		cluster.ExternalServer = state.ExternalServer.ValueBoolPointer()
 	}
 
-	if !plan.TrustProvider.Kind.IsNull() && plan.TrustProvider.Kind.ValueString() != "" {
+	if !plan.OidcIssuerURL.IsNull() {
+		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
+	} else {
+		cluster.OidcIssuerUrl = state.OidcIssuerURL.ValueStringPointer()
+	}
+
+	var certToDecode tftypes.String
+	if !plan.OidcIssuerCaCert.IsNull() {
+		certToDecode = plan.OidcIssuerCaCert
+	} else {
+		certToDecode = state.OidcIssuerCaCert
+	}
+
+	if !certToDecode.IsNull() && certToDecode.ValueString() != "" {
+		decodedCert, err := base64.StdEncoding.DecodeString(certToDecode.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding oidc_issuer_ca_cert",
+				fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err),
+			)
+			return
+		}
+		cluster.OidcIssuerCaCert = decodedCert
+	} else {
+		cluster.OidcIssuerCaCert = []byte{}
+	}
+
+	if !plan.TrustProvider.Kind.IsNull() {
 		trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error updating trust provider",
 				fmt.Sprintf("Failed to create trust provider: %s", err),
 			)
+
 			return
 		}
 
 		cluster.TrustProvider = trustProvider
 	} else {
-		trustProviderKind := state.TrustProvider.Kind.ValueString()
-		cluster.TrustProvider = &trustproviderpb.TrustProvider{
-			Kind: &trustProviderKind,
-		}
+		// TrustProvider is required, so if it's not in the plan, it must be in the state.
+		trustProvider, _ := newTrustProvider(state.TrustProvider.Kind.ValueString())
+		cluster.TrustProvider = trustProvider
 	}
 
 	if !plan.ExtraHelmValues.IsNull() {
@@ -212,6 +269,17 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 
+		cluster.ExtraHelmValues = parsedHelmValues
+	} else {
+		parsedHelmValues, err := parseExtraHelmValues(state.ExtraHelmValues)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error parsing extra_helm_values from state",
+				fmt.Sprintf("Failed to parse extra_helm_values: %s", err),
+			)
+
+			return
+		}
 		cluster.ExtraHelmValues = parsedHelmValues
 	}
 
@@ -232,6 +300,18 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	plan.KubernetesContext = tftypes.StringValue(updateResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(updateResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(updateResp.GetExternalServer())
+
+	if updateResp.GetOidcIssuerUrl() != "" {
+		plan.OidcIssuerURL = tftypes.StringValue(updateResp.GetOidcIssuerUrl())
+	} else {
+		plan.OidcIssuerURL = tftypes.StringNull()
+	}
+
+	if len(updateResp.GetOidcIssuerCaCert()) > 0 {
+		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(updateResp.GetOidcIssuerCaCert()))
+	} else {
+		plan.OidcIssuerCaCert = tftypes.StringNull()
+	}
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),
@@ -344,7 +424,7 @@ func validateHelmValues(planValues tftypes.String, responseValues *structpb.Stru
 	}
 
 	if string(planValuesJSON) != string(responseValuesJSON) {
-		return fmt.Errorf("Helm values mismatch: plan values don't match response values")
+		return fmt.Errorf("a Helm values mismatch: plan values don't match response values")
 	}
 
 	return nil

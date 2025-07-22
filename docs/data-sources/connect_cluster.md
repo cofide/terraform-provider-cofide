@@ -30,6 +30,8 @@ Provides information about a cluster resource.
 - `extra_helm_values` (String) The extra Helm values to provide to the cluster.
 - `id` (String) The ID of the cluster.
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
+- `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.
+- `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
 - `profile` (String) The Cofide profile used by the cluster.
 - `trust_provider` (Attributes) The trust provider of the cluster. (see [below for nested schema](#nestedatt--trust_provider))
 
