@@ -39,8 +39,8 @@ github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4/go.mod h1:6pvJx4me5XP
 github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
-github.com/cofide/cofide-api-sdk v0.25.2 h1:6Fb40M6KcLQrq6ypAdPPGTT6i8VzZBsHqFTbXW6zn44=
-github.com/cofide/cofide-api-sdk v0.25.2/go.mod h1:FHXZIcrVNFpsWazmW/eP+rtdGARsj+uni2fElB1213Y=
+github.com/cofide/cofide-api-sdk v0.25.3 h1:dJLtU0Bfwu6uGpithg6QvHqymMvT2sDJgQqZpYOZTrc=
+github.com/cofide/cofide-api-sdk v0.25.3/go.mod h1:FHXZIcrVNFpsWazmW/eP+rtdGARsj+uni2fElB1213Y=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
 github.com/cyphar/filepath-securejoin v0.4.1/go.mod h1:Sdj7gXlvMcPZsbhwhQ33GguGLDGQL7h7bg04C/+u9jI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
