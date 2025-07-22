@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	clustersvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/cluster_service/v1alpha1"
@@ -85,6 +86,35 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	cluster := clusters[0]
 
+	var extraHelmValues types.String
+	if helmValues := cluster.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
+		jsonBytes, err := helmValues.MarshalJSON()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing cluster data",
+				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
+			)
+			return
+		}
+		extraHelmValues = types.StringValue(string(jsonBytes))
+	} else {
+		extraHelmValues = types.StringNull()
+	}
+
+	var oidcIssuerURL types.String
+	if url := cluster.GetOidcIssuerUrl(); url != "" {
+		oidcIssuerURL = types.StringValue(url)
+	} else {
+		oidcIssuerURL = types.StringNull()
+	}
+
+	var oidcIssuerCaCert types.String
+	if certBytes := cluster.GetOidcIssuerCaCert(); len(certBytes) > 0 {
+		oidcIssuerCaCert = types.StringValue(base64.StdEncoding.EncodeToString(certBytes))
+	} else {
+		oidcIssuerCaCert = types.StringNull()
+	}
+
 	state := ClusterModel{
 		ID:                types.StringValue(cluster.GetId()),
 		Name:              types.StringValue(cluster.GetName()),
@@ -94,11 +124,11 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		TrustProvider: &TrustProviderModel{
 			Kind: types.StringValue(cluster.GetTrustProvider().GetKind()),
 		},
-		ExtraHelmValues:  types.StringValue(cluster.GetExtraHelmValues().String()),
+		ExtraHelmValues:  extraHelmValues,
 		Profile:          types.StringValue(cluster.GetProfile()),
 		ExternalServer:   types.BoolValue(cluster.GetExternalServer()),
-		OidcIssuerURL:    types.StringValue(cluster.GetOidcIssuerUrl()),
-		OidcIssuerCaCert: types.StringValue(string(cluster.GetOidcIssuerCaCert())),
+		OidcIssuerURL:    oidcIssuerURL,
+		OidcIssuerCaCert: oidcIssuerCaCert,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
