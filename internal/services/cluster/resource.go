@@ -129,18 +129,8 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.KubernetesContext = tftypes.StringValue(createResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(createResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(createResp.GetExternalServer())
-
-	if createResp.GetOidcIssuerUrl() != "" {
-		plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())
-	} else {
-		plan.OidcIssuerURL = tftypes.StringNull()
-	}
-
-	if len(createResp.GetOidcIssuerCaCert()) > 0 {
-		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(createResp.GetOidcIssuerCaCert()))
-	} else {
-		plan.OidcIssuerCaCert = tftypes.StringNull()
-	}
+	plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())
+	plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(createResp.GetOidcIssuerCaCert()))
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
@@ -300,18 +290,8 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	plan.KubernetesContext = tftypes.StringValue(updateResp.GetKubernetesContext())
 	plan.Profile = tftypes.StringValue(updateResp.GetProfile())
 	plan.ExternalServer = tftypes.BoolValue(updateResp.GetExternalServer())
-
-	if updateResp.GetOidcIssuerUrl() != "" {
-		plan.OidcIssuerURL = tftypes.StringValue(updateResp.GetOidcIssuerUrl())
-	} else {
-		plan.OidcIssuerURL = tftypes.StringNull()
-	}
-
-	if len(updateResp.GetOidcIssuerCaCert()) > 0 {
-		plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(updateResp.GetOidcIssuerCaCert()))
-	} else {
-		plan.OidcIssuerCaCert = tftypes.StringNull()
-	}
+	plan.OidcIssuerURL = tftypes.StringValue(updateResp.GetOidcIssuerUrl())
+	plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(updateResp.GetOidcIssuerCaCert()))
 
 	plan.TrustProvider = &TrustProviderModel{
 		Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),
