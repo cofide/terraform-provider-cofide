@@ -6,7 +6,7 @@ require (
 	github.com/cofide/cofide-api-sdk v0.28.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
-	github.com/hashicorp/terraform-plugin-framework v1.16.0
+	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/spiffe/spire-api-sdk v1.12.4
 	github.com/stretchr/testify v1.11.1
