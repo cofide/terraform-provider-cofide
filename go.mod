@@ -3,12 +3,12 @@ module github.com/cofide/terraform-provider-cofide
 go 1.24.5
 
 require (
-	github.com/cofide/cofide-api-sdk v0.28.0
+	github.com/cofide/cofide-api-sdk v0.29.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/spiffe/spire-api-sdk v1.12.4
+	github.com/spiffe/spire-api-sdk v1.13.1
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.10
@@ -73,6 +73,6 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
