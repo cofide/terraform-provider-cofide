@@ -27,6 +27,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
         "kubernetes.io/metadata.name" = "test"
       }
     }
+    dns_name_templates = ["example.namespace.svc.cluster.local"]
   }
 }
 

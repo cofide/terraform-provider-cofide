@@ -111,6 +111,7 @@ func (r *AttestationPolicyResource) Create(ctx context.Context, req resource.Cre
 		plan.Kubernetes = &APKubernetesModel{
 			NamespaceSelector: plan.Kubernetes.NamespaceSelector,
 			PodSelector:       plan.Kubernetes.PodSelector,
+			DNSNameTemplates:  plan.Kubernetes.DNSNameTemplates,
 		}
 	}
 
