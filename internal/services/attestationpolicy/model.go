@@ -13,6 +13,7 @@ type AttestationPolicyModel struct {
 type APKubernetesModel struct {
 	NamespaceSelector *APLabelSelectorModel `tfsdk:"namespace_selector"`
 	PodSelector       *APLabelSelectorModel `tfsdk:"pod_selector"`
+	DNSNameTemplates  []tftypes.String      `tfsdk:dns_name_templates`
 }
 
 type APLabelSelectorModel struct {
