@@ -18,10 +18,10 @@ Provides information about a cluster resource.
 ### Required
 
 - `name` (String) The name of the cluster.
-- `org_id` (String) The ID of the organisation.
 
 ### Optional
 
+- `org_id` (String) The ID of the organisation.
 - `trust_zone_id` (String) The ID of the associated trust zone.
 
 ### Read-Only

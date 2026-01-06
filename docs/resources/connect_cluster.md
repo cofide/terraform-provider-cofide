@@ -20,7 +20,6 @@ Provides a cluster resource.
 - `external_server` (Boolean) Whether or not the SPIRE server runs externally.
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
 - `name` (String) The name of the cluster.
-- `org_id` (String) The ID of the organisation.
 - `profile` (String) The Cofide profile used by the cluster.
 - `trust_provider` (Attributes) The trust provider of the cluster. (see [below for nested schema](#nestedatt--trust_provider))
 - `trust_zone_id` (String) The ID of the associated trust zone.
@@ -30,6 +29,7 @@ Provides a cluster resource.
 - `extra_helm_values` (String) The extra Helm values to provide to the cluster.
 - `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
+- `org_id` (String) The ID of the organisation.
 
 ### Read-Only
 

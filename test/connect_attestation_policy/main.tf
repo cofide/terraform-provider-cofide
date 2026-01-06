@@ -1,6 +1,10 @@
+data "cofide_connect_organization" "org" {
+  name = "default"
+}
+
 resource "cofide_connect_attestation_policy" "attestation_policy_static" {
   name   = "test-ap-1"
-  org_id = "test-org-id"
+  org_id = data.cofide_connect_organization.org.id
 
   static = {
     spiffe_id_path = "test/workload"
@@ -23,7 +27,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
 
 resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
-  org_id = "test-org-id"
+  org_id = data.cofide_connect_organization.org.id
 
   kubernetes = {
     namespace_selector = {
@@ -46,7 +50,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
 
 data "cofide_connect_attestation_policy" "attestation_policy_static" {
   name   = "test-ap-1"
-  org_id = "test-org-id"
+  org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
     cofide_connect_attestation_policy.attestation_policy_static
@@ -55,7 +59,7 @@ data "cofide_connect_attestation_policy" "attestation_policy_static" {
 
 data "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
-  org_id = "test-org-id"
+  org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
     cofide_connect_attestation_policy.attestation_policy_kubernetes

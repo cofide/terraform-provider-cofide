@@ -51,6 +51,7 @@ func (t *TrustZoneDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	filter := &trustzonesvcpb.ListTrustZonesRequest_Filter{
 		Name:        config.Name.ValueStringPointer(),
+		OrgId:       config.OrgID.ValueStringPointer(),
 		TrustDomain: config.TrustDomain.ValueStringPointer(),
 	}
 	trustZones, err := t.client.TrustZoneV1Alpha1().ListTrustZones(ctx, filter)

@@ -21,6 +21,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
+	"github.com/cofide/terraform-provider-cofide/internal/services/organization"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 )
 
@@ -158,5 +159,6 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		cluster.NewDataSource,
 		federation.NewDataSource,
 		trustzone.NewDataSource,
+		organization.NewDataSource,
 	}
 }

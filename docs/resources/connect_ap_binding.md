@@ -17,13 +17,13 @@ Provides an attestation policy binding resource.
 
 ### Required
 
-- `org_id` (String) The ID of the organisation.
 - `policy_id` (String) The ID of the attestation policy.
 - `trust_zone_id` (String) The ID of the trust zone.
 
 ### Optional
 
 - `federations` (List of Object) The list of associated federations. (see [below for nested schema](#nestedatt--federations))
+- `org_id` (String) The ID of the organisation.
 
 ### Read-Only
 

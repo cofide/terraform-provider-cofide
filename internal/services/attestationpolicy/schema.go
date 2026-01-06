@@ -25,6 +25,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"org_id": schema.StringAttribute{
 				Description: "The ID of the organisation.",
 				Optional:    true,
+				Computed:    true,
 			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",
