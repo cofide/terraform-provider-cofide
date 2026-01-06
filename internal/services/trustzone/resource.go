@@ -13,9 +13,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ resource.Resource = &TrustZoneResource{}
-var _ resource.ResourceWithImportState = &TrustZoneResource{}
-var _ resource.ResourceWithValidateConfig = &TrustZoneResource{}
+var (
+	_ resource.Resource                   = &TrustZoneResource{}
+	_ resource.ResourceWithImportState    = &TrustZoneResource{}
+	_ resource.ResourceWithValidateConfig = &TrustZoneResource{}
+)
 
 type TrustZoneResource struct {
 	client sdkclient.ClientSet
@@ -57,6 +59,7 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 
 	trustZone := &trustzonepb.TrustZone{
 		Name:             plan.Name.ValueString(),
+		OrgId:            plan.OrgID.ValueStringPointer(),
 		TrustDomain:      plan.TrustDomain.ValueString(),
 		IsManagementZone: plan.IsManagementZone.ValueBool(),
 	}

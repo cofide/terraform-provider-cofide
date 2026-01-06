@@ -23,6 +23,7 @@ Provides a trust zone resource.
 ### Optional
 
 - `is_management_zone` (Boolean) Whether or not this is a management trust zone.
+- `org_id` (String) The ID of the organisation.
 
 ### Read-Only
 
@@ -30,4 +31,3 @@ Provides a trust zone resource.
 - `bundle_endpoint_url` (String) The bundle endpoint URL of the trust zone.
 - `id` (String) The ID of the trust zone.
 - `jwt_issuer` (String) The JWT issuer of the trust zone.
-- `org_id` (String) The ID of the organisation.

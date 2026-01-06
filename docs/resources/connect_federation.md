@@ -17,9 +17,12 @@ Provides a federation resource.
 
 ### Required
 
-- `org_id` (String) The ID of the organisation.
 - `remote_trust_zone_id` (String) The ID of the associated remote trust zone.
 - `trust_zone_id` (String) The ID of the associated trust zone.
+
+### Optional
+
+- `org_id` (String) The ID of the organisation.
 
 ### Read-Only
 

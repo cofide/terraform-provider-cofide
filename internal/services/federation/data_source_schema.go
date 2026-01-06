@@ -19,7 +19,7 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"org_id": schema.StringAttribute{
 				Description: "The ID of the organisation.",
-				Required:    true,
+				Optional:    true,
 			},
 			"trust_zone_id": schema.StringAttribute{
 				Description: "The ID of the associated trust zone.",

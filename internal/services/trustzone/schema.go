@@ -13,21 +13,22 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Provides a trust zone resource.",
 		Attributes: map[string]schema.Attribute{
-			"name": schema.StringAttribute{
-				Description: "The name of the trust zone.",
-				Required:    true,
-			},
-			"trust_domain": schema.StringAttribute{
-				Description: "The trust domain of the trust zone.",
-				Required:    true,
-			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the trust zone.",
 				Computed:    true,
 			},
+			"name": schema.StringAttribute{
+				Description: "The name of the trust zone.",
+				Required:    true,
+			},
 			"org_id": schema.StringAttribute{
 				Description: "The ID of the organisation.",
+				Optional:    true,
 				Computed:    true,
+			},
+			"trust_domain": schema.StringAttribute{
+				Description: "The trust domain of the trust zone.",
+				Required:    true,
 			},
 			"is_management_zone": schema.BoolAttribute{
 				Description: "Whether or not this is a management trust zone.",

@@ -18,6 +18,9 @@ Provides information about an attestation policy resource.
 ### Required
 
 - `name` (String) The name of the attestation policy.
+
+### Optional
+
 - `org_id` (String) The ID of the organisation.
 
 ### Read-Only
