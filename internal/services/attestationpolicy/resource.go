@@ -7,17 +7,15 @@ import (
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
-	spiretypes "github.com/spiffe/spire-api-sdk/proto/spire/api/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 )
 
-var _ resource.Resource = &AttestationPolicyResource{}
-var _ resource.ResourceWithImportState = &AttestationPolicyResource{}
-var _ resource.ResourceWithValidateConfig = &AttestationPolicyResource{}
+var (
+	_ resource.Resource                   = &AttestationPolicyResource{}
+	_ resource.ResourceWithImportState    = &AttestationPolicyResource{}
+	_ resource.ResourceWithValidateConfig = &AttestationPolicyResource{}
+)
 
 type AttestationPolicyResource struct {
 	client sdkclient.ClientSet
@@ -57,43 +55,7 @@ func (r *AttestationPolicyResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	policy := &attestationpolicypb.AttestationPolicy{
-		Name:  plan.Name.ValueString(),
-		OrgId: plan.OrgID.ValueStringPointer(),
-	}
-
-	if plan.Kubernetes != nil {
-		k8sPolicy := &attestationpolicypb.APKubernetes{}
-		if plan.Kubernetes.NamespaceSelector != nil {
-			k8sPolicy.NamespaceSelector = convertLabelSelector(plan.Kubernetes.NamespaceSelector)
-		}
-		if plan.Kubernetes.PodSelector != nil {
-			k8sPolicy.PodSelector = convertLabelSelector(plan.Kubernetes.PodSelector)
-		}
-		policy.Policy = &attestationpolicypb.AttestationPolicy_Kubernetes{
-			Kubernetes: k8sPolicy,
-		}
-	}
-
-	if plan.Static != nil {
-		staticPolicy := &attestationpolicypb.APStatic{
-			SpiffeId: plan.Static.SpiffeID.ValueStringPointer(),
-		}
-
-		selectors, err := extractSelectors(ctx, plan.Static.Selectors)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error extracting selectors",
-				err.Error(),
-			)
-			return
-		}
-		staticPolicy.Selectors = selectors
-		policy.Policy = &attestationpolicypb.AttestationPolicy_Static{
-			Static: staticPolicy,
-		}
-	}
-
+	policy := modelToProto(plan)
 	createResp, err := r.client.AttestationPolicyV1Alpha1().CreateAttestationPolicy(ctx, policy)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -103,25 +65,8 @@ func (r *AttestationPolicyResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	plan.ID = tftypes.StringValue(createResp.GetId())
-	plan.Name = tftypes.StringValue(createResp.GetName())
-	plan.OrgID = tftypes.StringValue(createResp.GetOrgId())
-
-	if k8s := createResp.GetKubernetes(); k8s != nil && plan.Kubernetes != nil {
-		plan.Kubernetes = &APKubernetesModel{
-			NamespaceSelector: plan.Kubernetes.NamespaceSelector,
-			PodSelector:       plan.Kubernetes.PodSelector,
-		}
-	}
-
-	if static := createResp.GetStatic(); static != nil && plan.Static != nil {
-		plan.Static = &APStaticModel{
-			SpiffeID:  tftypes.StringValue(static.GetSpiffeId()),
-			Selectors: plan.Static.Selectors,
-		}
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	state := protoToModel(createResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *AttestationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -135,14 +80,12 @@ func (r *AttestationPolicyResource) Read(ctx context.Context, req resource.ReadR
 
 func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state AttestationPolicyModel
-
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var plan AttestationPolicyModel
-
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -157,42 +100,8 @@ func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	policy := &attestationpolicypb.AttestationPolicy{
-		Id:    &policyID,
-		Name:  plan.Name.ValueString(),
-		OrgId: plan.OrgID.ValueStringPointer(),
-	}
-
-	if plan.Kubernetes != nil {
-		k8sPolicy := &attestationpolicypb.APKubernetes{}
-		if plan.Kubernetes.NamespaceSelector != nil {
-			k8sPolicy.NamespaceSelector = convertLabelSelector(plan.Kubernetes.NamespaceSelector)
-		}
-		if plan.Kubernetes.PodSelector != nil {
-			k8sPolicy.PodSelector = convertLabelSelector(plan.Kubernetes.PodSelector)
-		}
-		policy.Policy = &attestationpolicypb.AttestationPolicy_Kubernetes{
-			Kubernetes: k8sPolicy,
-		}
-	}
-
-	if plan.Static != nil {
-		staticPolicy := &attestationpolicypb.APStatic{
-			SpiffeId: plan.Static.SpiffeID.ValueStringPointer(),
-		}
-		selectors, err := extractSelectors(ctx, plan.Static.Selectors)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error extracting selectors",
-				err.Error(),
-			)
-			return
-		}
-		staticPolicy.Selectors = selectors
-		policy.Policy = &attestationpolicypb.AttestationPolicy_Static{
-			Static: staticPolicy,
-		}
-	}
+	policy := modelToProto(plan)
+	policy.Id = &policyID
 
 	updateResp, err := r.client.AttestationPolicyV1Alpha1().UpdateAttestationPolicy(ctx, policy)
 	if err != nil {
@@ -203,25 +112,8 @@ func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	plan.ID = tftypes.StringValue(updateResp.GetId())
-	plan.Name = tftypes.StringValue(updateResp.GetName())
-	plan.OrgID = tftypes.StringValue(updateResp.GetOrgId())
-
-	if k8s := updateResp.GetKubernetes(); k8s != nil && plan.Kubernetes != nil {
-		plan.Kubernetes = &APKubernetesModel{
-			NamespaceSelector: plan.Kubernetes.NamespaceSelector,
-			PodSelector:       plan.Kubernetes.PodSelector,
-		}
-	}
-
-	if static := updateResp.GetStatic(); static != nil && plan.Static != nil {
-		plan.Static = &APStaticModel{
-			SpiffeID:  tftypes.StringValue(static.GetSpiffeId()),
-			Selectors: plan.Static.Selectors,
-		}
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	newState := protoToModel(updateResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (r *AttestationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -274,49 +166,4 @@ func (r *AttestationPolicyResource) ValidateConfig(ctx context.Context, req reso
 		)
 		return
 	}
-}
-
-func extractSelectors(ctx context.Context, selectors []APStaticSelectorModel) ([]*spiretypes.Selector, error) {
-	protoSelectors := []*spiretypes.Selector{}
-
-	for _, s := range selectors {
-		protoSelectors = append(protoSelectors, &spiretypes.Selector{
-			Type:  s.Type.ValueString(),
-			Value: s.Value.ValueString(),
-		})
-	}
-
-	return protoSelectors, nil
-}
-
-func convertLabelSelector(selector *APLabelSelectorModel) *attestationpolicypb.APLabelSelector {
-	if selector == nil {
-		return nil
-	}
-
-	result := &attestationpolicypb.APLabelSelector{
-		MatchLabels: make(map[string]string),
-	}
-
-	if !selector.MatchLabels.IsNull() {
-		elements := selector.MatchLabels.Elements()
-		for k, v := range elements {
-			if str, ok := v.(tftypes.String); ok {
-				result.MatchLabels[k] = str.ValueString()
-			}
-		}
-	}
-
-	for _, expr := range selector.MatchExpressions {
-		matchExpr := &attestationpolicypb.APMatchExpression{
-			Key:      expr.Key.ValueString(),
-			Operator: expr.Operator.ValueString(),
-		}
-		for _, v := range expr.Values {
-			matchExpr.Values = append(matchExpr.Values, v.ValueString())
-		}
-		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
-	}
-
-	return result
 }

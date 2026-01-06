@@ -3,7 +3,8 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_static"
   org_id = "example-org-id"
 
   static = {
-    spiffe_id = "spiffe://example.org/workload"
+    spiffe_id_path = "test/workload"
+    parent_id_path = "test/agent"
     selectors = [
       {
         type  = "k8s"
@@ -13,6 +14,9 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_static"
         type  = "k8s"
         value = "sa:test-sa"
       }
+    ]
+    dns_names = [
+      "test.workload"
     ]
   }
 }
@@ -27,5 +31,11 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_kuberne
         "kubernetes.io/metadata.name" = "test"
       }
     }
+    pod_selector = {
+      match_labels = {
+        "test-label" = "test"
+      }
+    }
+    spiffe_id_path_template = "test/workload"
   }
 }

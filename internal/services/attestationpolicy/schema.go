@@ -94,14 +94,27 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 					},
+					"dns_name_templates": schema.ListAttribute{
+						Description: "The list of DNS name templates for the Kubernetes attestation policy.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"spiffe_id_path_template": schema.StringAttribute{
+						Description: "The SPIFFE ID path template for the Kubernetes attestation policy.",
+						Optional:    true,
+					},
 				},
 			},
 			"static": schema.SingleNestedAttribute{
 				Description: "The configuration of the static attestation policy.",
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
-					"spiffe_id": schema.StringAttribute{
-						Description: "The SPIFFE ID of the static attestation policy.",
+					"spiffe_id_path": schema.StringAttribute{
+						Description: "The SPIFFE ID path for the static attestation policy.",
+						Required:    true,
+					},
+					"parent_id_path": schema.StringAttribute{
+						Description: "The parent ID path for the static attestation policy.",
 						Required:    true,
 					},
 					"selectors": schema.ListNestedAttribute{
@@ -119,6 +132,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
+					},
+					"dns_names": schema.ListAttribute{
+						Description: "The list of DNS names for the static attestation policy.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
 					},
 				},
 			},
