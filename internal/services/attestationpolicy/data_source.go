@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 	attestationpolicysvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/attestation_policy_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -103,11 +101,15 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 		if ps := k8s.GetPodSelector(); ps != nil {
 			state.Kubernetes.PodSelector = convertProtoLabelSelector(ps)
 		}
+		state.Kubernetes.DnsNameTemplates = convertProtoStringSlice(k8s.GetDnsNameTemplates())
+		state.Kubernetes.SpiffeIDPathTemplate = types.StringValue(k8s.GetSpiffeIdPathTemplate())
 	}
 
 	if static := policy.GetStatic(); static != nil {
 		state.Static = &APStaticModel{
-			SpiffeID: types.StringValue(static.GetSpiffeId()),
+			SpiffeIDPath: types.StringValue(static.GetSpiffeIdPath()),
+			ParentIdPath: types.StringValue(static.GetParentIdPath()),
+			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
 		}
 		for _, selector := range static.GetSelectors() {
 			state.Static.Selectors = append(state.Static.Selectors, APStaticSelectorModel{
@@ -118,37 +120,4 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-}
-
-func convertProtoLabelSelector(selector *attestationpolicypb.APLabelSelector) *APLabelSelectorModel {
-	if selector == nil {
-		return nil
-	}
-
-	result := &APLabelSelectorModel{
-		MatchLabels: types.MapNull(types.StringType),
-	}
-
-	// Convert match labels
-	if len(selector.MatchLabels) > 0 {
-		elements := make(map[string]attr.Value)
-		for k, v := range selector.MatchLabels {
-			elements[k] = types.StringValue(v)
-		}
-		result.MatchLabels = types.MapValueMust(types.StringType, elements)
-	}
-
-	// Convert match expressions
-	for _, expr := range selector.MatchExpressions {
-		matchExpr := APMatchExpressionModel{
-			Key:      types.StringValue(expr.GetKey()),
-			Operator: types.StringValue(expr.GetOperator()),
-		}
-		for _, v := range expr.GetValues() {
-			matchExpr.Values = append(matchExpr.Values, types.StringValue(v))
-		}
-		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
-	}
-
-	return result
 }

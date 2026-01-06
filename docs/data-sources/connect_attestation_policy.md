@@ -31,8 +31,10 @@ Provides information about an attestation policy resource.
 
 Read-Only:
 
+- `dns_name_templates` (List of String) The list of DNS name templates for the Kubernetes attestation policy.
 - `namespace_selector` (Attributes) The configuration of the namespace selector for the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes--namespace_selector))
 - `pod_selector` (Attributes) The configuration of the pod selector for the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes--pod_selector))
+- `spiffe_id_path_template` (String) The SPIFFE ID path template for the Kubernetes attestation policy.
 
 <a id="nestedatt--kubernetes--namespace_selector"></a>
 ### Nested Schema for `kubernetes.namespace_selector`
@@ -78,8 +80,10 @@ Read-Only:
 
 Read-Only:
 
+- `dns_names` (List of String) The list of DNS names for the static attestation policy.
+- `parent_id_path` (String) The parent ID path for the static attestation policy.
 - `selectors` (Attributes List) The list of selectors for the static attestation policy. (see [below for nested schema](#nestedatt--static--selectors))
-- `spiffe_id` (String) The SPIFFE ID of the static attestation policy.
+- `spiffe_id_path` (String) The SPIFFE ID path for the static attestation policy.
 
 <a id="nestedatt--static--selectors"></a>
 ### Nested Schema for `static.selectors`

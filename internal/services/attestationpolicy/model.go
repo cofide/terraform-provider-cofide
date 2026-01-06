@@ -11,8 +11,10 @@ type AttestationPolicyModel struct {
 }
 
 type APKubernetesModel struct {
-	NamespaceSelector *APLabelSelectorModel `tfsdk:"namespace_selector"`
-	PodSelector       *APLabelSelectorModel `tfsdk:"pod_selector"`
+	NamespaceSelector    *APLabelSelectorModel `tfsdk:"namespace_selector"`
+	PodSelector          *APLabelSelectorModel `tfsdk:"pod_selector"`
+	DnsNameTemplates     []tftypes.String      `tfsdk:"dns_name_templates"`
+	SpiffeIDPathTemplate tftypes.String        `tfsdk:"spiffe_id_path_template"`
 }
 
 type APLabelSelectorModel struct {
@@ -27,8 +29,10 @@ type APMatchExpressionModel struct {
 }
 
 type APStaticModel struct {
-	SpiffeID  tftypes.String          `tfsdk:"spiffe_id"`
-	Selectors []APStaticSelectorModel `tfsdk:"selectors"`
+	SpiffeIDPath tftypes.String          `tfsdk:"spiffe_id_path"`
+	ParentIdPath tftypes.String          `tfsdk:"parent_id_path"`
+	Selectors    []APStaticSelectorModel `tfsdk:"selectors"`
+	DNSNames     []tftypes.String        `tfsdk:"dns_names"`
 }
 
 type APStaticSelectorModel struct {
