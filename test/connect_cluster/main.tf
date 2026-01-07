@@ -31,7 +31,7 @@ resource "cofide_connect_cluster" "cluster" {
   external_server = true
 
   oidc_issuer_url     = "https://oidc.example.com"
-  oidc_issuer_ca_cert = base64encode("DUMMY_CERTIFICATE_DATA")
+  oidc_issuer_ca_cert = base64encode(file("oidc-issuer-ca.crt"))
 
   depends_on = [
     cofide_connect_trust_zone.trust_zone
