@@ -6,6 +6,9 @@ test *args:
 
 test-race: (test "--" "-race")
 
+integration *args:
+    {{justfile_directory()}}/test/run.sh {{args}}
+
 lint *args:
     golangci-lint run --show-stats {{args}}
 
