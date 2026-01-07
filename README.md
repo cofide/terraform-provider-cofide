@@ -109,3 +109,27 @@ To generate or update documentation for the provider, run the following command 
 ```bash
 just generate
 ```
+
+To run linters:
+
+```sh
+just lint
+```
+
+To run unit tests:
+
+```sh
+just test
+```
+
+To run integration tests against a local development Connect deployment:
+
+```sh
+just integration
+```
+
+To run one or more specific integration tests:
+
+```sh
+just integration connect_trust_zone
+```
