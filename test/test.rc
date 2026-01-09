@@ -1,0 +1,5 @@
+# This file can be sourced to provide environment variables for testing against
+# a local development deployment of Connect.
+export COFIDE_CONNECT_URL="cofide.security:8443"
+export COFIDE_API_TOKEN="$(grep 'cofide_access_token' ~/.cofide/credentials | cut -d'=' -f2)"
+export COFIDE_INSECURE_SKIP_VERIFY="true"
