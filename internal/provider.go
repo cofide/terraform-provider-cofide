@@ -22,6 +22,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
 	"github.com/cofide/terraform-provider-cofide/internal/services/organization"
+	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 )
 
@@ -148,6 +149,7 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		apbinding.NewResource,
 		cluster.NewResource,
 		federation.NewResource,
+		rolebinding.NewResource,
 		trustzone.NewResource,
 	}
 }
