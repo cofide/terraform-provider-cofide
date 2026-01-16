@@ -162,5 +162,6 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		federation.NewDataSource,
 		trustzone.NewDataSource,
 		organization.NewDataSource,
+		rolebinding.NewDataSource,
 	}
 }
