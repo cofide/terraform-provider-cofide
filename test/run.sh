@@ -13,15 +13,12 @@ source "$TEST_DIR/test.rc"
 function run_test() {
   local dir=${1?Specify test Terraform directory}
   echo "Running Terraform test in \"$dir\""
-  pushd "$dir" >/dev/null
-  # Ensure popd is called on function return to restore the original directory.
-  trap "popd >/dev/null" RETURN
 
-  if ! terraform apply -auto-approve; then
+  if ! terraform -chdir="$dir" apply -auto-approve; then
     echo "ERROR: Failed to apply" >&2
     return 1
   fi
-  if ! terraform destroy -auto-approve; then
+  if ! terraform -chdir="$dir" destroy -auto-approve; then
     echo "ERROR: Failed to destroy" >&2
     return 1
   fi
