@@ -28,6 +28,7 @@ Provides information about an attestation policy resource.
 - `id` (String) The ID of the attestation policy.
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
+- `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
 
 <a id="nestedatt--kubernetes"></a>
 ### Nested Schema for `kubernetes`
@@ -95,3 +96,20 @@ Read-Only:
 
 - `type` (String) The type of the selector.
 - `value` (String) The value of the selector.
+
+
+
+<a id="nestedatt--tpm_node"></a>
+### Nested Schema for `tpm_node`
+
+Read-Only:
+
+- `attestation` (Attributes) The TPM attestation configuration. (see [below for nested schema](#nestedatt--tpm_node--attestation))
+- `selector_values` (List of String) The list of selector values for the TPM node attestation policy.
+
+<a id="nestedatt--tpm_node--attestation"></a>
+### Nested Schema for `tpm_node.attestation`
+
+Read-Only:
+
+- `ek_hash` (String) SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.

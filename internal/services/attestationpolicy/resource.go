@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	_ resource.Resource                   = &AttestationPolicyResource{}
-	_ resource.ResourceWithImportState    = &AttestationPolicyResource{}
-	_ resource.ResourceWithValidateConfig = &AttestationPolicyResource{}
+	_ resource.Resource                     = &AttestationPolicyResource{}
+	_ resource.ResourceWithImportState      = &AttestationPolicyResource{}
+	_ resource.ResourceWithConfigValidators = &AttestationPolicyResource{}
 )
 
 type AttestationPolicyResource struct {
@@ -138,32 +138,4 @@ func (r *AttestationPolicyResource) Delete(ctx context.Context, req resource.Del
 
 func (r *AttestationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-func (r *AttestationPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data AttestationPolicyModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	hasKubernetes := data.Kubernetes != nil
-	hasStatic := data.Static != nil
-
-	if !hasKubernetes && !hasStatic {
-		resp.Diagnostics.AddError(
-			"Invalid configuration",
-			"Either kubernetes or static block must be configured, but neither was provided.",
-		)
-		return
-	}
-
-	if hasKubernetes && hasStatic {
-		resp.Diagnostics.AddError(
-			"Invalid configuration",
-			"Only one of kubernetes or static block can be configured, but both were provided.",
-		)
-		return
-	}
 }

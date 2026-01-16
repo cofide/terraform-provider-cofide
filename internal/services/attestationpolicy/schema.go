@@ -2,6 +2,7 @@ package attestationpolicy
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -141,6 +142,27 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 			},
+			"tpm_node": schema.SingleNestedAttribute{
+				Description: "The configuration of the TPM node attestation policy.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"attestation": schema.SingleNestedAttribute{
+						Description: "The TPM attestation configuration.",
+						Required:    true,
+						Attributes: map[string]schema.Attribute{
+							"ek_hash": schema.StringAttribute{
+								Description: "SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.",
+								Required:    true,
+							},
+						},
+					},
+					"selector_values": schema.ListAttribute{
+						Description: "The list of selector values for the TPM node attestation policy.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+				},
+			},
 		},
 	}
 }
@@ -149,19 +171,19 @@ func (a *AttestationPolicyResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = ResourceSchema(ctx)
 }
 
-type atLeastOneOfValidator struct{}
+type exactlyOneOfValidator struct{}
 
-var _ resource.ConfigValidator = atLeastOneOfValidator{}
+var _ resource.ConfigValidator = exactlyOneOfValidator{}
 
-func (v atLeastOneOfValidator) Description(ctx context.Context) string {
-	return "at least one of 'kubernetes' or 'static' must be configured"
+func (v exactlyOneOfValidator) Description(ctx context.Context) string {
+	return "exactly one of 'kubernetes', 'static', or 'tpm_node' must be configured"
 }
 
-func (v atLeastOneOfValidator) MarkdownDescription(ctx context.Context) string {
-	return "at least one of `kubernetes` or `static` must be configured"
+func (v exactlyOneOfValidator) MarkdownDescription(ctx context.Context) string {
+	return "exactly one of `kubernetes`, `static`, or `tpm_node` must be configured"
 }
 
-func (v atLeastOneOfValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (v exactlyOneOfValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data AttestationPolicyModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -169,21 +191,11 @@ func (v atLeastOneOfValidator) ValidateResource(ctx context.Context, req resourc
 		return
 	}
 
-	hasKubernetes := data.Kubernetes != nil
-	hasStatic := data.Static != nil
-
-	if !hasKubernetes && !hasStatic {
+	valid, reason := isExactlyOneNonNil(data.Kubernetes, data.Static, data.TPMNode)
+	if !valid {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Either kubernetes or static block must be configured, but neither was provided.",
-		)
-		return
-	}
-
-	if hasKubernetes && hasStatic {
-		resp.Diagnostics.AddError(
-			"Invalid configuration",
-			"Only one of kubernetes or static block can be configured, but both were provided.",
+			"Exactly one of kubernetes, static or tpm_node blocks must be configured, but "+reason+" were provided.",
 		)
 		return
 	}
@@ -191,6 +203,29 @@ func (v atLeastOneOfValidator) ValidateResource(ctx context.Context, req resourc
 
 func (a *AttestationPolicyResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		atLeastOneOfValidator{},
+		exactlyOneOfValidator{},
 	}
+}
+
+// isExactlyOneNonNil returns true if the value of exactly one of the arguments is non-nil.
+// Otherwise, it returns false and a string reason of "none" or "multiple".
+func isExactlyOneNonNil(input ...any) (bool, string) {
+	count := 0
+	for _, v := range input {
+		// An interface value is not nil if it has a type, even if the underlying value is nil.
+		// We must use reflection to check if the underlying value is nil.
+		if v == nil {
+			continue
+		}
+		if !reflect.ValueOf(v).IsNil() {
+			count++
+		}
+	}
+	if count == 0 {
+		return false, "none"
+	}
+	if count > 1 {
+		return false, "multiple"
+	}
+	return true, ""
 }

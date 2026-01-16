@@ -8,6 +8,7 @@ type AttestationPolicyModel struct {
 	OrgID      tftypes.String     `tfsdk:"org_id"`
 	Kubernetes *APKubernetesModel `tfsdk:"kubernetes"`
 	Static     *APStaticModel     `tfsdk:"static"`
+	TPMNode    *APTPMNodeModel    `tfsdk:"tpm_node"`
 }
 
 type APKubernetesModel struct {
@@ -38,4 +39,13 @@ type APStaticModel struct {
 type APStaticSelectorModel struct {
 	Type  tftypes.String `tfsdk:"type"`
 	Value tftypes.String `tfsdk:"value"`
+}
+
+type APTPMNodeModel struct {
+	Attestation    TPMAttestationModel `tfsdk:"attestation"`
+	SelectorValues []tftypes.String    `tfsdk:"selector_values"`
+}
+
+type TPMAttestationModel struct {
+	EKHash tftypes.String `tfsdk:"ek_hash"`
 }
