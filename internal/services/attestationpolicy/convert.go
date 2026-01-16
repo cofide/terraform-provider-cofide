@@ -38,6 +38,19 @@ func modelToProto(model AttestationPolicyModel) *attestationpolicypb.Attestation
 			Static: staticPolicy,
 		}
 	}
+
+	if model.TPMNode != nil {
+		tpmNodePolicy := &attestationpolicypb.APTPMNode{
+			Attestation: &attestationpolicypb.TPMAttestation{
+				EkHash: model.TPMNode.Attestation.EKHash.ValueStringPointer(),
+			},
+			SelectorValues: convertStringSlice(model.TPMNode.SelectorValues),
+		}
+		proto.Policy = &attestationpolicypb.AttestationPolicy_TpmNode{
+			TpmNode: tpmNodePolicy,
+		}
+	}
+
 	return proto
 }
 
@@ -66,6 +79,16 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
 		}
 	}
+
+	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
+		model.TPMNode = &APTPMNodeModel{
+			Attestation: TPMAttestationModel{
+				EKHash: tftypes.StringValue(tpmNode.GetAttestation().GetEkHash()),
+			},
+			SelectorValues: convertProtoStringSlice(tpmNode.GetSelectorValues()),
+		}
+	}
+
 	return model
 }
 

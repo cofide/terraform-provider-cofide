@@ -140,6 +140,27 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 			},
+			"tpm_node": schema.SingleNestedAttribute{
+				Description: "The configuration of the TPM node attestation policy.",
+				Computed:    true,
+				Attributes: map[string]schema.Attribute{
+					"attestation": schema.SingleNestedAttribute{
+						Description: "The TPM attestation configuration.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"ek_hash": schema.StringAttribute{
+								Description: "SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.",
+								Computed:    true,
+							},
+						},
+					},
+					"selector_values": schema.ListAttribute{
+						Description: "The list of selector values for the TPM node attestation policy.",
+						Computed:    true,
+						ElementType: tftypes.StringType,
+					},
+				},
+			},
 		},
 	}
 }

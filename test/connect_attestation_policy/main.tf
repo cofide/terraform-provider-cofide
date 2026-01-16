@@ -48,6 +48,20 @@ resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
   }
 }
 
+resource "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
+  name   = "test-ap-3"
+  org_id = data.cofide_connect_organization.org.id
+
+  tpm_node = {
+    attestation = {
+      ek_hash = "5b3e0a049837688b09028ba84be190720bcc8f6cf74a487dc53b2ce9f376b5fb"
+    }
+    selector_values = [
+      "test-selector"
+    ]
+  }
+}
+
 data "cofide_connect_attestation_policy" "attestation_policy_static" {
   name   = "test-ap-1"
   org_id = data.cofide_connect_organization.org.id
