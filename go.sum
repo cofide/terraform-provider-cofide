@@ -26,8 +26,8 @@ github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/
 github.com/bufbuild/protocompile v0.14.1/go.mod h1:ppVdAIhbr2H8asPk6k4pY7t9zB1OU5DoEw9xY/FUi1c=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
 github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
-github.com/cofide/cofide-api-sdk v0.40.1 h1:jOwVud0yvE+xe5zyJ8MWCsfdFLCEHw0sLHR9BtdSabM=
-github.com/cofide/cofide-api-sdk v0.40.1/go.mod h1:yrwdU/Ta2MYOOHj8neQgn/8Ls2rk9fZ32fWNS/0uScg=
+github.com/cofide/cofide-api-sdk v0.41.0 h1:/1L5PanAJ8i+0UdFebaTx9oSqbiNNHCi96uZIKmjRWk=
+github.com/cofide/cofide-api-sdk v0.41.0/go.mod h1:yrwdU/Ta2MYOOHj8neQgn/8Ls2rk9fZ32fWNS/0uScg=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
 github.com/cyphar/filepath-securejoin v0.4.1/go.mod h1:Sdj7gXlvMcPZsbhwhQ33GguGLDGQL7h7bg04C/+u9jI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
