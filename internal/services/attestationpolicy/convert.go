@@ -4,6 +4,7 @@ import (
 	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	spiretypes "github.com/spiffe/spire-api-sdk/proto/spire/api/types"
 )
 
@@ -57,9 +58,9 @@ func modelToProto(model AttestationPolicyModel) *attestationpolicypb.Attestation
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
 func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolicyModel {
 	model := AttestationPolicyModel{
-		ID:    tftypes.StringValue(proto.GetId()),
+		ID:    optionalStringValue(proto.Id),
 		Name:  tftypes.StringValue(proto.GetName()),
-		OrgID: tftypes.StringValue(proto.GetOrgId()),
+		OrgID: optionalStringValue(proto.OrgId),
 	}
 
 	if k8s := proto.GetKubernetes(); k8s != nil {
@@ -67,14 +68,14 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 			NamespaceSelector:    convertProtoLabelSelector(k8s.NamespaceSelector),
 			PodSelector:          convertProtoLabelSelector(k8s.PodSelector),
 			DnsNameTemplates:     convertProtoStringSlice(k8s.GetDnsNameTemplates()),
-			SpiffeIDPathTemplate: tftypes.StringValue(k8s.GetSpiffeIdPathTemplate()),
+			SpiffeIDPathTemplate: optionalStringValue(k8s.SpiffeIdPathTemplate),
 		}
 	}
 
 	if static := proto.GetStatic(); static != nil {
 		model.Static = &APStaticModel{
-			SpiffeIDPath: tftypes.StringValue(static.GetSpiffeIdPath()),
-			ParentIdPath: tftypes.StringValue(static.GetParentIdPath()),
+			SpiffeIDPath: optionalStringValue(static.SpiffeIdPath),
+			ParentIdPath: optionalStringValue(static.ParentIdPath),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
 			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
 		}
@@ -83,7 +84,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
 		model.TPMNode = &APTPMNodeModel{
 			Attestation: TPMAttestationModel{
-				EKHash: tftypes.StringValue(tpmNode.GetAttestation().GetEkHash()),
+				EKHash: optionalStringValue(tpmNode.GetAttestation().EkHash),
 			},
 			SelectorValues: convertProtoStringSlice(tpmNode.GetSelectorValues()),
 		}
@@ -195,4 +196,11 @@ func convertProtoSelectors(selectors []*spiretypes.Selector) []APStaticSelectorM
 		})
 	}
 	return modelSelectors
+}
+
+func optionalStringValue(s *string) basetypes.StringValue {
+	if s == nil {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(*s)
 }
