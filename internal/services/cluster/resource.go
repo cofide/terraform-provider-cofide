@@ -62,14 +62,17 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	cluster := &clusterpb.Cluster{
 		Name:              plan.Name.ValueStringPointer(),
-		OrgId:             plan.OrgID.ValueStringPointer(),
 		TrustZoneId:       plan.TrustZoneID.ValueStringPointer(),
 		KubernetesContext: plan.KubernetesContext.ValueStringPointer(),
 		Profile:           plan.Profile.ValueStringPointer(),
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+	if !plan.OrgID.IsNull() {
+		cluster.OrgId = plan.OrgID.ValueStringPointer()
+	}
+
+	if !plan.OidcIssuerURL.IsNull() {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
 
@@ -122,27 +125,52 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	plan.ID = tftypes.StringValue(createResp.GetId())
-	plan.Name = tftypes.StringValue(createResp.GetName())
-	plan.OrgID = tftypes.StringValue(createResp.GetOrgId())
-	plan.TrustZoneID = tftypes.StringValue(createResp.GetTrustZoneId())
-	plan.KubernetesContext = tftypes.StringValue(createResp.GetKubernetesContext())
-	plan.Profile = tftypes.StringValue(createResp.GetProfile())
-	plan.ExternalServer = tftypes.BoolValue(createResp.GetExternalServer())
-	plan.OidcIssuerURL = tftypes.StringValue(createResp.GetOidcIssuerUrl())
-	plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(createResp.GetOidcIssuerCaCert()))
-
-	plan.TrustProvider = &TrustProviderModel{
-		Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
+	var extraHelmValues tftypes.String
+	if helmValues := createResp.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
+		jsonBytes, err := helmValues.MarshalJSON()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing cluster data",
+				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
+			)
+			return
+		}
+		extraHelmValues = tftypes.StringValue(string(jsonBytes))
+	} else {
+		extraHelmValues = tftypes.StringNull()
 	}
 
-	extraHelmValues := createResp.GetExtraHelmValues()
-	if err := validateHelmValues(plan.ExtraHelmValues, extraHelmValues); err != nil {
-		resp.Diagnostics.AddError("Inconsistent Helm values", err.Error())
-		return
+	var oidcIssuerURL tftypes.String
+	if url := createResp.GetOidcIssuerUrl(); url != "" {
+		oidcIssuerURL = tftypes.StringValue(url)
+	} else {
+		oidcIssuerURL = tftypes.StringNull()
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	var oidcIssuerCaCert tftypes.String
+	if certBytes := createResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
+		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
+	} else {
+		oidcIssuerCaCert = tftypes.StringNull()
+	}
+
+	state := ClusterModel{
+		ID:                tftypes.StringValue(createResp.GetId()),
+		Name:              tftypes.StringValue(createResp.GetName()),
+		OrgID:             tftypes.StringValue(createResp.GetOrgId()),
+		TrustZoneID:       tftypes.StringValue(createResp.GetTrustZoneId()),
+		KubernetesContext: tftypes.StringValue(createResp.GetKubernetesContext()),
+		TrustProvider: &TrustProviderModel{
+			Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
+		},
+		ExtraHelmValues:  extraHelmValues,
+		Profile:          tftypes.StringValue(createResp.GetProfile()),
+		ExternalServer:   tftypes.BoolValue(createResp.GetExternalServer()),
+		OidcIssuerURL:    oidcIssuerURL,
+		OidcIssuerCaCert: oidcIssuerCaCert,
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (c *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -152,98 +180,117 @@ func (c *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-}
 
-func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state ClusterModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
+	clusterID := state.ID.ValueString()
+	cluster, err := c.client.ClusterV1Alpha1().GetCluster(ctx, clusterID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading cluster",
+			fmt.Sprintf("Could not read cluster %q: %s", clusterID, err),
+		)
 		return
 	}
 
-	var plan ClusterModel
+	var extraHelmValues tftypes.String
+	if helmValues := cluster.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
+		jsonBytes, err := helmValues.MarshalJSON()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing cluster data",
+				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
+			)
+			return
+		}
+		extraHelmValues = tftypes.StringValue(string(jsonBytes))
+	} else {
+		extraHelmValues = tftypes.StringNull()
+	}
 
+	var oidcIssuerURL tftypes.String
+	if url := cluster.GetOidcIssuerUrl(); url != "" {
+		oidcIssuerURL = tftypes.StringValue(url)
+	} else {
+		oidcIssuerURL = tftypes.StringNull()
+	}
+
+	var oidcIssuerCaCert tftypes.String
+	if certBytes := cluster.GetOidcIssuerCaCert(); len(certBytes) > 0 {
+		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
+	} else {
+		oidcIssuerCaCert = tftypes.StringNull()
+	}
+
+	newState := ClusterModel{
+		ID:                tftypes.StringValue(cluster.GetId()),
+		Name:              tftypes.StringValue(cluster.GetName()),
+		OrgID:             tftypes.StringValue(cluster.GetOrgId()),
+		TrustZoneID:       tftypes.StringValue(cluster.GetTrustZoneId()),
+		KubernetesContext: tftypes.StringValue(cluster.GetKubernetesContext()),
+		TrustProvider: &TrustProviderModel{
+			Kind: tftypes.StringValue(cluster.GetTrustProvider().GetKind()),
+		},
+		ExtraHelmValues:  extraHelmValues,
+		Profile:          tftypes.StringValue(cluster.GetProfile()),
+		ExternalServer:   tftypes.BoolValue(cluster.GetExternalServer()),
+		OidcIssuerURL:    oidcIssuerURL,
+		OidcIssuerCaCert: oidcIssuerCaCert,
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
+}
+
+func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan ClusterModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clusterID := state.ID.ValueString()
-	if clusterID == "" {
-		resp.Diagnostics.AddError(
-			"Error updating cluster",
-			"Cluster ID not found in state. The resource might not have been created properly.",
-		)
+	var state ClusterModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
+	clusterID := state.ID.ValueString()
 
 	cluster := &clusterpb.Cluster{
-		Id:          &clusterID,
-		Name:        plan.Name.ValueStringPointer(),
-		OrgId:       plan.OrgID.ValueStringPointer(),
-		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
+		Id:                &clusterID,
+		Name:              plan.Name.ValueStringPointer(),
+		TrustZoneId:       plan.TrustZoneID.ValueStringPointer(),
+		KubernetesContext: plan.KubernetesContext.ValueStringPointer(),
+		Profile:           plan.Profile.ValueStringPointer(),
+		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if !plan.KubernetesContext.IsNull() {
-		cluster.KubernetesContext = plan.KubernetesContext.ValueStringPointer()
-	} else {
-		cluster.KubernetesContext = state.KubernetesContext.ValueStringPointer()
+	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+		cluster.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
-	if !plan.Profile.IsNull() {
-		cluster.Profile = plan.Profile.ValueStringPointer()
-	} else {
-		cluster.Profile = state.Profile.ValueStringPointer()
-	}
-
-	if !plan.ExternalServer.IsNull() {
-		cluster.ExternalServer = plan.ExternalServer.ValueBoolPointer()
-	} else {
-		cluster.ExternalServer = state.ExternalServer.ValueBoolPointer()
-	}
-
-	if !plan.OidcIssuerURL.IsNull() {
+	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
-	} else {
-		cluster.OidcIssuerUrl = state.OidcIssuerURL.ValueStringPointer()
 	}
 
-	var certToDecode tftypes.String
-	if !plan.OidcIssuerCaCert.IsNull() {
-		certToDecode = plan.OidcIssuerCaCert
-	} else {
-		certToDecode = state.OidcIssuerCaCert
-	}
-
-	if !certToDecode.IsNull() && certToDecode.ValueString() != "" {
-		decodedCert, err := base64.StdEncoding.DecodeString(certToDecode.ValueString())
+	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
+		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error decoding oidc_issuer_ca_cert",
-				fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err),
-			)
+			resp.Diagnostics.AddError("Error decoding oidc_issuer_ca_cert", fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err))
 			return
 		}
 		cluster.OidcIssuerCaCert = decodedCert
-	} else {
-		cluster.OidcIssuerCaCert = []byte{}
 	}
 
-	if !plan.TrustProvider.Kind.IsNull() {
+	if plan.TrustProvider != nil && !plan.TrustProvider.Kind.IsNull() {
 		trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error updating trust provider",
-				fmt.Sprintf("Failed to create trust provider: %s", err),
-			)
-
+			resp.Diagnostics.AddError("Error updating trust provider", fmt.Sprintf("Failed to create trust provider: %s", err))
 			return
 		}
-
 		cluster.TrustProvider = trustProvider
 	} else {
-		// TrustProvider is required, so if it's not in the plan, it must be in the state.
 		trustProvider, _ := newTrustProvider(state.TrustProvider.Kind.ValueString())
 		cluster.TrustProvider = trustProvider
 	}
@@ -251,23 +298,7 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	if !plan.ExtraHelmValues.IsNull() {
 		parsedHelmValues, err := parseExtraHelmValues(plan.ExtraHelmValues)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error parsing extra_helm_values",
-				fmt.Sprintf("Failed to parse extra_helm_values: %s", err),
-			)
-
-			return
-		}
-
-		cluster.ExtraHelmValues = parsedHelmValues
-	} else {
-		parsedHelmValues, err := parseExtraHelmValues(state.ExtraHelmValues)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error parsing extra_helm_values from state",
-				fmt.Sprintf("Failed to parse extra_helm_values: %s", err),
-			)
-
+			resp.Diagnostics.AddError("Error parsing extra_helm_values", fmt.Sprintf("Failed to parse extra_helm_values: %s", err))
 			return
 		}
 		cluster.ExtraHelmValues = parsedHelmValues
@@ -275,35 +306,58 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	updateResp, err := c.client.ClusterV1Alpha1().UpdateCluster(ctx, cluster)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error updating cluster",
-			err.Error(),
-		)
-
+		resp.Diagnostics.AddError("Error updating cluster", err.Error())
 		return
 	}
 
-	plan.ID = tftypes.StringValue(updateResp.GetId())
-	plan.Name = tftypes.StringValue(updateResp.GetName())
-	plan.OrgID = tftypes.StringValue(updateResp.GetOrgId())
-	plan.TrustZoneID = tftypes.StringValue(updateResp.GetTrustZoneId())
-	plan.KubernetesContext = tftypes.StringValue(updateResp.GetKubernetesContext())
-	plan.Profile = tftypes.StringValue(updateResp.GetProfile())
-	plan.ExternalServer = tftypes.BoolValue(updateResp.GetExternalServer())
-	plan.OidcIssuerURL = tftypes.StringValue(updateResp.GetOidcIssuerUrl())
-	plan.OidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(updateResp.GetOidcIssuerCaCert()))
-
-	plan.TrustProvider = &TrustProviderModel{
-		Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),
+	// Create new state object from response
+	var extraHelmValuesStr tftypes.String
+	if helmValues := updateResp.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
+		jsonBytes, err := helmValues.MarshalJSON()
+		if err != nil {
+			resp.Diagnostics.AddError("Error processing cluster data", fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err))
+			return
+		}
+		extraHelmValuesStr = tftypes.StringValue(string(jsonBytes))
+	} else {
+		extraHelmValuesStr = tftypes.StringNull()
 	}
 
-	extraHelmValues := updateResp.GetExtraHelmValues()
-	if err := validateHelmValues(plan.ExtraHelmValues, extraHelmValues); err != nil {
-		resp.Diagnostics.AddError("Inconsistent Helm values", err.Error())
-		return
+	var oidcIssuerURLStr tftypes.String
+	if url := updateResp.GetOidcIssuerUrl(); url != "" {
+		oidcIssuerURLStr = tftypes.StringValue(url)
+	} else if !plan.OidcIssuerURL.IsNull() {
+		oidcIssuerURLStr = plan.OidcIssuerURL
+	} else {
+		oidcIssuerURLStr = tftypes.StringNull()
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	var oidcIssuerCaCertStr tftypes.String
+	if certBytes := updateResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
+		oidcIssuerCaCertStr = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
+	} else if !plan.OidcIssuerCaCert.IsNull() {
+		oidcIssuerCaCertStr = plan.OidcIssuerCaCert
+	} else {
+		oidcIssuerCaCertStr = tftypes.StringNull()
+	}
+
+	newState := ClusterModel{
+		ID:                tftypes.StringValue(updateResp.GetId()),
+		Name:              tftypes.StringValue(updateResp.GetName()),
+		OrgID:             tftypes.StringValue(updateResp.GetOrgId()),
+		TrustZoneID:       tftypes.StringValue(updateResp.GetTrustZoneId()),
+		KubernetesContext: tftypes.StringValue(updateResp.GetKubernetesContext()),
+		TrustProvider: &TrustProviderModel{
+			Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),
+		},
+		ExtraHelmValues:  extraHelmValuesStr,
+		Profile:          tftypes.StringValue(updateResp.GetProfile()),
+		ExternalServer:   tftypes.BoolValue(updateResp.GetExternalServer()),
+		OidcIssuerURL:    oidcIssuerURLStr,
+		OidcIssuerCaCert: oidcIssuerCaCertStr,
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (c *ClusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

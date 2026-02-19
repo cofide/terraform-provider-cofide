@@ -5,6 +5,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 var _ resource.ResourceWithConfigValidators = (*ClusterResource)(nil)
@@ -16,6 +18,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"id": schema.StringAttribute{
 				Description: "The ID of the cluster.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the cluster.",
@@ -25,6 +30,10 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Description: "The ID of the organisation.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					optionalComputedModifier{},
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"trust_zone_id": schema.StringAttribute{
 				Description: "The ID of the associated trust zone.",
@@ -60,11 +69,19 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Description: "The OIDC issuer URL of the cluster.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					optionalComputedModifier{},
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"oidc_issuer_ca_cert": schema.StringAttribute{
 				Description: "The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					optionalComputedModifier{},
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}

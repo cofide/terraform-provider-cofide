@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -153,27 +154,5 @@ func (r *AttestationPolicyResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *AttestationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	name := req.ID
-
-	policies, err := r.client.AttestationPolicyV1Alpha1().ListAttestationPolicies(ctx, nil)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error importing attestation policy",
-			fmt.Sprintf("Could not list attestation policies: %s", err),
-		)
-		return
-	}
-
-	for _, p := range policies {
-		if p.GetName() == name {
-			state := protoToModel(p)
-			resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-			return
-		}
-	}
-
-	resp.Diagnostics.AddError(
-		"Error importing attestation policy",
-		fmt.Sprintf("Could not find attestation policy with name %q", name),
-	)
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

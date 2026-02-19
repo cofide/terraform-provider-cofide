@@ -56,9 +56,12 @@ func (f *FederationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	federation := &federationpb.Federation{
-		OrgId:             plan.OrgID.ValueStringPointer(),
 		TrustZoneId:       plan.TrustZoneID.ValueStringPointer(),
 		RemoteTrustZoneId: plan.RemoteTrustZoneID.ValueStringPointer(),
+	}
+
+	if !plan.OrgID.IsNull() {
+		federation.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
 	createResp, err := f.client.FederationV1Alpha1().CreateFederation(ctx, federation)
@@ -71,12 +74,14 @@ func (f *FederationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	plan.ID = tftypes.StringValue(createResp.GetId())
-	plan.OrgID = tftypes.StringValue(createResp.GetOrgId())
-	plan.TrustZoneID = tftypes.StringValue(createResp.GetTrustZoneId())
-	plan.RemoteTrustZoneID = tftypes.StringValue(createResp.GetRemoteTrustZoneId())
+	state := FederationModel{
+		ID:                tftypes.StringValue(createResp.GetId()),
+		OrgID:             tftypes.StringValue(createResp.GetOrgId()),
+		TrustZoneID:       tftypes.StringValue(createResp.GetTrustZoneId()),
+		RemoteTrustZoneID: tftypes.StringValue(createResp.GetRemoteTrustZoneId()),
+	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (f *FederationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -86,6 +91,29 @@ func (f *FederationResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	federationID := state.ID.ValueString()
+	federation, err := f.client.FederationV1Alpha1().GetFederation(ctx, federationID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading federation",
+			fmt.Sprintf("Could not read federation %q: %s", federationID, err),
+		)
+		return
+	}
+
+	newState := FederationModel{
+		ID:                tftypes.StringValue(federation.GetId()),
+		OrgID:             tftypes.StringValue(federation.GetOrgId()),
+		TrustZoneID:       tftypes.StringValue(federation.GetTrustZoneId()),
+		RemoteTrustZoneID: tftypes.StringValue(federation.GetRemoteTrustZoneId()),
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (f *FederationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
