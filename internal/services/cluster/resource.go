@@ -68,11 +68,11 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if !plan.OrgID.IsNull() {
+	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
 		cluster.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
-	if !plan.OidcIssuerURL.IsNull() {
+	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
 

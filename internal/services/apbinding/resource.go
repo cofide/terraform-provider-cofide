@@ -69,7 +69,7 @@ func (a *APBindingResource) Create(ctx context.Context, req resource.CreateReque
 		Federations: federations,
 	}
 
-	if !plan.OrgID.IsNull() {
+	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
 		binding.OrgId = plan.OrgID.ValueStringPointer()
 	}
 

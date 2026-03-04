@@ -62,7 +62,7 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 		TrustDomain: plan.TrustDomain.ValueString(),
 	}
 
-	if !plan.OrgID.IsNull() {
+	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
 		trustZone.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
@@ -172,22 +172,12 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		orgIDStr = tftypes.StringNull()
 	}
 
-	// is_management_zone is a bool, so we can't check for empty string, but we can preserve the plan value
-	var isMgmtZoneBool tftypes.Bool
-	if updateResp.GetIsManagementZone() || !plan.IsManagementZone.IsNull() {
-		// If API returns true, or if there was a value in the plan, use the API response.
-		// If API is false AND plan was null, this will result in false, which is the only option.
-		isMgmtZoneBool = tftypes.BoolValue(updateResp.GetIsManagementZone())
-	} else {
-		isMgmtZoneBool = tftypes.BoolNull()
-	}
-
 	newState := TrustZoneModel{
 		ID:                    tftypes.StringValue(updateResp.GetId()),
 		Name:                  tftypes.StringValue(updateResp.GetName()),
 		TrustDomain:           tftypes.StringValue(updateResp.GetTrustDomain()),
 		OrgID:                 orgIDStr,
-		IsManagementZone:      isMgmtZoneBool,
+		IsManagementZone:      tftypes.BoolValue(updateResp.GetIsManagementZone()),
 		BundleEndpointURL:     tftypes.StringValue(updateResp.GetBundleEndpointUrl()),
 		BundleEndpointProfile: tftypes.StringValue(updateResp.GetBundleEndpointProfile().String()),
 		JWTIssuer:             tftypes.StringValue(updateResp.GetJwtIssuer()),
@@ -235,13 +225,4 @@ func (t *TrustZoneResource) ValidateConfig(ctx context.Context, req resource.Val
 			"The is_management_zone field cannot be modified after creation. Create a new trust zone instead.",
 		)
 	}
-}
-
-// getBundleEndpointProfile converts a string to a BundleEndpointProfile enum pointer
-func getBundleEndpointProfile(value string) (*trustzonepb.BundleEndpointProfile, bool) {
-	if profileVal, ok := trustzonepb.BundleEndpointProfile_value[value]; ok {
-		profile := trustzonepb.BundleEndpointProfile(profileVal)
-		return &profile, true
-	}
-	return nil, false
 }
