@@ -150,6 +150,8 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	var oidcIssuerCaCert tftypes.String
 	if certBytes := createResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
 		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
+	} else if !plan.OidcIssuerCaCert.IsNull() {
+		oidcIssuerCaCert = plan.OidcIssuerCaCert
 	} else {
 		oidcIssuerCaCert = tftypes.StringNull()
 	}
