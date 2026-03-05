@@ -6,6 +6,7 @@ import (
 
 	trustzonepb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_zone/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -62,7 +63,7 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 		TrustDomain: plan.TrustDomain.ValueString(),
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		trustZone.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
@@ -153,7 +154,7 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		IsManagementZone: plan.IsManagementZone.ValueBool(),
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		trustZone.OrgId = plan.OrgID.ValueStringPointer()
 	}
 

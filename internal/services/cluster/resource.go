@@ -9,6 +9,7 @@ import (
 	clusterpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cluster/v1alpha1"
 	trustproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_provider/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -68,15 +69,15 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		cluster.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
-	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OidcIssuerURL) {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
 
-	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OidcIssuerCaCert) {
 		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -266,15 +267,15 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		cluster.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
-	if !plan.OidcIssuerURL.IsNull() && plan.OidcIssuerURL.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OidcIssuerURL) {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
 
-	if !plan.OidcIssuerCaCert.IsNull() && plan.OidcIssuerCaCert.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OidcIssuerCaCert) {
 		decodedCert, err := base64.StdEncoding.DecodeString(plan.OidcIssuerCaCert.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Error decoding oidc_issuer_ca_cert", fmt.Sprintf("Failed to decode oidc_issuer_ca_cert from base64: %s", err))

@@ -7,6 +7,7 @@ import (
 	apbindingpb "github.com/cofide/cofide-api-sdk/gen/go/proto/ap_binding/v1alpha1"
 	apbindinginsvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/ap_binding_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -69,7 +70,7 @@ func (a *APBindingResource) Create(ctx context.Context, req resource.CreateReque
 		Federations: federations,
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		binding.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
@@ -188,7 +189,7 @@ func (a *APBindingResource) Update(ctx context.Context, req resource.UpdateReque
 		Federations: federations,
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		binding.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
