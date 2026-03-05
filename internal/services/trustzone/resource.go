@@ -236,12 +236,3 @@ func (t *TrustZoneResource) ValidateConfig(ctx context.Context, req resource.Val
 		)
 	}
 }
-
-// getBundleEndpointProfile converts a string to a BundleEndpointProfile enum pointer
-func getBundleEndpointProfile(value string) (*trustzonepb.BundleEndpointProfile, bool) {
-	if profileVal, ok := trustzonepb.BundleEndpointProfile_value[value]; ok {
-		profile := trustzonepb.BundleEndpointProfile(profileVal)
-		return &profile, true
-	}
-	return nil, false
-}
