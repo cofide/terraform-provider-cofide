@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	trustzonepb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_zone/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -57,11 +55,10 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	trustZone := &trustzonepb.TrustZone{
-		Name:             plan.Name.ValueString(),
-		OrgId:            plan.OrgID.ValueStringPointer(),
-		TrustDomain:      plan.TrustDomain.ValueString(),
-		IsManagementZone: plan.IsManagementZone.ValueBool(),
+	trustZone, err := modelToProto(plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting model to proto", err.Error())
+		return
 	}
 
 	createResp, err := t.client.TrustZoneV1Alpha1().CreateTrustZone(ctx, trustZone)
@@ -73,19 +70,8 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	plan.ID = tftypes.StringValue(createResp.GetId())
-	plan.Name = tftypes.StringValue(createResp.GetName())
-	plan.TrustDomain = tftypes.StringValue(createResp.GetTrustDomain())
-	plan.OrgID = tftypes.StringValue(createResp.GetOrgId())
-	plan.IsManagementZone = tftypes.BoolValue(createResp.GetIsManagementZone())
-	plan.BundleEndpointURL = tftypes.StringValue(createResp.GetBundleEndpointUrl())
-	plan.BundleEndpointProfile = tftypes.StringValue(createResp.GetBundleEndpointProfile().String())
-	plan.JWTIssuer = tftypes.StringValue(createResp.GetJwtIssuer())
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	newState := protoToModel(createResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (t *TrustZoneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -95,6 +81,31 @@ func (t *TrustZoneResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	trustZoneID := state.ID.ValueString()
+	if trustZoneID == "" {
+		resp.Diagnostics.AddError(
+			"Error reading trust zone",
+			"Trust zone ID not found in state.",
+		)
+		return
+	}
+
+	getResp, err := t.client.TrustZoneV1Alpha1().GetTrustZone(ctx, trustZoneID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading trust zone",
+			err.Error(),
+		)
+		return
+	}
+
+	newState := protoToModel(getResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -121,61 +132,12 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	orgID := state.OrgID.ValueString()
-	if orgID == "" {
-		resp.Diagnostics.AddError(
-			"Error updating trust zone",
-			"Org ID not found in state. The resource might not have been created properly.",
-		)
+	trustZone, err := modelToProto(plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting model to proto", err.Error())
 		return
 	}
-
-	trustZone := &trustzonepb.TrustZone{
-		Id:    &trustZoneID,
-		Name:  plan.Name.ValueString(),
-		OrgId: &orgID,
-	}
-
-	if !plan.TrustDomain.IsNull() && plan.TrustDomain.ValueString() != "" {
-		trustZone.TrustDomain = plan.TrustDomain.ValueString()
-	} else {
-		trustZone.TrustDomain = state.TrustDomain.ValueString()
-	}
-
-	if !plan.IsManagementZone.IsNull() {
-		trustZone.IsManagementZone = plan.IsManagementZone.ValueBool()
-	} else {
-		trustZone.IsManagementZone = state.IsManagementZone.ValueBool()
-	}
-
-	if !plan.BundleEndpointURL.IsNull() && plan.BundleEndpointURL.ValueString() != "" {
-		trustZone.BundleEndpointUrl = plan.BundleEndpointURL.ValueStringPointer()
-	} else {
-		trustZone.BundleEndpointUrl = state.BundleEndpointURL.ValueStringPointer()
-	}
-
-	var profileStr string
-
-	if !plan.BundleEndpointProfile.IsNull() && plan.BundleEndpointProfile.ValueString() != "" {
-		profileStr = plan.BundleEndpointProfile.ValueString()
-	} else {
-		profileStr = state.BundleEndpointProfile.ValueString()
-	}
-
-	if profile, ok := getBundleEndpointProfile(profileStr); ok {
-		trustZone.BundleEndpointProfile = profile
-	} else {
-		resp.Diagnostics.AddWarning(
-			"Unknown BundleEndpointProfile",
-			fmt.Sprintf("Value '%s' is not recognized. This might be due to API version mismatch.", profileStr),
-		)
-	}
-
-	if !plan.JWTIssuer.IsNull() && plan.JWTIssuer.ValueString() != "" {
-		trustZone.JwtIssuer = plan.JWTIssuer.ValueStringPointer()
-	} else {
-		trustZone.JwtIssuer = state.JWTIssuer.ValueStringPointer()
-	}
+	trustZone.Id = &trustZoneID
 
 	updateResp, err := t.client.TrustZoneV1Alpha1().UpdateTrustZone(ctx, trustZone)
 	if err != nil {
@@ -186,16 +148,8 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	plan.ID = tftypes.StringValue(updateResp.GetId())
-	plan.Name = tftypes.StringValue(updateResp.GetName())
-	plan.TrustDomain = tftypes.StringValue(updateResp.GetTrustDomain())
-	plan.OrgID = tftypes.StringValue(updateResp.GetOrgId())
-	plan.IsManagementZone = tftypes.BoolValue(updateResp.GetIsManagementZone())
-	plan.BundleEndpointURL = tftypes.StringValue(updateResp.GetBundleEndpointUrl())
-	plan.BundleEndpointProfile = tftypes.StringValue(updateResp.GetBundleEndpointProfile().String())
-	plan.JWTIssuer = tftypes.StringValue(updateResp.GetJwtIssuer())
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	newState := protoToModel(updateResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (t *TrustZoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -237,13 +191,4 @@ func (t *TrustZoneResource) ValidateConfig(ctx context.Context, req resource.Val
 			"The is_management_zone field cannot be modified after creation. Create a new trust zone instead.",
 		)
 	}
-}
-
-// getBundleEndpointProfile converts a string to a BundleEndpointProfile enum pointer
-func getBundleEndpointProfile(value string) (*trustzonepb.BundleEndpointProfile, bool) {
-	if profileVal, ok := trustzonepb.BundleEndpointProfile_value[value]; ok {
-		profile := trustzonepb.BundleEndpointProfile(profileVal)
-		return &profile, true
-	}
-	return nil, false
 }

@@ -8,7 +8,6 @@ import (
 
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type FederationDataSource struct {
@@ -86,12 +85,6 @@ func (f *FederationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	federation := federations[0]
 
-	state := FederationModel{
-		ID:                types.StringValue(federation.GetId()),
-		OrgID:             types.StringValue(federation.GetOrgId()),
-		TrustZoneID:       types.StringValue(federation.GetTrustZoneId()),
-		RemoteTrustZoneID: types.StringValue(federation.GetRemoteTrustZoneId()),
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	newState := protoToModel(federation)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }

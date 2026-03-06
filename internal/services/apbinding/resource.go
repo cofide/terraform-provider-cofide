@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	apbindingpb "github.com/cofide/cofide-api-sdk/gen/go/proto/ap_binding/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -47,7 +45,7 @@ func (r *APBindingResource) Configure(_ context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-func (a *APBindingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *APBindingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan APBindingModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -55,21 +53,9 @@ func (a *APBindingResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	federations := make([]*apbindingpb.APBindingFederation, 0)
-	for _, federation := range plan.Federations {
-		federations = append(federations, &apbindingpb.APBindingFederation{
-			TrustZoneId: federation.TrustZoneID.ValueStringPointer(),
-		})
-	}
+	binding := modelToProto(plan)
 
-	binding := &apbindingpb.APBinding{
-		OrgId:       plan.OrgID.ValueStringPointer(),
-		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
-		PolicyId:    plan.PolicyID.ValueStringPointer(),
-		Federations: federations,
-	}
-
-	createResp, err := a.client.APBindingV1Alpha1().CreateAPBinding(ctx, binding)
+	createResp, err := r.client.APBindingV1Alpha1().CreateAPBinding(ctx, binding)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating AP binding",
@@ -78,32 +64,52 @@ func (a *APBindingResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	if createResp.GetId() != "" {
-		plan.ID = tftypes.StringValue(createResp.GetId())
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	newState := protoToModel(createResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
-func (a *APBindingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *APBindingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state APBindingModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	bindingID := state.ID.ValueString()
+	if bindingID == "" {
+		resp.Diagnostics.AddError(
+			"Error reading AP binding",
+			"AP binding ID not found in state.",
+		)
+		return
+	}
+
+	getResp, err := r.client.APBindingV1Alpha1().GetAPBinding(ctx, bindingID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading AP binding",
+			err.Error(),
+		)
+		return
+	}
+
+	newState := protoToModel(getResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
-func (a *APBindingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *APBindingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state APBindingModel
-
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var plan APBindingModel
-
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -118,22 +124,10 @@ func (a *APBindingResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	federations := make([]*apbindingpb.APBindingFederation, 0)
-	for _, federation := range plan.Federations {
-		federations = append(federations, &apbindingpb.APBindingFederation{
-			TrustZoneId: federation.TrustZoneID.ValueStringPointer(),
-		})
-	}
+	binding := modelToProto(plan)
+	binding.Id = &bindingID
 
-	binding := &apbindingpb.APBinding{
-		Id:          &bindingID,
-		OrgId:       plan.OrgID.ValueStringPointer(),
-		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
-		PolicyId:    plan.PolicyID.ValueStringPointer(),
-		Federations: federations,
-	}
-
-	updateResp, err := a.client.APBindingV1Alpha1().UpdateAPBinding(ctx, binding)
+	updateResp, err := r.client.APBindingV1Alpha1().UpdateAPBinding(ctx, binding)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating AP binding",
@@ -142,14 +136,11 @@ func (a *APBindingResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	if updateResp.GetId() != "" {
-		plan.ID = tftypes.StringValue(updateResp.GetId())
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	newState := protoToModel(updateResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
-func (a *APBindingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *APBindingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state APBindingModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -157,7 +148,7 @@ func (a *APBindingResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	err := a.client.APBindingV1Alpha1().DestroyAPBinding(ctx, state.ID.ValueString())
+	err := r.client.APBindingV1Alpha1().DestroyAPBinding(ctx, state.ID.ValueString())
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
 			resp.Diagnostics.AddError(
@@ -170,11 +161,11 @@ func (a *APBindingResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 }
 
-func (a *APBindingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *APBindingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func (a *APBindingResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (r *APBindingResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data APBindingModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)

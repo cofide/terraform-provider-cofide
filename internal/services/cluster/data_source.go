@@ -2,13 +2,11 @@ package cluster
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	clustersvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/cluster_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type ClusterDataSource struct {
@@ -86,50 +84,16 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	cluster := clusters[0]
 
-	var extraHelmValues types.String
-	if helmValues := cluster.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
-		jsonBytes, err := helmValues.MarshalJSON()
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error processing cluster data",
-				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
-			)
-			return
-		}
-		extraHelmValues = types.StringValue(string(jsonBytes))
-	} else {
-		extraHelmValues = types.StringNull()
+	if err := validateHelmValues(config.ExtraHelmValues, cluster.GetExtraHelmValues()); err != nil {
+		resp.Diagnostics.AddError("Inconsistent Helm values", err.Error())
+		return
 	}
 
-	var oidcIssuerURL types.String
-	if url := cluster.GetOidcIssuerUrl(); url != "" {
-		oidcIssuerURL = types.StringValue(url)
-	} else {
-		oidcIssuerURL = types.StringNull()
+	newState, err := protoToModel(cluster)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting proto to model", err.Error())
+		return
 	}
 
-	var oidcIssuerCaCert types.String
-	if certBytes := cluster.GetOidcIssuerCaCert(); len(certBytes) > 0 {
-		oidcIssuerCaCert = types.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else {
-		oidcIssuerCaCert = types.StringNull()
-	}
-
-	state := ClusterModel{
-		ID:                types.StringValue(cluster.GetId()),
-		Name:              types.StringValue(cluster.GetName()),
-		OrgID:             types.StringValue(cluster.GetOrgId()),
-		TrustZoneID:       types.StringValue(cluster.GetTrustZoneId()),
-		KubernetesContext: types.StringValue(cluster.GetKubernetesContext()),
-		TrustProvider: &TrustProviderModel{
-			Kind: types.StringValue(cluster.GetTrustProvider().GetKind()),
-		},
-		ExtraHelmValues:  extraHelmValues,
-		Profile:          types.StringValue(cluster.GetProfile()),
-		ExternalServer:   types.BoolValue(cluster.GetExternalServer()),
-		OidcIssuerURL:    oidcIssuerURL,
-		OidcIssuerCaCert: oidcIssuerCaCert,
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
