@@ -6,6 +6,7 @@ import (
 
 	trustzonepb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_zone/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -62,7 +63,7 @@ func (t *TrustZoneResource) Create(ctx context.Context, req resource.CreateReque
 		TrustDomain: plan.TrustDomain.ValueString(),
 	}
 
-	if !plan.OrgID.IsNull() {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		trustZone.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
@@ -153,7 +154,7 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		IsManagementZone: plan.IsManagementZone.ValueBool(),
 	}
 
-	if !plan.OrgID.IsNull() && plan.OrgID.ValueString() != "" {
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
 		trustZone.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
@@ -172,22 +173,12 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 		orgIDStr = tftypes.StringNull()
 	}
 
-	// is_management_zone is a bool, so we can't check for empty string, but we can preserve the plan value
-	var isMgmtZoneBool tftypes.Bool
-	if updateResp.GetIsManagementZone() || !plan.IsManagementZone.IsNull() {
-		// If API returns true, or if there was a value in the plan, use the API response.
-		// If API is false AND plan was null, this will result in false, which is the only option.
-		isMgmtZoneBool = tftypes.BoolValue(updateResp.GetIsManagementZone())
-	} else {
-		isMgmtZoneBool = tftypes.BoolNull()
-	}
-
 	newState := TrustZoneModel{
 		ID:                    tftypes.StringValue(updateResp.GetId()),
 		Name:                  tftypes.StringValue(updateResp.GetName()),
 		TrustDomain:           tftypes.StringValue(updateResp.GetTrustDomain()),
 		OrgID:                 orgIDStr,
-		IsManagementZone:      isMgmtZoneBool,
+		IsManagementZone:      tftypes.BoolValue(updateResp.GetIsManagementZone()),
 		BundleEndpointURL:     tftypes.StringValue(updateResp.GetBundleEndpointUrl()),
 		BundleEndpointProfile: tftypes.StringValue(updateResp.GetBundleEndpointProfile().String()),
 		JWTIssuer:             tftypes.StringValue(updateResp.GetJwtIssuer()),

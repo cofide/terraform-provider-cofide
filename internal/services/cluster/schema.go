@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 
+	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -31,7 +32,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					optionalComputedModifier{},
+					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
@@ -70,7 +71,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					optionalComputedModifier{},
+					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
@@ -79,7 +80,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					optionalComputedModifier{},
+					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
