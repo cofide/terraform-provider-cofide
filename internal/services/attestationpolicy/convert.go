@@ -176,26 +176,44 @@ func convertProtoStringSlice(input []string) []tftypes.String {
 	return result
 }
 
-func convertSelectors(selectors []APStaticSelectorModel) []*spiretypes.Selector {
-	protoSelectors := []*spiretypes.Selector{}
-	for _, s := range selectors {
+// selectorAttrTypes defines the attribute types for a single selector object.
+var selectorAttrTypes = map[string]attr.Type{
+	"type":  tftypes.StringType,
+	"value": tftypes.StringType,
+}
+
+// selectorElemType is the Terraform object type for a single selector.
+var selectorElemType = tftypes.ObjectType{AttrTypes: selectorAttrTypes}
+
+func convertSelectors(selectors tftypes.List) []*spiretypes.Selector {
+	var protoSelectors []*spiretypes.Selector
+	for _, elem := range selectors.Elements() {
+		obj, ok := elem.(tftypes.Object)
+		if !ok {
+			continue
+		}
+		attrs := obj.Attributes()
 		protoSelectors = append(protoSelectors, &spiretypes.Selector{
-			Type:  s.Type.ValueString(),
-			Value: s.Value.ValueString(),
+			Type:  attrs["type"].(tftypes.String).ValueString(),
+			Value: attrs["value"].(tftypes.String).ValueString(),
 		})
 	}
 	return protoSelectors
 }
 
-func convertProtoSelectors(selectors []*spiretypes.Selector) []APStaticSelectorModel {
-	modelSelectors := []APStaticSelectorModel{}
+func convertProtoSelectors(selectors []*spiretypes.Selector) tftypes.List {
+	elems := make([]attr.Value, 0, len(selectors))
 	for _, s := range selectors {
-		modelSelectors = append(modelSelectors, APStaticSelectorModel{
-			Type:  tftypes.StringValue(s.Type),
-			Value: tftypes.StringValue(s.Value),
+		obj, diags := tftypes.ObjectValue(selectorAttrTypes, map[string]attr.Value{
+			"type":  tftypes.StringValue(s.Type),
+			"value": tftypes.StringValue(s.Value),
 		})
+		if diags.HasError() {
+			continue
+		}
+		elems = append(elems, obj)
 	}
-	return modelSelectors
+	return tftypes.ListValueMust(selectorElemType, elems)
 }
 
 func optionalStringValue(s *string) basetypes.StringValue {
