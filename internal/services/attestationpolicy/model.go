@@ -30,15 +30,10 @@ type APMatchExpressionModel struct {
 }
 
 type APStaticModel struct {
-	SpiffeIDPath tftypes.String          `tfsdk:"spiffe_id_path"`
-	ParentIdPath tftypes.String          `tfsdk:"parent_id_path"`
-	Selectors    []APStaticSelectorModel `tfsdk:"selectors"`
-	DNSNames     []tftypes.String        `tfsdk:"dns_names"`
-}
-
-type APStaticSelectorModel struct {
-	Type  tftypes.String `tfsdk:"type"`
-	Value tftypes.String `tfsdk:"value"`
+	SpiffeIDPath tftypes.String   `tfsdk:"spiffe_id_path"`
+	ParentIdPath tftypes.String   `tfsdk:"parent_id_path"`
+	Selectors    tftypes.List     `tfsdk:"selectors"`
+	DNSNames     []tftypes.String `tfsdk:"dns_names"`
 }
 
 type APTPMNodeModel struct {

@@ -109,13 +109,8 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 		state.Static = &APStaticModel{
 			SpiffeIDPath: types.StringValue(static.GetSpiffeIdPath()),
 			ParentIdPath: types.StringValue(static.GetParentIdPath()),
+			Selectors:    convertProtoSelectors(static.GetSelectors()),
 			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
-		}
-		for _, selector := range static.GetSelectors() {
-			state.Static.Selectors = append(state.Static.Selectors, APStaticSelectorModel{
-				Type:  types.StringValue(selector.GetType()),
-				Value: types.StringValue(selector.GetValue()),
-			})
 		}
 	}
 

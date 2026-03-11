@@ -4,6 +4,7 @@ import (
 	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	spiretypes "github.com/spiffe/spire-api-sdk/proto/spire/api/types"
 )
 
@@ -57,9 +58,9 @@ func modelToProto(model AttestationPolicyModel) *attestationpolicypb.Attestation
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
 func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolicyModel {
 	model := AttestationPolicyModel{
-		ID:    tftypes.StringValue(proto.GetId()),
+		ID:    optionalStringValue(proto.Id),
 		Name:  tftypes.StringValue(proto.GetName()),
-		OrgID: tftypes.StringValue(proto.GetOrgId()),
+		OrgID: optionalStringValue(proto.OrgId),
 	}
 
 	if k8s := proto.GetKubernetes(); k8s != nil {
@@ -67,14 +68,14 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 			NamespaceSelector:    convertProtoLabelSelector(k8s.NamespaceSelector),
 			PodSelector:          convertProtoLabelSelector(k8s.PodSelector),
 			DnsNameTemplates:     convertProtoStringSlice(k8s.GetDnsNameTemplates()),
-			SpiffeIDPathTemplate: tftypes.StringValue(k8s.GetSpiffeIdPathTemplate()),
+			SpiffeIDPathTemplate: optionalStringValue(k8s.SpiffeIdPathTemplate),
 		}
 	}
 
 	if static := proto.GetStatic(); static != nil {
 		model.Static = &APStaticModel{
-			SpiffeIDPath: tftypes.StringValue(static.GetSpiffeIdPath()),
-			ParentIdPath: tftypes.StringValue(static.GetParentIdPath()),
+			SpiffeIDPath: optionalStringValue(static.SpiffeIdPath),
+			ParentIdPath: optionalStringValue(static.ParentIdPath),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
 			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
 		}
@@ -83,7 +84,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
 		model.TPMNode = &APTPMNodeModel{
 			Attestation: TPMAttestationModel{
-				EKHash: tftypes.StringValue(tpmNode.GetAttestation().GetEkHash()),
+				EKHash: optionalStringValue(tpmNode.GetAttestation().EkHash),
 			},
 			SelectorValues: convertProtoStringSlice(tpmNode.GetSelectorValues()),
 		}
@@ -175,24 +176,49 @@ func convertProtoStringSlice(input []string) []tftypes.String {
 	return result
 }
 
-func convertSelectors(selectors []APStaticSelectorModel) []*spiretypes.Selector {
-	protoSelectors := []*spiretypes.Selector{}
-	for _, s := range selectors {
+// selectorAttrTypes defines the attribute types for a single selector object.
+var selectorAttrTypes = map[string]attr.Type{
+	"type":  tftypes.StringType,
+	"value": tftypes.StringType,
+}
+
+// selectorElemType is the Terraform object type for a single selector.
+var selectorElemType = tftypes.ObjectType{AttrTypes: selectorAttrTypes}
+
+func convertSelectors(selectors tftypes.List) []*spiretypes.Selector {
+	var protoSelectors []*spiretypes.Selector
+	for _, elem := range selectors.Elements() {
+		obj, ok := elem.(tftypes.Object)
+		if !ok {
+			continue
+		}
+		attrs := obj.Attributes()
 		protoSelectors = append(protoSelectors, &spiretypes.Selector{
-			Type:  s.Type.ValueString(),
-			Value: s.Value.ValueString(),
+			Type:  attrs["type"].(tftypes.String).ValueString(),
+			Value: attrs["value"].(tftypes.String).ValueString(),
 		})
 	}
 	return protoSelectors
 }
 
-func convertProtoSelectors(selectors []*spiretypes.Selector) []APStaticSelectorModel {
-	modelSelectors := []APStaticSelectorModel{}
+func convertProtoSelectors(selectors []*spiretypes.Selector) tftypes.List {
+	elems := make([]attr.Value, 0, len(selectors))
 	for _, s := range selectors {
-		modelSelectors = append(modelSelectors, APStaticSelectorModel{
-			Type:  tftypes.StringValue(s.Type),
-			Value: tftypes.StringValue(s.Value),
+		obj, diags := tftypes.ObjectValue(selectorAttrTypes, map[string]attr.Value{
+			"type":  tftypes.StringValue(s.Type),
+			"value": tftypes.StringValue(s.Value),
 		})
+		if diags.HasError() {
+			continue
+		}
+		elems = append(elems, obj)
 	}
-	return modelSelectors
+	return tftypes.ListValueMust(selectorElemType, elems)
+}
+
+func optionalStringValue(s *string) basetypes.StringValue {
+	if s == nil {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(*s)
 }
