@@ -12,7 +12,7 @@ var _ datasource.DataSource = &AttestationPolicyDataSource{}
 
 func DataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides information about an attestation policy resource.",
+		MarkdownDescription: "Provides information about a Cofide Connect attestation policy.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the attestation policy.",
@@ -110,11 +110,11 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"spiffe_id_path": schema.StringAttribute{
-						Description: "The SPIFFE ID path for the static attestation policy.",
+						Description: "The SPIFFE ID path suffix assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).",
 						Computed:    true,
 					},
 					"parent_id_path": schema.StringAttribute{
-						Description: "The parent ID path for the static attestation policy.",
+						Description: "The SPIFFE ID path of the parent node for workloads matching this policy.",
 						Computed:    true,
 					},
 					"selectors": schema.ListNestedAttribute{
@@ -123,11 +123,11 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"type": schema.StringAttribute{
-									Description: "The type of the selector.",
+									Description: "The selector type (e.g. `k8s` for Kubernetes workload selectors).",
 									Computed:    true,
 								},
 								"value": schema.StringAttribute{
-									Description: "The value of the selector.",
+									Description: "The selector value. Format depends on type (e.g. `ns:default` or `sa:my-service-account` for `k8s`).",
 									Computed:    true,
 								},
 							},
@@ -149,7 +149,7 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"ek_hash": schema.StringAttribute{
-								Description: "SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.",
+								Description: "The SHA-256 hash of the TPM Endorsement Key (EK) certificate, in lowercase hexadecimal format.",
 								Computed:    true,
 							},
 						},

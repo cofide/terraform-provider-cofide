@@ -3,12 +3,12 @@
 page_title: "cofide_connect_ap_binding Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides information about an attestation policy binding resource.
+  Provides information about a Cofide Connect attestation policy binding.
 ---
 
 # cofide_connect_ap_binding (Data Source)
 
-Provides information about an attestation policy binding resource.
+Provides information about a Cofide Connect attestation policy binding.
 
 ## Example Usage
 
@@ -34,7 +34,7 @@ data "cofide_connect_ap_binding" "example_ap_binding" {
 
 ### Read-Only
 
-- `federations` (List of Object) The list of associated federations. (see [below for nested schema](#nestedatt--federations))
+- `federations` (List of Object) The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone. (see [below for nested schema](#nestedatt--federations))
 - `id` (String) The ID of the attestation policy binding.
 
 <a id="nestedatt--federations"></a>

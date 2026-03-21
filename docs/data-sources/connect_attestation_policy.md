@@ -3,12 +3,12 @@
 page_title: "cofide_connect_attestation_policy Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides information about an attestation policy resource.
+  Provides information about a Cofide Connect attestation policy.
 ---
 
 # cofide_connect_attestation_policy (Data Source)
 
-Provides information about an attestation policy resource.
+Provides information about a Cofide Connect attestation policy.
 
 ## Example Usage
 
@@ -92,17 +92,17 @@ Read-Only:
 Read-Only:
 
 - `dns_names` (List of String) The list of DNS names for the static attestation policy.
-- `parent_id_path` (String) The parent ID path for the static attestation policy.
+- `parent_id_path` (String) The SPIFFE ID path of the parent node for workloads matching this policy.
 - `selectors` (Attributes List) The list of selectors for the static attestation policy. (see [below for nested schema](#nestedatt--static--selectors))
-- `spiffe_id_path` (String) The SPIFFE ID path for the static attestation policy.
+- `spiffe_id_path` (String) The SPIFFE ID path suffix assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).
 
 <a id="nestedatt--static--selectors"></a>
 ### Nested Schema for `static.selectors`
 
 Read-Only:
 
-- `type` (String) The type of the selector.
-- `value` (String) The value of the selector.
+- `type` (String) The selector type (e.g. `k8s` for Kubernetes workload selectors).
+- `value` (String) The selector value. Format depends on type (e.g. `ns:default` or `sa:my-service-account` for `k8s`).
 
 
 
@@ -119,4 +119,4 @@ Read-Only:
 
 Read-Only:
 
-- `ek_hash` (String) SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.
+- `ek_hash` (String) The SHA-256 hash of the TPM Endorsement Key (EK) certificate, in lowercase hexadecimal format.

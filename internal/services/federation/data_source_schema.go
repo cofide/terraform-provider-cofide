@@ -11,7 +11,7 @@ var _ datasource.DataSource = &FederationDataSource{}
 
 func DataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides information about a federation resource.",
+		MarkdownDescription: "Provides information about a Cofide Connect federation.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the federation.",

@@ -3,12 +3,12 @@
 page_title: "cofide_connect_federation Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides information about a federation resource.
+  Provides information about a Cofide Connect federation.
 ---
 
 # cofide_connect_federation (Data Source)
 
-Provides information about a federation resource.
+Provides information about a Cofide Connect federation.
 
 ## Example Usage
 

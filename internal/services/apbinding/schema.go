@@ -16,7 +16,7 @@ var _ resource.ResourceWithConfigValidators = (*APBindingResource)(nil)
 
 func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides an attestation policy binding resource.",
+		MarkdownDescription: "Manages a Cofide Connect attestation policy binding. Binds an attestation policy to a trust zone, controlling which workloads receive SPIFFE IDs in that zone.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the attestation policy binding.",
@@ -43,7 +43,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"federations": schema.ListAttribute{
-				Description: "The list of associated federations.",
+				Description: "The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone.",
 				Optional:    true,
 				ElementType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{

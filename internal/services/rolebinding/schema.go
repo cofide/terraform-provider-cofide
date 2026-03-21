@@ -9,7 +9,7 @@ var _ resource.ResourceWithConfigValidators = (*RoleBindingResource)(nil)
 
 func resourceSchema() schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides a role binding resource.",
+		MarkdownDescription: "Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of `user` or `group` must be provided.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the role binding.",
@@ -24,7 +24,7 @@ func resourceSchema() schema.Schema {
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"subject": schema.StringAttribute{
-						Description: "The subject of the user.",
+						Description: "The subject identifier of the user (typically an email address or user ID).",
 						Required:    true,
 					},
 				},
@@ -34,7 +34,7 @@ func resourceSchema() schema.Schema {
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"claim_value": schema.StringAttribute{
-						Description: "The claim value of the group.",
+						Description: "The value of the group claim from the identity provider.",
 						Required:    true,
 					},
 				},
@@ -44,11 +44,11 @@ func resourceSchema() schema.Schema {
 				Required:    true,
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
-						Description: "The type of the resource.",
+						Description: "The type of the resource to bind the role to. e.g. TrustZone, Cluster",
 						Required:    true,
 					},
 					"id": schema.StringAttribute{
-						Description: "The ID of the resource.",
+						Description: "The ID of the resource to bind the role to.",
 						Required:    true,
 					},
 				},

@@ -3,12 +3,12 @@
 page_title: "cofide_connect_cluster Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides information about a cluster resource.
+  Provides information about a Cofide Connect cluster.
 ---
 
 # cofide_connect_cluster (Data Source)
 
-Provides information about a cluster resource.
+Provides information about a Cofide Connect cluster.
 
 ## Example Usage
 
@@ -33,13 +33,13 @@ data "cofide_connect_cluster" "example_cluster" {
 
 ### Read-Only
 
-- `external_server` (Boolean) Whether or not the SPIRE server runs externally.
-- `extra_helm_values` (String) The extra Helm values to provide to the cluster.
+- `external_server` (Boolean) Whether the SPIRE server runs externally to this cluster.
+- `extra_helm_values` (String) Additional Helm values for the Cofide agent Helm chart installation, in YAML format.
 - `id` (String) The ID of the cluster.
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
 - `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
-- `profile` (String) The Cofide profile used by the cluster.
+- `profile` (String) The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).
 - `trust_provider` (Attributes) The trust provider of the cluster. (see [below for nested schema](#nestedatt--trust_provider))
 
 <a id="nestedatt--trust_provider"></a>

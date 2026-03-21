@@ -3,12 +3,12 @@
 page_title: "cofide_connect_federation Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides a federation resource.
+  Manages a Cofide Connect federation. Establishes a trust relationship between two trust zones so their workloads can mutually authenticate.
 ---
 
 # cofide_connect_federation (Resource)
 
-Provides a federation resource.
+Manages a Cofide Connect federation. Establishes a trust relationship between two trust zones so their workloads can mutually authenticate.
 
 ## Example Usage
 

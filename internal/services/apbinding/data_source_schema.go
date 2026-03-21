@@ -13,7 +13,7 @@ var _ datasource.DataSource = &APBindingDataSource{}
 
 func DataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides information about an attestation policy binding resource.",
+		MarkdownDescription: "Provides information about a Cofide Connect attestation policy binding.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the attestation policy binding.",
@@ -32,7 +32,7 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"federations": schema.ListAttribute{
-				Description: "The list of associated federations.",
+				Description: "The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone.",
 				Computed:    true,
 				ElementType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{

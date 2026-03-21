@@ -14,7 +14,7 @@ var _ resource.ResourceWithConfigValidators = (*FederationResource)(nil)
 
 func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides a federation resource.",
+		MarkdownDescription: "Manages a Cofide Connect federation. Establishes a trust relationship between two trust zones so their workloads can mutually authenticate.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the federation.",

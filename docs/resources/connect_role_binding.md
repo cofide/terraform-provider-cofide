@@ -3,12 +3,12 @@
 page_title: "cofide_connect_role_binding Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides a role binding resource.
+  Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of user or group must be provided.
 ---
 
 # cofide_connect_role_binding (Resource)
 
-Provides a role binding resource.
+Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of `user` or `group` must be provided.
 
 ## Example Usage
 
@@ -47,8 +47,8 @@ resource "cofide_connect_role_binding" "example_role_binding" {
 
 Required:
 
-- `id` (String) The ID of the resource.
-- `type` (String) The type of the resource.
+- `id` (String) The ID of the resource to bind the role to.
+- `type` (String) The type of the resource to bind the role to. e.g. TrustZone, Cluster
 
 
 <a id="nestedatt--group"></a>
@@ -56,7 +56,7 @@ Required:
 
 Required:
 
-- `claim_value` (String) The claim value of the group.
+- `claim_value` (String) The value of the group claim from the identity provider.
 
 
 <a id="nestedatt--user"></a>
@@ -64,4 +64,4 @@ Required:
 
 Required:
 
-- `subject` (String) The subject of the user.
+- `subject` (String) The subject identifier of the user (typically an email address or user ID).
