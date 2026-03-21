@@ -3,12 +3,12 @@
 page_title: "cofide_connect_ap_binding Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides an attestation policy binding resource.
+  Manages a Cofide Connect attestation policy binding. Binds an attestation policy to a trust zone, controlling which workloads receive SPIFFE IDs in that zone.
 ---
 
 # cofide_connect_ap_binding (Resource)
 
-Provides an attestation policy binding resource.
+Manages a Cofide Connect attestation policy binding. Binds an attestation policy to a trust zone, controlling which workloads receive SPIFFE IDs in that zone.
 
 ## Example Usage
 
@@ -30,7 +30,7 @@ resource "cofide_connect_ap_binding" "example_ap_binding" {
 
 ### Optional
 
-- `federations` (List of Object) The list of associated federations. (see [below for nested schema](#nestedatt--federations))
+- `federations` (List of Object) The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone. (see [below for nested schema](#nestedatt--federations))
 - `org_id` (String) The ID of the organisation.
 
 ### Read-Only

@@ -4,8 +4,10 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -13,7 +15,7 @@ var _ resource.ResourceWithConfigValidators = (*AttestationPolicyResource)(nil)
 
 func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides an attestation policy resource.",
+		MarkdownDescription: "Manages a Cofide Connect attestation policy. Attestation policies define how workloads are identified and what SPIFFE IDs they receive. Exactly one of `kubernetes`, `static`, or `tpm_node` must be configured.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the attestation policy.",
@@ -51,8 +53,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 											Required:    true,
 										},
 										"operator": schema.StringAttribute{
-											Description: "The operator of the match expression.",
+											Description: "The operator for the label match expression. Valid values: `In`, `NotIn`, `Exists`, `DoesNotExist`. `In` and `NotIn` require `values`; `Exists` and `DoesNotExist` must have no `values`.",
 											Required:    true,
+											Validators: []validator.String{
+												stringvalidator.OneOf("In", "NotIn", "Exists", "DoesNotExist"),
+											},
 										},
 										"values": schema.ListAttribute{
 											Description: "The values of the match expression.",
@@ -83,8 +88,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 											Required:    true,
 										},
 										"operator": schema.StringAttribute{
-											Description: "The operator of the match expression.",
+											Description: "The operator for the label match expression. Valid values: `In`, `NotIn`, `Exists`, `DoesNotExist`. `In` and `NotIn` require `values`; `Exists` and `DoesNotExist` must have no `values`.",
 											Required:    true,
+											Validators: []validator.String{
+												stringvalidator.OneOf("In", "NotIn", "Exists", "DoesNotExist"),
+											},
 										},
 										"values": schema.ListAttribute{
 											Description: "The values of the match expression.",
@@ -112,11 +120,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"spiffe_id_path": schema.StringAttribute{
-						Description: "The SPIFFE ID path for the static attestation policy.",
+						Description: "The SPIFFE ID path suffix assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).",
 						Required:    true,
 					},
 					"parent_id_path": schema.StringAttribute{
-						Description: "The parent ID path for the static attestation policy.",
+						Description: "The SPIFFE ID path of the parent node for workloads matching this policy.",
 						Required:    true,
 					},
 					"selectors": schema.ListNestedAttribute{
@@ -125,11 +133,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"type": schema.StringAttribute{
-									Description: "The type of the selector.",
+									Description: "The selector type (e.g. `k8s` for Kubernetes workload selectors).",
 									Required:    true,
 								},
 								"value": schema.StringAttribute{
-									Description: "The value of the selector.",
+									Description: "The selector value. Format depends on type (e.g. `ns:default` or `sa:my-service-account` for `k8s`).",
 									Required:    true,
 								},
 							},
@@ -151,7 +159,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 						Required:    true,
 						Attributes: map[string]schema.Attribute{
 							"ek_hash": schema.StringAttribute{
-								Description: "SHA-256 hash of the Endorsement Key (EK) certificate of the TPM.",
+								Description: "The SHA-256 hash of the TPM Endorsement Key (EK) certificate, in lowercase hexadecimal format.",
 								Required:    true,
 							},
 						},

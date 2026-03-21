@@ -12,7 +12,7 @@ var _ datasource.DataSource = &ClusterDataSource{}
 
 func DataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides information about a cluster resource.",
+		MarkdownDescription: "Provides information about a Cofide Connect cluster.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the cluster.",
@@ -101,15 +101,15 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"extra_helm_values": schema.StringAttribute{
-				Description: "The extra Helm values to provide to the cluster.",
+				Description: "Additional Helm values for the Cofide agent Helm chart installation, in YAML format.",
 				Computed:    true,
 			},
 			"profile": schema.StringAttribute{
-				Description: "The Cofide profile used by the cluster.",
+				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).",
 				Computed:    true,
 			},
 			"external_server": schema.BoolAttribute{
-				Description: "Whether or not the SPIRE server runs externally.",
+				Description: "Whether the SPIRE server runs externally to this cluster.",
 				Computed:    true,
 			},
 			"oidc_issuer_url": schema.StringAttribute{

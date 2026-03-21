@@ -3,12 +3,12 @@
 page_title: "cofide_connect_cluster Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides a cluster resource.
+  Manages a Cofide Connect cluster. A cluster represents a Kubernetes cluster registered with a trust zone.
 ---
 
 # cofide_connect_cluster (Resource)
 
-Provides a cluster resource.
+Manages a Cofide Connect cluster. A cluster represents a Kubernetes cluster registered with a trust zone.
 
 ## Example Usage
 
@@ -31,17 +31,17 @@ resource "cofide_connect_cluster" "example_cluster" {
 
 ### Required
 
-- `external_server` (Boolean) Whether or not the SPIRE server runs externally.
+- `external_server` (Boolean) Whether the SPIRE server runs externally to this cluster. Set to `true` for clusters that delegate to a centralized SPIRE server.
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
 - `name` (String) The name of the cluster.
-- `profile` (String) The Cofide profile used by the cluster.
+- `profile` (String) The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).
 - `trust_provider` (Attributes) The trust provider of the cluster. (see [below for nested schema](#nestedatt--trust_provider))
 - `trust_zone_id` (String) The ID of the associated trust zone.
 
 ### Optional
 
-- `extra_helm_values` (String) The extra Helm values to provide to the cluster.
-- `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.
+- `extra_helm_values` (String) Additional Helm values for the Cofide agent Helm chart installation, in YAML format. Use `yamlencode()` to generate from a Terraform map.
+- `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL. Use `base64encode(file(...))` to supply a PEM certificate file.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
 - `org_id` (String) The ID of the organisation.
 
@@ -54,7 +54,7 @@ resource "cofide_connect_cluster" "example_cluster" {
 
 Required:
 
-- `kind` (String) The kind of trust provider.
+- `kind` (String) The kind of trust provider. Currently only `kubernetes` is supported.
 
 Optional:
 

@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
 
 var _ resource.ResourceWithConfigValidators = (*ClusterResource)(nil)
 
 func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides a cluster resource.",
+		MarkdownDescription: "Manages a Cofide Connect cluster. A cluster represents a Kubernetes cluster registered with a trust zone.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the cluster.",
@@ -51,8 +52,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Attributes: map[string]schema.Attribute{
 					"kind": schema.StringAttribute{
-						Description: "The kind of trust provider.",
+						Description: "The kind of trust provider. Currently only `kubernetes` is supported.",
 						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("kubernetes"),
+						},
 					},
 					"k8s_psat_config": schema.SingleNestedAttribute{
 						Description: "Configuration for the k8s PSAT node attestor plugin.",
@@ -113,15 +117,15 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"extra_helm_values": schema.StringAttribute{
-				Description: "The extra Helm values to provide to the cluster.",
+				Description: "Additional Helm values for the Cofide agent Helm chart installation, in YAML format. Use `yamlencode()` to generate from a Terraform map.",
 				Optional:    true,
 			},
 			"profile": schema.StringAttribute{
-				Description: "The Cofide profile used by the cluster.",
+				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).",
 				Required:    true,
 			},
 			"external_server": schema.BoolAttribute{
-				Description: "Whether or not the SPIRE server runs externally.",
+				Description: "Whether the SPIRE server runs externally to this cluster. Set to `true` for clusters that delegate to a centralized SPIRE server.",
 				Required:    true,
 			},
 			"oidc_issuer_url": schema.StringAttribute{
@@ -134,7 +138,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"oidc_issuer_ca_cert": schema.StringAttribute{
-				Description: "The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.",
+				Description: "The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL. Use `base64encode(file(...))` to supply a PEM certificate file.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{

@@ -3,12 +3,12 @@
 page_title: "cofide_connect_trust_zone Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Provides a trust zone resource.
+  Manages a Cofide Connect trust zone. A trust zone contains a SPIFFE trust domain.
 ---
 
 # cofide_connect_trust_zone (Resource)
 
-Provides a trust zone resource.
+Manages a Cofide Connect trust zone. A trust zone contains a SPIFFE trust domain.
 
 ## Example Usage
 
@@ -26,16 +26,16 @@ resource "cofide_connect_trust_zone" "example_trust_zone" {
 ### Required
 
 - `name` (String) The name of the trust zone.
-- `trust_domain` (String) The trust domain of the trust zone.
+- `trust_domain` (String) The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`).
 
 ### Optional
 
-- `is_management_zone` (Boolean) Whether or not this is a management trust zone.
+- `is_management_zone` (Boolean) Whether this is a management trust zone. Cannot be changed after creation.
 - `org_id` (String) The ID of the organisation.
 
 ### Read-Only
 
-- `bundle_endpoint_profile` (String) The bundle endpoint profile of the trust zone.
-- `bundle_endpoint_url` (String) The bundle endpoint URL of the trust zone.
+- `bundle_endpoint_profile` (String) The SPIFFE bundle endpoint profile for this trust zone (`BUNDLE_ENDPOINT_PROFILE_HTTPS_SPIFFE` or `BUNDLE_ENDPOINT_PROFILE_HTTPS_WEB`). Set by Cofide Connect.
+- `bundle_endpoint_url` (String) The URL of the SPIFFE bundle endpoint for this trust zone. Set by Cofide Connect.
 - `id` (String) The ID of the trust zone.
-- `jwt_issuer` (String) The JWT issuer of the trust zone.
+- `jwt_issuer` (String) The JWT issuer URL for this trust zone. Set by Cofide Connect.
