@@ -83,10 +83,10 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 
 	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
 		model.TPMNode = &APTPMNodeModel{
-			Attestation: TPMAttestationModel{
-				EKHash: optionalStringValue(tpmNode.GetAttestation().EkHash),
-			},
 			SelectorValues: convertProtoStringSlice(tpmNode.GetSelectorValues()),
+		}
+		if attestation := tpmNode.GetAttestation(); attestation != nil {
+			model.TPMNode.Attestation.EKHash = optionalStringValue(attestation.EkHash)
 		}
 	}
 
