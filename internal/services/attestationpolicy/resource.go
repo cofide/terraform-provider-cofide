@@ -76,6 +76,23 @@ func (r *AttestationPolicyResource) Read(ctx context.Context, req resource.ReadR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	policyID := state.ID.ValueString()
+	policy, err := r.client.AttestationPolicyV1Alpha1().GetAttestationPolicy(ctx, policyID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading attestation policy",
+			fmt.Sprintf("Could not read attestation policy %q: %s", policyID, err),
+		)
+		return
+	}
+
+	newState := protoToModel(policy)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
