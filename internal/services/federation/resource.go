@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	federationpb "github.com/cofide/cofide-api-sdk/gen/go/proto/federation/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -55,11 +53,7 @@ func (f *FederationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	federation := &federationpb.Federation{
-		OrgId:             plan.OrgID.ValueStringPointer(),
-		TrustZoneId:       plan.TrustZoneID.ValueStringPointer(),
-		RemoteTrustZoneId: plan.RemoteTrustZoneID.ValueStringPointer(),
-	}
+	federation := modelToProto(plan)
 
 	createResp, err := f.client.FederationV1Alpha1().CreateFederation(ctx, federation)
 	if err != nil {
@@ -71,12 +65,8 @@ func (f *FederationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	plan.ID = tftypes.StringValue(createResp.GetId())
-	plan.OrgID = tftypes.StringValue(createResp.GetOrgId())
-	plan.TrustZoneID = tftypes.StringValue(createResp.GetTrustZoneId())
-	plan.RemoteTrustZoneID = tftypes.StringValue(createResp.GetRemoteTrustZoneId())
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	newState := protoToModel(createResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (f *FederationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -86,6 +76,31 @@ func (f *FederationResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	federationID := state.ID.ValueString()
+	if federationID == "" {
+		resp.Diagnostics.AddError(
+			"Error reading federation",
+			"Federation ID not found in state.",
+		)
+		return
+	}
+
+	getResp, err := f.client.FederationV1Alpha1().GetFederation(ctx, federationID)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error reading federation",
+			err.Error(),
+		)
+		return
+	}
+
+	newState := protoToModel(getResp)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
 func (f *FederationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {

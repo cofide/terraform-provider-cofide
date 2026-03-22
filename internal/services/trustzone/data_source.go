@@ -7,7 +7,6 @@ import (
 	trustzonesvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/trust_zone_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type TrustZoneDataSource struct {
@@ -81,16 +80,6 @@ func (t *TrustZoneDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	trustZone := trustZones[0]
 
-	state := TrustZoneModel{
-		ID:                    types.StringValue(trustZone.GetId()),
-		Name:                  types.StringValue(trustZone.GetName()),
-		TrustDomain:           types.StringValue(trustZone.GetTrustDomain()),
-		OrgID:                 types.StringValue(trustZone.GetOrgId()),
-		IsManagementZone:      types.BoolValue(trustZone.GetIsManagementZone()),
-		BundleEndpointURL:     types.StringValue(trustZone.GetBundleEndpointUrl()),
-		BundleEndpointProfile: types.StringValue(trustZone.GetBundleEndpointProfile().String()),
-		JWTIssuer:             types.StringValue(trustZone.GetJwtIssuer()),
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	newState := protoToModel(trustZone)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }

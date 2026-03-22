@@ -7,7 +7,6 @@ import (
 	apbindinginsvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/ap_binding_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type APBindingDataSource struct {
@@ -20,11 +19,11 @@ func NewDataSource() datasource.DataSource {
 	return &APBindingDataSource{}
 }
 
-func (a *APBindingDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *APBindingDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_connect_ap_binding"
 }
 
-func (a *APBindingDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *APBindingDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -38,10 +37,10 @@ func (a *APBindingDataSource) Configure(_ context.Context, req datasource.Config
 		return
 	}
 
-	a.client = client
+	d.client = client
 }
 
-func (a *APBindingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *APBindingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var config APBindingModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
@@ -53,7 +52,7 @@ func (a *APBindingDataSource) Read(ctx context.Context, req datasource.ReadReque
 		TrustZoneId: config.TrustZoneID.ValueStringPointer(),
 		PolicyId:    config.PolicyID.ValueStringPointer(),
 	}
-	bindings, err := a.client.APBindingV1Alpha1().ListAPBindings(ctx, filter)
+	bindings, err := d.client.APBindingV1Alpha1().ListAPBindings(ctx, filter)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading attestation policy binding",
@@ -88,20 +87,7 @@ func (a *APBindingDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	state := APBindingModel{
-		ID:          types.StringValue(binding.GetId()),
-		OrgID:       types.StringValue(binding.GetOrgId()),
-		TrustZoneID: types.StringValue(binding.GetTrustZoneId()),
-		PolicyID:    types.StringValue(binding.GetPolicyId()),
-	}
-
-	federations := make([]APBindingFederationModel, 0)
-	for _, federation := range binding.GetFederations() {
-		federations = append(federations, APBindingFederationModel{
-			TrustZoneID: types.StringValue(federation.GetTrustZoneId()),
-		})
-	}
-	state.Federations = federations
+	state := protoToModel(binding)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
