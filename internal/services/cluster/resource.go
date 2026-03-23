@@ -126,20 +126,9 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	var extraHelmValues tftypes.String
-	if helmValues := createResp.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
-		jsonBytes, err := helmValues.MarshalJSON()
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error processing cluster data",
-				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
-			)
-			return
-		}
-		extraHelmValues = tftypes.StringValue(string(jsonBytes))
-	} else {
-		extraHelmValues = tftypes.StringNull()
-	}
+	// Store the plan value for extra_helm_values to preserve the original format
+	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
+	extraHelmValues := plan.ExtraHelmValues
 
 	var oidcIssuerURL tftypes.String
 	if url := createResp.GetOidcIssuerUrl(); url != "" {
@@ -198,19 +187,13 @@ func (c *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var extraHelmValues tftypes.String
-	if helmValues := cluster.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
-		jsonBytes, err := helmValues.MarshalJSON()
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error processing cluster data",
-				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
-			)
-			return
-		}
-		extraHelmValues = tftypes.StringValue(string(jsonBytes))
-	} else {
-		extraHelmValues = tftypes.StringNull()
+	extraHelmValues, err := helmValuesForState(cluster.GetExtraHelmValues(), state.ExtraHelmValues)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error processing cluster data",
+			fmt.Sprintf("Could not process extra_helm_values: %s", err),
+		)
+		return
 	}
 
 	var oidcIssuerURL tftypes.String
@@ -313,18 +296,9 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// Create new state object from response
-	var extraHelmValuesStr tftypes.String
-	if helmValues := updateResp.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
-		jsonBytes, err := helmValues.MarshalJSON()
-		if err != nil {
-			resp.Diagnostics.AddError("Error processing cluster data", fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err))
-			return
-		}
-		extraHelmValuesStr = tftypes.StringValue(string(jsonBytes))
-	} else {
-		extraHelmValuesStr = tftypes.StringNull()
-	}
+	// Store the plan value for extra_helm_values to preserve the original format
+	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
+	extraHelmValuesStr := plan.ExtraHelmValues
 
 	var oidcIssuerURLStr tftypes.String
 	if url := updateResp.GetOidcIssuerUrl(); url != "" {

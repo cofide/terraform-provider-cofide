@@ -3,19 +3,19 @@ data "cofide_connect_organization" "org" {
 }
 
 resource "cofide_connect_trust_zone" "trust_zone" {
-  name         = "test-tz"
+  name         = "apb-tz"
   org_id       = data.cofide_connect_organization.org.id
-  trust_domain = "test-tz.cofide.dev"
+  trust_domain = "apb-tz.cofide.dev"
 }
 
 resource "cofide_connect_trust_zone" "federated_trust_zone" {
-  name         = "test-federated-tz"
+  name         = "apb-federated-tz"
   org_id       = data.cofide_connect_organization.org.id
-  trust_domain = "test-federated-tz.cofide.dev"
+  trust_domain = "apb-federated-tz.cofide.dev"
 }
 
 resource "cofide_connect_attestation_policy" "attestation_policy_static" {
-  name   = "test-ap"
+  name   = "apb-ap"
   org_id = data.cofide_connect_organization.org.id
 
   static = {

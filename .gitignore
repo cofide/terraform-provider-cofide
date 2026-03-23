@@ -3,6 +3,7 @@ terraform-provider-cofide
 /build
 assets
 .terraform
+test/**/.terraform.lock.hcl
 _output/
 .vscode
 /results
@@ -11,6 +12,7 @@ _output/
 .DS_Store
 example.tf
 terraform.tfvars
+dev.tfrc
 terraform.tfplan
 bin/
 modules-dev/
