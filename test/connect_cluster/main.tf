@@ -3,9 +3,9 @@ data "cofide_connect_organization" "org" {
 }
 
 resource "cofide_connect_trust_zone" "trust_zone" {
-  name         = "test-tz"
+  name         = "cluster-tz"
   org_id       = data.cofide_connect_organization.org.id
-  trust_domain = "test-tz.cofide.dev"
+  trust_domain = "cluster-tz.cofide.dev"
 }
 
 resource "cofide_connect_cluster" "cluster" {
