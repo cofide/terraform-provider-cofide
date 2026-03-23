@@ -11,6 +11,7 @@ _output/
 .DS_Store
 example.tf
 terraform.tfvars
+dev.tfrc
 terraform.tfplan
 bin/
 modules-dev/

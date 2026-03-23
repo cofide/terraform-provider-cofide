@@ -7,13 +7,24 @@
 set -euo pipefail
 
 TEST_DIR=$(dirname $BASH_SOURCE)
+REPO_DIR=$(dirname "$TEST_DIR")
 
 source "$TEST_DIR/test.rc"
+
+DEV_TFRC="$REPO_DIR/dev.tfrc"
+if [[ -f "$DEV_TFRC" ]]; then
+  export TF_CLI_CONFIG_FILE="$DEV_TFRC"
+fi
 
 function run_test() {
   local dir=${1?Specify test Terraform directory}
   echo "Running Terraform test in \"$dir\""
 
+  if ! terraform -chdir="$dir" init -upgrade; then
+    echo "ERROR: Failed to init" >&2
+    return 1
+  fi
+  terraform -chdir="$dir" destroy -auto-approve || true
   if ! terraform -chdir="$dir" apply -auto-approve; then
     echo "ERROR: Failed to apply" >&2
     return 1
