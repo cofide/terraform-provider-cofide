@@ -40,4 +40,28 @@ Provides information about a cluster resource.
 
 Read-Only:
 
+- `k8s_psat_config` (Attributes) Configuration for the k8s PSAT node attestor plugin. (see [below for nested schema](#nestedatt--trust_provider--k8s_psat_config))
 - `kind` (String) The kind of trust provider.
+
+<a id="nestedatt--trust_provider--k8s_psat_config"></a>
+### Nested Schema for `trust_provider.k8s_psat_config`
+
+Read-Only:
+
+- `allowed_node_label_keys` (List of String) Node label keys that may be used as selectors in this cluster.
+- `allowed_pod_label_keys` (List of String) Pod label keys that may be used as selectors in this cluster.
+- `allowed_service_accounts` (Attributes List) Service accounts whose tokens agents may use to attest nodes in this cluster. (see [below for nested schema](#nestedatt--trust_provider--k8s_psat_config--allowed_service_accounts))
+- `api_server_ca_cert` (String) Base64-encoded CA certificate of the cluster's API server.
+- `api_server_proxy_url` (String) Proxy URL for the cluster's API server.
+- `api_server_tls_server_name` (String) Alternative TLS server name to verify the API server certificate against.
+- `api_server_url` (String) URL of the cluster's API server.
+- `enabled` (Boolean) Whether to enable the k8s PSAT node attestor plugin with a Connect datasource.
+- `spire_server_audience` (String) Audience the SPIRE server uses in the JWT presented to the cluster's API server.
+
+<a id="nestedatt--trust_provider--k8s_psat_config--allowed_service_accounts"></a>
+### Nested Schema for `trust_provider.k8s_psat_config.allowed_service_accounts`
+
+Read-Only:
+
+- `namespace` (String) The namespace of the service account.
+- `service_account_name` (String) The name of the service account.

@@ -121,14 +121,12 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		OrgID:             types.StringValue(cluster.GetOrgId()),
 		TrustZoneID:       types.StringValue(cluster.GetTrustZoneId()),
 		KubernetesContext: types.StringValue(cluster.GetKubernetesContext()),
-		TrustProvider: &TrustProviderModel{
-			Kind: types.StringValue(cluster.GetTrustProvider().GetKind()),
-		},
-		ExtraHelmValues:  extraHelmValues,
-		Profile:          types.StringValue(cluster.GetProfile()),
-		ExternalServer:   types.BoolValue(cluster.GetExternalServer()),
-		OidcIssuerURL:    oidcIssuerURL,
-		OidcIssuerCaCert: oidcIssuerCaCert,
+		TrustProvider:     trustProviderFromProto(cluster.GetTrustProvider()),
+		ExtraHelmValues:   extraHelmValues,
+		Profile:           types.StringValue(cluster.GetProfile()),
+		ExternalServer:    types.BoolValue(cluster.GetExternalServer()),
+		OidcIssuerURL:     oidcIssuerURL,
+		OidcIssuerCaCert:  oidcIssuerCaCert,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

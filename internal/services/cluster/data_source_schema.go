@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var _ datasource.DataSource = &ClusterDataSource{}
@@ -40,6 +41,62 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 					"kind": schema.StringAttribute{
 						Description: "The kind of trust provider.",
 						Computed:    true,
+					},
+					"k8s_psat_config": schema.SingleNestedAttribute{
+						Description: "Configuration for the k8s PSAT node attestor plugin.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description: "Whether to enable the k8s PSAT node attestor plugin with a Connect datasource.",
+								Computed:    true,
+							},
+							"allowed_service_accounts": schema.ListNestedAttribute{
+								Description: "Service accounts whose tokens agents may use to attest nodes in this cluster.",
+								Computed:    true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"namespace": schema.StringAttribute{
+											Description: "The namespace of the service account.",
+											Computed:    true,
+										},
+										"service_account_name": schema.StringAttribute{
+											Description: "The name of the service account.",
+											Computed:    true,
+										},
+									},
+								},
+							},
+							"allowed_node_label_keys": schema.ListAttribute{
+								Description: "Node label keys that may be used as selectors in this cluster.",
+								Computed:    true,
+								ElementType: types.StringType,
+							},
+							"allowed_pod_label_keys": schema.ListAttribute{
+								Description: "Pod label keys that may be used as selectors in this cluster.",
+								Computed:    true,
+								ElementType: types.StringType,
+							},
+							"api_server_ca_cert": schema.StringAttribute{
+								Description: "Base64-encoded CA certificate of the cluster's API server.",
+								Computed:    true,
+							},
+							"api_server_url": schema.StringAttribute{
+								Description: "URL of the cluster's API server.",
+								Computed:    true,
+							},
+							"api_server_tls_server_name": schema.StringAttribute{
+								Description: "Alternative TLS server name to verify the API server certificate against.",
+								Computed:    true,
+							},
+							"api_server_proxy_url": schema.StringAttribute{
+								Description: "Proxy URL for the cluster's API server.",
+								Computed:    true,
+							},
+							"spire_server_audience": schema.StringAttribute{
+								Description: "Audience the SPIRE server uses in the JWT presented to the cluster's API server.",
+								Computed:    true,
+							},
+						},
 					},
 				},
 			},

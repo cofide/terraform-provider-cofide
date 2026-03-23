@@ -238,6 +238,115 @@ func TestValidateHelmValues(t *testing.T) {
 	}
 }
 
+func TestTrustProviderRoundTrip(t *testing.T) {
+	tests := []struct {
+		name  string
+		model *TrustProviderModel
+	}{
+		{
+			name: "kind only",
+			model: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: nil,
+			},
+		},
+		{
+			name: "with k8s_psat_config disabled",
+			model: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled:                types.BoolValue(false),
+					AllowedServiceAccounts: nil,
+					AllowedNodeLabelKeys:   nil,
+					AllowedPodLabelKeys:    nil,
+					ApiServerCaCert:        types.StringNull(),
+					ApiServerURL:           types.StringNull(),
+					ApiServerTLSServerName: types.StringNull(),
+					ApiServerProxyURL:      types.StringNull(),
+					SpireServerAudience:    types.StringNull(),
+				},
+			},
+		},
+		{
+			name: "with minimal k8s_psat_config",
+			model: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled:                types.BoolValue(true),
+					AllowedServiceAccounts: nil,
+					AllowedNodeLabelKeys:   nil,
+					AllowedPodLabelKeys:    nil,
+					ApiServerCaCert:        types.StringNull(),
+					ApiServerURL:           types.StringNull(),
+					ApiServerTLSServerName: types.StringNull(),
+					ApiServerProxyURL:      types.StringNull(),
+					SpireServerAudience:    types.StringNull(),
+				},
+			},
+		},
+		{
+			name: "with full k8s_psat_config",
+			model: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled: types.BoolValue(true),
+					AllowedServiceAccounts: []ServiceAccountModel{
+						{
+							Namespace:          types.StringValue("spire"),
+							ServiceAccountName: types.StringValue("spire-agent"),
+						},
+						{
+							Namespace:          types.StringValue("default"),
+							ServiceAccountName: types.StringValue("app-agent"),
+						},
+					},
+					AllowedNodeLabelKeys:   []types.String{types.StringValue("kubernetes.io/hostname")},
+					AllowedPodLabelKeys:    []types.String{types.StringValue("app"), types.StringValue("version")},
+					ApiServerCaCert:        types.StringValue("dGVzdC1jYQ=="), // base64("test-ca")
+					ApiServerURL:           types.StringValue("https://kubernetes.default.svc"),
+					ApiServerTLSServerName: types.StringValue("kubernetes"),
+					ApiServerProxyURL:      types.StringValue("http://proxy:3128"),
+					SpireServerAudience:    types.StringValue("spire-server"),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proto, err := trustProviderToProto(tt.model)
+			require.NoError(t, err)
+
+			got := trustProviderFromProto(proto)
+			assert.Equal(t, tt.model, got)
+		})
+	}
+}
+
+func TestTrustProviderFromProto_Nil(t *testing.T) {
+	got := trustProviderFromProto(nil)
+	assert.Equal(t, types.StringValue(""), got.Kind)
+	assert.Nil(t, got.K8sPsatConfig)
+}
+
+func TestTrustProviderToProto_InvalidKind(t *testing.T) {
+	model := &TrustProviderModel{
+		Kind:          types.StringValue("invalid"),
+		K8sPsatConfig: nil,
+	}
+	_, err := trustProviderToProto(model)
+	require.ErrorContains(t, err, "invalid trust provider kind: invalid")
+}
+
+func TestK8sPsatConfigToProto_InvalidBase64CaCert(t *testing.T) {
+	model := &K8sPsatConfigModel{
+		Enabled:         types.BoolValue(true),
+		ApiServerCaCert: types.StringValue("not-valid-base64!!!"),
+	}
+	_, err := k8sPsatConfigToProto(model)
+	require.ErrorContains(t, err, "failed to decode api_server_ca_cert from base64")
+}
+
 func TestHelmValuesForState(t *testing.T) {
 	nonEmptyStruct, err := structpb.NewStruct(map[string]interface{}{"key": "value"})
 	require.NoError(t, err)
@@ -324,6 +433,175 @@ func TestHelmValuesForState(t *testing.T) {
 				assert.False(t, got.IsNull())
 				assert.Equal(t, tt.wantValue, got.ValueString())
 			}
+		})
+	}
+}
+
+func TestK8sPsatConfigForState(t *testing.T) {
+	sa := ServiceAccountModel{
+		Namespace:          types.StringValue("spire"),
+		ServiceAccountName: types.StringValue("spire-agent"),
+	}
+
+	tests := []struct {
+		name  string
+		model *K8sPsatConfigModel
+		prev  *K8sPsatConfigModel
+		want  *K8sPsatConfigModel
+	}{
+		{
+			name:  "nil API service accounts, nil prev → nil",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+		},
+		{
+			name:  "nil API service accounts, empty prev → empty preserved",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{}},
+		},
+		{
+			name:  "non-empty API service accounts override empty prev",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{sa}},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{sa}},
+		},
+		{
+			name:  "nil API service accounts, non-empty prev → nil (API removal wins)",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{sa}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+		},
+		{
+			name:  "nil API node label keys, nil prev → nil",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+		},
+		{
+			name:  "nil API node label keys, empty prev → empty preserved",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: []types.String{}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: []types.String{}},
+		},
+		{
+			name:  "nil API pod label keys, empty prev → empty preserved",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: []types.String{}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: []types.String{}},
+		},
+		{
+			name:  "nil API node label keys, non-empty prev → nil (API removal wins)",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: []types.String{types.StringValue("kubernetes.io/hostname")}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedNodeLabelKeys: nil},
+		},
+		{
+			name:  "nil API pod label keys, non-empty prev → nil (API removal wins)",
+			model: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: nil},
+			prev:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: []types.String{types.StringValue("app")}},
+			want:  &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedPodLabelKeys: nil},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := k8sPsatConfigForState(tt.model, tt.prev)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestTrustProviderForState(t *testing.T) {
+	tests := []struct {
+		name  string
+		model *TrustProviderModel
+		prev  *TrustProviderModel
+		want  *TrustProviderModel
+	}{
+		{
+			name: "nil prev → model returned as-is",
+			model: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			},
+			prev: nil,
+			want: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			},
+		},
+		{
+			name: "nil prev k8s_psat_config → model returned as-is",
+			model: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			},
+			prev: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: nil,
+			},
+			want: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: nil},
+			},
+		},
+		{
+			name: "nil model k8s_psat_config → model returned as-is",
+			model: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: nil,
+			},
+			prev: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{Enabled: types.BoolValue(true), AllowedServiceAccounts: []ServiceAccountModel{}},
+			},
+			want: &TrustProviderModel{
+				Kind:          types.StringValue("kubernetes"),
+				K8sPsatConfig: nil,
+			},
+		},
+		{
+			name: "both non-nil → list fields merged from prev",
+			model: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled:                types.BoolValue(true),
+					AllowedServiceAccounts: nil,
+					AllowedNodeLabelKeys:   nil,
+					AllowedPodLabelKeys:    nil,
+				},
+			},
+			prev: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled:                types.BoolValue(true),
+					AllowedServiceAccounts: []ServiceAccountModel{},
+					AllowedNodeLabelKeys:   []types.String{},
+					AllowedPodLabelKeys:    nil,
+				},
+			},
+			want: &TrustProviderModel{
+				Kind: types.StringValue("kubernetes"),
+				K8sPsatConfig: &K8sPsatConfigModel{
+					Enabled:                types.BoolValue(true),
+					AllowedServiceAccounts: []ServiceAccountModel{},
+					AllowedNodeLabelKeys:   []types.String{},
+					AllowedPodLabelKeys:    nil,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Build a proto from the model, then call trustProviderForState with the prev.
+			// This exercises the full path including trustProviderFromProto.
+			proto, err := trustProviderToProto(tt.model)
+			require.NoError(t, err)
+			got := trustProviderForState(proto, tt.prev)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
