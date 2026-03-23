@@ -29,6 +29,12 @@ function run_test() {
     echo "ERROR: Failed to apply" >&2
     return 1
   fi
+  if [[ -f "$dir/assertions.sh" ]]; then
+    if ! bash "$dir/assertions.sh" "$dir"; then
+      echo "ERROR: Assertions failed" >&2
+      return 1
+    fi
+  fi
   if ! terraform -chdir="$dir" destroy -auto-approve; then
     echo "ERROR: Failed to destroy" >&2
     return 1
