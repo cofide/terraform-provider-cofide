@@ -13,24 +13,34 @@ import (
 // equivalent to the API response, it is preserved unchanged so that the
 // original user-provided format (YAML or JSON) is not replaced with JSON.
 func helmValuesForState(apiValues *structpb.Struct, stateValue tftypes.String) (tftypes.String, error) {
-	if apiValues == nil || len(apiValues.Fields) == 0 {
-		return tftypes.StringNull(), nil
+	// Treat nil/empty API values as "{}" so they can be compared consistently
+	// with state values like "" or "{}" that are also semantically empty.
+	var apiJSON string
+	if apiValues != nil && len(apiValues.Fields) > 0 {
+		jsonBytes, err := apiValues.MarshalJSON()
+		if err != nil {
+			return tftypes.StringNull(), fmt.Errorf("could not marshal extra_helm_values to JSON: %w", err)
+		}
+		apiJSON = string(jsonBytes)
+	} else {
+		apiJSON = "{}"
 	}
-
-	jsonBytes, err := apiValues.MarshalJSON()
-	if err != nil {
-		return tftypes.StringNull(), fmt.Errorf("could not marshal extra_helm_values to JSON: %w", err)
-	}
-	apiJSON := string(jsonBytes)
 
 	// If the state already holds a value, keep it when it is semantically
 	// equivalent to what the API returned. This avoids replacing YAML with
-	// JSON and triggering spurious diffs on the next plan.
+	// JSON and triggering spurious diffs on the next plan, and prevents
+	// empty values like "" or "{}" from being replaced with null.
 	if !stateValue.IsNull() && !stateValue.IsUnknown() {
 		stateNormalized, err := normalizeHelmValuesToJSON(stateValue.ValueString())
 		if err == nil && stateNormalized == apiJSON {
 			return stateValue, nil
 		}
+	}
+
+	// If the API had no values and the state wasn't preserved, return null
+	// rather than "{}" so that unset attributes remain unset.
+	if apiJSON == "{}" {
+		return tftypes.StringNull(), nil
 	}
 
 	return tftypes.StringValue(apiJSON), nil
