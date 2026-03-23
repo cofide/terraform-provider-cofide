@@ -90,7 +90,7 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		cluster.OidcIssuerCaCert = decodedCert
 	}
 
-	trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
+	trustProvider, err := trustProviderToProto(plan.TrustProvider)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating trust provider",
@@ -152,14 +152,12 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		OrgID:             tftypes.StringValue(createResp.GetOrgId()),
 		TrustZoneID:       tftypes.StringValue(createResp.GetTrustZoneId()),
 		KubernetesContext: tftypes.StringValue(createResp.GetKubernetesContext()),
-		TrustProvider: &TrustProviderModel{
-			Kind: tftypes.StringValue(createResp.GetTrustProvider().GetKind()),
-		},
-		ExtraHelmValues:  extraHelmValues,
-		Profile:          tftypes.StringValue(createResp.GetProfile()),
-		ExternalServer:   tftypes.BoolValue(createResp.GetExternalServer()),
-		OidcIssuerURL:    oidcIssuerURL,
-		OidcIssuerCaCert: oidcIssuerCaCert,
+		TrustProvider:     trustProviderForState(createResp.GetTrustProvider(), plan.TrustProvider),
+		ExtraHelmValues:   extraHelmValues,
+		Profile:           tftypes.StringValue(createResp.GetProfile()),
+		ExternalServer:    tftypes.BoolValue(createResp.GetExternalServer()),
+		OidcIssuerURL:     oidcIssuerURL,
+		OidcIssuerCaCert:  oidcIssuerCaCert,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -216,14 +214,12 @@ func (c *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		OrgID:             tftypes.StringValue(cluster.GetOrgId()),
 		TrustZoneID:       tftypes.StringValue(cluster.GetTrustZoneId()),
 		KubernetesContext: tftypes.StringValue(cluster.GetKubernetesContext()),
-		TrustProvider: &TrustProviderModel{
-			Kind: tftypes.StringValue(cluster.GetTrustProvider().GetKind()),
-		},
-		ExtraHelmValues:  extraHelmValues,
-		Profile:          tftypes.StringValue(cluster.GetProfile()),
-		ExternalServer:   tftypes.BoolValue(cluster.GetExternalServer()),
-		OidcIssuerURL:    oidcIssuerURL,
-		OidcIssuerCaCert: oidcIssuerCaCert,
+		TrustProvider:     trustProviderForState(cluster.GetTrustProvider(), state.TrustProvider),
+		ExtraHelmValues:   extraHelmValues,
+		Profile:           tftypes.StringValue(cluster.GetProfile()),
+		ExternalServer:    tftypes.BoolValue(cluster.GetExternalServer()),
+		OidcIssuerURL:     oidcIssuerURL,
+		OidcIssuerCaCert:  oidcIssuerCaCert,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
@@ -270,14 +266,14 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if plan.TrustProvider != nil && !plan.TrustProvider.Kind.IsNull() {
-		trustProvider, err := newTrustProvider(plan.TrustProvider.Kind.ValueString())
+		trustProvider, err := trustProviderToProto(plan.TrustProvider)
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating trust provider", fmt.Sprintf("Failed to create trust provider: %s", err))
 			return
 		}
 		cluster.TrustProvider = trustProvider
 	} else {
-		trustProvider, _ := newTrustProvider(state.TrustProvider.Kind.ValueString())
+		trustProvider, _ := trustProviderToProto(state.TrustProvider)
 		cluster.TrustProvider = trustProvider
 	}
 
@@ -324,14 +320,12 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		OrgID:             tftypes.StringValue(updateResp.GetOrgId()),
 		TrustZoneID:       tftypes.StringValue(updateResp.GetTrustZoneId()),
 		KubernetesContext: tftypes.StringValue(updateResp.GetKubernetesContext()),
-		TrustProvider: &TrustProviderModel{
-			Kind: tftypes.StringValue(updateResp.GetTrustProvider().GetKind()),
-		},
-		ExtraHelmValues:  extraHelmValuesStr,
-		Profile:          tftypes.StringValue(updateResp.GetProfile()),
-		ExternalServer:   tftypes.BoolValue(updateResp.GetExternalServer()),
-		OidcIssuerURL:    oidcIssuerURLStr,
-		OidcIssuerCaCert: oidcIssuerCaCertStr,
+		TrustProvider:     trustProviderForState(updateResp.GetTrustProvider(), plan.TrustProvider),
+		ExtraHelmValues:   extraHelmValuesStr,
+		Profile:           tftypes.StringValue(updateResp.GetProfile()),
+		ExternalServer:    tftypes.BoolValue(updateResp.GetExternalServer()),
+		OidcIssuerURL:     oidcIssuerURLStr,
+		OidcIssuerCaCert:  oidcIssuerCaCertStr,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
@@ -380,6 +374,157 @@ func newTrustProvider(kind string) (*trustproviderpb.TrustProvider, error) {
 	default:
 		return nil, fmt.Errorf("invalid trust provider kind: %s", kind)
 	}
+}
+
+// trustProviderToProto converts a TrustProviderModel to a TrustProvider proto message.
+func trustProviderToProto(model *TrustProviderModel) (*trustproviderpb.TrustProvider, error) {
+	tp, err := newTrustProvider(model.Kind.ValueString())
+	if err != nil {
+		return nil, err
+	}
+	if model.K8sPsatConfig != nil {
+		cfg, err := k8sPsatConfigToProto(model.K8sPsatConfig)
+		if err != nil {
+			return nil, err
+		}
+		tp.K8SPsatConfig = cfg
+	}
+	return tp, nil
+}
+
+// k8sPsatConfigToProto converts a K8sPsatConfigModel to a K8SPsatConfig proto message.
+func k8sPsatConfigToProto(model *K8sPsatConfigModel) (*trustproviderpb.K8SPsatConfig, error) {
+	cfg := &trustproviderpb.K8SPsatConfig{
+		Enabled: model.Enabled.ValueBool(),
+	}
+
+	for _, sa := range model.AllowedServiceAccounts {
+		cfg.AllowedServiceAccounts = append(cfg.AllowedServiceAccounts, &trustproviderpb.K8SPsatConfig_ServiceAccount{
+			Namespace:          sa.Namespace.ValueString(),
+			ServiceAccountName: sa.ServiceAccountName.ValueString(),
+		})
+	}
+
+	for _, key := range model.AllowedNodeLabelKeys {
+		cfg.AllowedNodeLabelKeys = append(cfg.AllowedNodeLabelKeys, key.ValueString())
+	}
+
+	for _, key := range model.AllowedPodLabelKeys {
+		cfg.AllowedPodLabelKeys = append(cfg.AllowedPodLabelKeys, key.ValueString())
+	}
+
+	if !model.ApiServerCaCert.IsNull() && model.ApiServerCaCert.ValueString() != "" {
+		decoded, err := base64.StdEncoding.DecodeString(model.ApiServerCaCert.ValueString())
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode api_server_ca_cert from base64: %w", err)
+		}
+		cfg.ApiServerCaCert = decoded
+	}
+
+	if !model.ApiServerURL.IsNull() {
+		cfg.ApiServerUrl = model.ApiServerURL.ValueString()
+	}
+	if !model.ApiServerTLSServerName.IsNull() {
+		cfg.ApiServerTlsServerName = model.ApiServerTLSServerName.ValueString()
+	}
+	if !model.ApiServerProxyURL.IsNull() {
+		cfg.ApiServerProxyUrl = model.ApiServerProxyURL.ValueString()
+	}
+	if !model.SpireServerAudience.IsNull() {
+		cfg.SpireServerAudience = model.SpireServerAudience.ValueString()
+	}
+
+	return cfg, nil
+}
+
+// trustProviderForState returns a TrustProviderModel for storage in state, using prev to
+// preserve user intent for fields where nil and empty are semantically equivalent in proto3.
+func trustProviderForState(apiTp *trustproviderpb.TrustProvider, prev *TrustProviderModel) *TrustProviderModel {
+	model := trustProviderFromProto(apiTp)
+	if prev == nil || prev.K8sPsatConfig == nil || model.K8sPsatConfig == nil {
+		return model
+	}
+	model.K8sPsatConfig = k8sPsatConfigForState(model.K8sPsatConfig, prev.K8sPsatConfig)
+	return model
+}
+
+// k8sPsatConfigForState returns a K8sPsatConfigModel for storage in state.
+// Proto3 does not distinguish nil from empty slice, but Terraform does. If the API
+// returns nil/empty for a list field and prev has an explicit empty list, the empty
+// list is preserved to avoid spurious plan diffs.
+func k8sPsatConfigForState(model, prev *K8sPsatConfigModel) *K8sPsatConfigModel {
+	if len(model.AllowedServiceAccounts) == 0 && len(prev.AllowedServiceAccounts) == 0 && prev.AllowedServiceAccounts != nil {
+		model.AllowedServiceAccounts = prev.AllowedServiceAccounts
+	}
+	if len(model.AllowedNodeLabelKeys) == 0 && len(prev.AllowedNodeLabelKeys) == 0 && prev.AllowedNodeLabelKeys != nil {
+		model.AllowedNodeLabelKeys = prev.AllowedNodeLabelKeys
+	}
+	if len(model.AllowedPodLabelKeys) == 0 && len(prev.AllowedPodLabelKeys) == 0 && prev.AllowedPodLabelKeys != nil {
+		model.AllowedPodLabelKeys = prev.AllowedPodLabelKeys
+	}
+	return model
+}
+
+// trustProviderFromProto converts a TrustProvider proto message to a TrustProviderModel.
+func trustProviderFromProto(tp *trustproviderpb.TrustProvider) *TrustProviderModel {
+	model := &TrustProviderModel{
+		Kind: tftypes.StringValue(tp.GetKind()),
+	}
+	if cfg := tp.GetK8SPsatConfig(); cfg != nil {
+		model.K8sPsatConfig = k8sPsatConfigFromProto(cfg)
+	}
+	return model
+}
+
+// k8sPsatConfigFromProto converts a K8SPsatConfig proto message to a K8sPsatConfigModel.
+func k8sPsatConfigFromProto(cfg *trustproviderpb.K8SPsatConfig) *K8sPsatConfigModel {
+	model := &K8sPsatConfigModel{
+		Enabled: tftypes.BoolValue(cfg.Enabled),
+	}
+
+	for _, sa := range cfg.AllowedServiceAccounts {
+		model.AllowedServiceAccounts = append(model.AllowedServiceAccounts, ServiceAccountModel{
+			Namespace:          tftypes.StringValue(sa.Namespace),
+			ServiceAccountName: tftypes.StringValue(sa.ServiceAccountName),
+		})
+	}
+
+	for _, key := range cfg.AllowedNodeLabelKeys {
+		model.AllowedNodeLabelKeys = append(model.AllowedNodeLabelKeys, tftypes.StringValue(key))
+	}
+
+	for _, key := range cfg.AllowedPodLabelKeys {
+		model.AllowedPodLabelKeys = append(model.AllowedPodLabelKeys, tftypes.StringValue(key))
+	}
+
+	if len(cfg.ApiServerCaCert) > 0 {
+		model.ApiServerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(cfg.ApiServerCaCert))
+	} else {
+		model.ApiServerCaCert = tftypes.StringNull()
+	}
+
+	if cfg.ApiServerUrl != "" {
+		model.ApiServerURL = tftypes.StringValue(cfg.ApiServerUrl)
+	} else {
+		model.ApiServerURL = tftypes.StringNull()
+	}
+	if cfg.ApiServerTlsServerName != "" {
+		model.ApiServerTLSServerName = tftypes.StringValue(cfg.ApiServerTlsServerName)
+	} else {
+		model.ApiServerTLSServerName = tftypes.StringNull()
+	}
+	if cfg.ApiServerProxyUrl != "" {
+		model.ApiServerProxyURL = tftypes.StringValue(cfg.ApiServerProxyUrl)
+	} else {
+		model.ApiServerProxyURL = tftypes.StringNull()
+	}
+	if cfg.SpireServerAudience != "" {
+		model.SpireServerAudience = tftypes.StringValue(cfg.SpireServerAudience)
+	} else {
+		model.SpireServerAudience = tftypes.StringNull()
+	}
+
+	return model
 }
 
 // parseExtraHelmValues parses the extra_helm_values field from a string to a structpb.Struct object.
