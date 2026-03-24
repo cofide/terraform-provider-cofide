@@ -29,6 +29,11 @@ func (v *oneOfValidator) ValidateResource(ctx context.Context, req resource.Vali
 	userSet := data.User != nil && !data.User.Subject.IsUnknown() && !data.User.Subject.IsNull()
 	groupSet := data.Group != nil && !data.Group.ClaimValue.IsUnknown() && !data.Group.ClaimValue.IsNull()
 
+	// Defer validation if values are not yet known (e.g. during for_each pre-expansion).
+	if (data.User != nil && data.User.Subject.IsUnknown()) || (data.Group != nil && data.Group.ClaimValue.IsUnknown()) {
+		return
+	}
+
 	if userSet && groupSet {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("user"),
