@@ -13,10 +13,47 @@ Provides information about a Cofide Connect attestation policy binding.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_ap_binding" "example_ap_binding" {
-  org_id        = "example-org-id"
-  trust_zone_id = "example-tz-id"
-  policy_id     = "example-ap-id"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "policy_id" {
+  description = "The ID of the attestation policy."
+  type        = string
+  default     = "example-ap-id"
+}
+
+
+data "cofide_connect_ap_binding" "example" {
+  org_id        = var.org_id
+  trust_zone_id = var.trust_zone_id
+  policy_id     = var.policy_id
+}
+
+
+output "ap_binding_federations" {
+  description = "The federations of the AP binding."
+  value       = data.cofide_connect_ap_binding.example.federations
 }
 ```
 

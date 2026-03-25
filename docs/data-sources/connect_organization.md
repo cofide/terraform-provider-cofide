@@ -13,8 +13,33 @@ Provides information about an organization resource.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_organization" "example_org" {
-  name = "default"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the organization."
+  type        = string
+  default     = "default"
+}
+
+
+data "cofide_connect_organization" "example" {
+  name = var.name
+}
+
+
+output "organization_id" {
+  description = "The ID of the organization."
+  value       = data.cofide_connect_organization.example.id
 }
 ```
 

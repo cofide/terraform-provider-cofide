@@ -13,25 +13,51 @@ Provides information about a Cofide Connect cluster.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_cluster" "example_cluster" {
-  name   = "example-cluster"
-  org_id = "example-org-id"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
 }
 
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the cluster."
+  type        = string
+  default     = "example-cluster"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+data "cofide_connect_cluster" "example" {
+  name   = var.name
+  org_id = var.org_id
+}
+
+
 output "cluster_id" {
-  value = data.cofide_connect_cluster.example_cluster.id
+  value = data.cofide_connect_cluster.example.id
 }
 
 output "cluster_trust_zone_id" {
-  value = data.cofide_connect_cluster.example_cluster.trust_zone_id
+  value = data.cofide_connect_cluster.example.trust_zone_id
 }
 
 output "cluster_trust_provider_kind" {
-  value = data.cofide_connect_cluster.example_cluster.trust_provider.kind
+  value = data.cofide_connect_cluster.example.trust_provider.kind
 }
 
 output "cluster_oidc_issuer_url" {
-  value = data.cofide_connect_cluster.example_cluster.oidc_issuer_url
+  value = data.cofide_connect_cluster.example.oidc_issuer_url
 }
 ```
 

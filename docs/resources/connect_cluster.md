@@ -13,12 +13,50 @@ Manages a Cofide Connect cluster. A cluster represents a Kubernetes cluster regi
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_cluster" "example_cluster" {
-  name               = "example-cluster"
-  trust_zone_id      = "example-tz-id"
-  org_id             = "example-org-id"
+# ------ Example: default ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the cluster."
+  type        = string
+  default     = "example-cluster"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "kubernetes_context" {
+  description = "The Kubernetes context to use."
+  type        = string
+  default     = "example-cluster-context"
+}
+
+
+resource "cofide_connect_cluster" "example" {
+  name               = var.name
+  trust_zone_id      = var.trust_zone_id
+  org_id             = var.org_id
   profile            = "kubernetes"
-  kubernetes_context = "example-cluster-context"
+  kubernetes_context = var.kubernetes_context
   external_server    = false
 
   trust_provider = {
@@ -26,15 +64,66 @@ resource "cofide_connect_cluster" "example_cluster" {
   }
 }
 
-resource "cofide_connect_cluster" "example_cluster_with_helm_values" {
-  name                = "example-cluster-helm"
-  trust_zone_id       = "example-tz-id"
-  org_id              = "example-org-id"
+
+output "cluster_id" {
+  description = "The ID of the cluster."
+  value       = cofide_connect_cluster.example.id
+}
+
+
+# ------ Example: with_helm_values ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the cluster."
+  type        = string
+  default     = "example-cluster-helm"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "kubernetes_context" {
+  description = "The Kubernetes context to use."
+  type        = string
+  default     = "example-cluster-context"
+}
+
+variable "oidc_issuer_url" {
+  description = "The OIDC issuer URL."
+  type        = string
+  default     = "https://oidc.example.com"
+}
+
+
+resource "cofide_connect_cluster" "example" {
+  name                = var.name
+  trust_zone_id       = var.trust_zone_id
+  org_id              = var.org_id
   profile             = "kubernetes"
-  kubernetes_context  = "example-cluster-context"
+  kubernetes_context  = var.kubernetes_context
   external_server     = false
-  oidc_issuer_url     = "https://oidc.example.com"
-  oidc_issuer_ca_cert = base64encode(file("ca.pem"))
+  oidc_issuer_url     = var.oidc_issuer_url
+  oidc_issuer_ca_cert = base64encode(file("${path.module}/ca.pem"))
 
   trust_provider = {
     kind = "kubernetes"
@@ -49,6 +138,12 @@ resource "cofide_connect_cluster" "example_cluster_with_helm_values" {
       }
     }
   })
+}
+
+
+output "cluster_id" {
+  description = "The ID of the cluster."
+  value       = cofide_connect_cluster.example.id
 }
 ```
 

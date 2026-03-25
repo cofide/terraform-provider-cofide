@@ -13,7 +13,7 @@ lint *args:
     golangci-lint run --show-stats {{args}}
 
 generate:
-    go generate ./...
+    ./tools/generate-docs.sh
 
 # Updates the terraform provider version in all test, example, and documentation files
 # Usage: just update-tf-version 0.9.0

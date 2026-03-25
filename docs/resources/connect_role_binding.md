@@ -13,26 +13,115 @@ Manages a Cofide Connect role binding. Grants a user or group a role on a specif
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_role_binding" "example_role_binding_user" {
-  role_id = "example-role-id"
-  user = {
-    subject = "user@example.com"
-  }
-  resource = {
-    type = "TrustZone"
-    id   = "example-tz-id"
+# ------ Example: group_binding ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
   }
 }
 
-resource "cofide_connect_role_binding" "example_role_binding_group" {
-  role_id = "example-role-id"
+provider "cofide" {}
+
+
+variable "role_id" {
+  description = "The ID of the role."
+  type        = string
+  default     = "example-role-id"
+}
+
+variable "group_claim_value" {
+  description = "The claim value of the group."
+  type        = string
+  default     = "platform-engineers"
+}
+
+variable "resource_type" {
+  description = "The type of the resource."
+  type        = string
+  default     = "Organization"
+}
+
+variable "resource_id" {
+  description = "The ID of the resource."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+resource "cofide_connect_role_binding" "example" {
+  role_id = var.role_id
   group = {
-    claim_value = "platform-engineers"
+    claim_value = var.group_claim_value
   }
   resource = {
-    type = "Organization"
-    id   = "example-org-id"
+    type = var.resource_type
+    id   = var.resource_id
   }
+}
+
+
+output "role_binding_id" {
+  description = "The ID of the role binding."
+  value       = cofide_connect_role_binding.example.id
+}
+
+
+# ------ Example: user_binding ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "role_id" {
+  description = "The ID of the role."
+  type        = string
+  default     = "example-role-id"
+}
+
+variable "user_subject" {
+  description = "The subject of the user."
+  type        = string
+  default     = "user@example.com"
+}
+
+variable "resource_type" {
+  description = "The type of the resource."
+  type        = string
+  default     = "TrustZone"
+}
+
+variable "resource_id" {
+  description = "The ID of the resource."
+  type        = string
+  default     = "example-tz-id"
+}
+
+
+resource "cofide_connect_role_binding" "example" {
+  role_id = var.role_id
+  user = {
+    subject = var.user_subject
+  }
+  resource = {
+    type = var.resource_type
+    id   = var.resource_id
+  }
+}
+
+
+output "role_binding_id" {
+  description = "The ID of the role binding."
+  value       = cofide_connect_role_binding.example.id
 }
 ```
 

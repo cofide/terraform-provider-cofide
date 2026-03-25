@@ -13,22 +13,105 @@ Manages a Cofide Connect attestation policy binding. Binds an attestation policy
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_ap_binding" "example_ap_binding" {
-  org_id        = "example-org-id"
-  trust_zone_id = "example-tz-id"
-  policy_id     = "example-ap-id"
+# ------ Example: default ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
 }
 
-resource "cofide_connect_ap_binding" "example_ap_binding_with_federations" {
-  org_id        = "example-org-id"
-  trust_zone_id = "example-tz-id"
-  policy_id     = "example-ap-id"
+provider "cofide" {}
+
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "policy_id" {
+  description = "The ID of the attestation policy."
+  type        = string
+  default     = "example-ap-id"
+}
+
+
+resource "cofide_connect_ap_binding" "example" {
+  org_id        = var.org_id
+  trust_zone_id = var.trust_zone_id
+  policy_id     = var.policy_id
+}
+
+
+output "ap_binding_id" {
+  description = "The ID of the AP binding."
+  value       = cofide_connect_ap_binding.example.id
+}
+
+
+# ------ Example: with_federations ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "policy_id" {
+  description = "The ID of the attestation policy."
+  type        = string
+  default     = "example-ap-id"
+}
+
+variable "remote_trust_zone_id" {
+  description = "The ID of the remote trust zone."
+  type        = string
+  default     = "example-remote-tz-id"
+}
+
+
+resource "cofide_connect_ap_binding" "example" {
+  org_id        = var.org_id
+  trust_zone_id = var.trust_zone_id
+  policy_id     = var.policy_id
 
   federations = [
     {
-      trust_zone_id = "example-remote-tz-id"
+      trust_zone_id = var.remote_trust_zone_id
     }
   ]
+}
+
+
+output "ap_binding_id" {
+  description = "The ID of the AP binding."
+  value       = cofide_connect_ap_binding.example.id
 }
 ```
 

@@ -13,10 +13,47 @@ Provides information about a Cofide Connect federation.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_federation" "example_federation" {
-  org_id               = "example-org-id"
-  trust_zone_id        = "example-tz-id"
-  remote_trust_zone_id = "example-remote-tz-id"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "remote_trust_zone_id" {
+  description = "The ID of the remote trust zone."
+  type        = string
+  default     = "example-remote-tz-id"
+}
+
+
+data "cofide_connect_federation" "example" {
+  org_id               = var.org_id
+  trust_zone_id        = var.trust_zone_id
+  remote_trust_zone_id = var.remote_trust_zone_id
+}
+
+
+output "federation_id" {
+  description = "The ID of the federation."
+  value       = data.cofide_connect_federation.example.id
 }
 ```
 
