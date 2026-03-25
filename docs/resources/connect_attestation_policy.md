@@ -136,7 +136,7 @@ Required:
 
 - `parent_id_path` (String) The SPIFFE ID path of the parent node for workloads matching this policy.
 - `selectors` (Attributes List) The list of selectors for the static attestation policy. (see [below for nested schema](#nestedatt--static--selectors))
-- `spiffe_id_path` (String) The SPIFFE ID path suffix assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).
+- `spiffe_id_path` (String) The SPIFFE ID path assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).
 
 Optional:
 

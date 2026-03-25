@@ -120,7 +120,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"spiffe_id_path": schema.StringAttribute{
-						Description: "The SPIFFE ID path suffix assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).",
+						Description: "The SPIFFE ID path assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).",
 						Required:    true,
 					},
 					"parent_id_path": schema.StringAttribute{
