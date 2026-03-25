@@ -117,11 +117,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"extra_helm_values": schema.StringAttribute{
-				Description: "Additional Helm values for the Cofide agent Helm chart installation, in YAML format. Use `yamlencode()` to generate from a Terraform map.",
+				Description: "Additional Helm values for the Cofide SPIRE Helm chart installation, in YAML format. Use `yamlencode()` to generate from a Terraform map.",
 				Optional:    true,
 			},
 			"profile": schema.StringAttribute{
-				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).",
+				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`). Ensures Cofide SPIRE is configured correctly for the target environment.",
 				Required:    true,
 			},
 			"external_server": schema.BoolAttribute{

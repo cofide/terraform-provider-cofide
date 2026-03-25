@@ -34,12 +34,12 @@ data "cofide_connect_cluster" "example_cluster" {
 ### Read-Only
 
 - `external_server` (Boolean) Whether the SPIRE server runs externally to this cluster.
-- `extra_helm_values` (String) Additional Helm values for the Cofide agent Helm chart installation, in YAML format.
+- `extra_helm_values` (String) Additional Helm values for the Cofide SPIRE Helm chart installation, in YAML format.
 - `id` (String) The ID of the cluster.
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
 - `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
-- `profile` (String) The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).
+- `profile` (String) The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`). Ensures Cofide SPIRE is configured correctly for the target environment.
 - `trust_provider` (Attributes) The trust provider of the cluster. (see [below for nested schema](#nestedatt--trust_provider))
 
 <a id="nestedatt--trust_provider"></a>

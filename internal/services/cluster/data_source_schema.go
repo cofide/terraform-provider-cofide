@@ -101,11 +101,11 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"extra_helm_values": schema.StringAttribute{
-				Description: "Additional Helm values for the Cofide agent Helm chart installation, in YAML format.",
+				Description: "Additional Helm values for the Cofide SPIRE Helm chart installation, in YAML format.",
 				Computed:    true,
 			},
 			"profile": schema.StringAttribute{
-				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`).",
+				Description: "The Cofide profile used by the cluster (e.g. `kubernetes`, `istio`). Ensures Cofide SPIRE is configured correctly for the target environment.",
 				Computed:    true,
 			},
 			"external_server": schema.BoolAttribute{
