@@ -14,3 +14,11 @@ lint *args:
 
 generate:
     go generate ./...
+
+# Updates the terraform provider version in all test, example, and documentation files
+# Usage: just update-tf-version 0.9.0
+update-tf-version version:
+    @echo "Updating Terraform provider version to ~> {{version}}..."
+    @find ./examples ./test -type f -name "*.tf" -exec perl -i -pe 's/(version\s*=\s*")~>\s*[0-9\.]+"/$1~> {{version}}"/' {} +
+    @perl -i -pe 's/(version\s*=\s*")~>\s*[0-9\.]+"/$1~> {{version}}"/' README.md
+    @echo "Update complete."

@@ -49,4 +49,5 @@ This project uses `just` as a command runner.
 *   **Code Style**: Standard Go formatting is enforced using `go fmt`.
 *   **Static Analysis**: `go vet` and `golangci-lint` are used to find potential issues.
 *   **Releasing**: The project uses `goreleaser` for building and releasing binaries.
+    *   When preparing a new release, update the provider version in the example and test files by using the `update-tf-version` command. For example: `just update-tf-version 0.9.0`
 *   **Local Development**: For local development, a `dev.tfrc` file is used to override the provider installation. See the `README.md` for more details.
