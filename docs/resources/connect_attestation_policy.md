@@ -13,32 +13,35 @@ Manages a Cofide Connect attestation policy. Attestation policies define how wor
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_attestation_policy" "example_attestation_policy_static" {
-  name   = "example-ap-static"
-  org_id = "example-org-id"
-
-  static = {
-    spiffe_id_path = "ns/default/sa/my-service-account"
-    parent_id_path = "test/agent"
-    selectors = [
-      {
-        type  = "k8s"
-        value = "ns:default"
-      },
-      {
-        type  = "k8s"
-        value = "sa:my-service-account"
-      }
-    ]
-    dns_names = [
-      "test.workload"
-    ]
+# ------ Example: kubernetes ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
   }
 }
 
-resource "cofide_connect_attestation_policy" "example_attestation_policy_kubernetes" {
-  name   = "example-ap-kubernetes"
-  org_id = "example-org-id"
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the attestation policy."
+  type        = string
+  default     = "example-ap-kubernetes"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+resource "cofide_connect_attestation_policy" "example" {
+  name   = var.name
+  org_id = var.org_id
 
   kubernetes = {
     namespace_selector = {
@@ -62,16 +65,110 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_kuberne
   }
 }
 
-resource "cofide_connect_attestation_policy" "example_attestation_policy_tpm_node" {
-  name   = "example-ap-tpm"
-  org_id = "example-org-id"
+
+output "attestation_policy_id" {
+  description = "The ID of the attestation policy."
+  value       = cofide_connect_attestation_policy.example.id
+}
+
+
+# ------ Example: static ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the attestation policy."
+  type        = string
+  default     = "example-ap-static"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+resource "cofide_connect_attestation_policy" "example" {
+  name   = var.name
+  org_id = var.org_id
+
+  static = {
+    spiffe_id_path = "ns/default/sa/my-service-account"
+    parent_id_path = "test/agent"
+    selectors = [
+      {
+        type  = "k8s"
+        value = "ns:default"
+      },
+      {
+        type  = "k8s"
+        value = "sa:my-service-account"
+      }
+    ]
+    dns_names = [
+      "test.workload"
+    ]
+  }
+}
+
+
+output "attestation_policy_id" {
+  description = "The ID of the attestation policy."
+  value       = cofide_connect_attestation_policy.example.id
+}
+
+
+# ------ Example: tpm_node ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the attestation policy."
+  type        = string
+  default     = "example-ap-tpm"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+resource "cofide_connect_attestation_policy" "example" {
+  name   = var.name
+  org_id = var.org_id
 
   tpm_node = {
     attestation = {
       ek_hash = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
     }
-    selector_values = ["plugin_name:tpm"]
   }
+}
+
+
+output "attestation_policy_id" {
+  description = "The ID of the attestation policy."
+  value       = cofide_connect_attestation_policy.example.id
 }
 ```
 

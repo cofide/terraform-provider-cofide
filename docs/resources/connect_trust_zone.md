@@ -13,10 +13,48 @@ Manages a Cofide Connect trust zone. A trust zone contains a SPIFFE trust domain
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_trust_zone" "example_trust_zone" {
-  name         = "example-tz"
-  org_id       = "example-org-id"
-  trust_domain = "example.cofide.dev"
+# ------ Example: ./examples_tmp/resources/cofide_connect_trust_zone ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_name" {
+  description = "The name for the trust zone."
+  type        = string
+  default     = "example-tz"
+}
+
+variable "trust_domain" {
+  description = "The trust domain for the trust zone."
+  type        = string
+  default     = "example.cofide.dev"
+}
+
+
+resource "cofide_connect_trust_zone" "example" {
+  name         = var.trust_zone_name
+  org_id       = var.org_id
+  trust_domain = var.trust_domain
+}
+
+
+output "trust_zone_id" {
+  description = "The ID of the created trust zone."
+  value       = cofide_connect_trust_zone.example.id
 }
 ```
 

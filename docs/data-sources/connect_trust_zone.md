@@ -13,9 +13,40 @@ Provides information about a Cofide Connect trust zone.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_trust_zone" "example_trust_zone" {
-  name   = "example-tz"
-  org_id = "example-org-id"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the trust zone."
+  type        = string
+  default     = "example-tz"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+data "cofide_connect_trust_zone" "example" {
+  name   = var.name
+  org_id = var.org_id
+}
+
+
+output "trust_zone_id" {
+  description = "The ID of the trust zone."
+  value       = data.cofide_connect_trust_zone.example.id
 }
 ```
 

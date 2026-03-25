@@ -13,9 +13,40 @@ Provides information about a Cofide Connect attestation policy.
 ## Example Usage
 
 ```terraform
-data "cofide_connect_attestation_policy" "example_attestation_policy" {
-  name   = "example-ap"
-  org_id = "example-org-id"
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.8.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the attestation policy."
+  type        = string
+  default     = "example-ap"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+
+data "cofide_connect_attestation_policy" "example" {
+  name   = var.name
+  org_id = var.org_id
+}
+
+
+output "attestation_policy_id" {
+  description = "The ID of the attestation policy."
+  value       = data.cofide_connect_attestation_policy.example.id
 }
 ```
 
