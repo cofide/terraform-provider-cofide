@@ -18,16 +18,16 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_static"
   org_id = "example-org-id"
 
   static = {
-    spiffe_id_path = "test/workload"
+    spiffe_id_path = "ns/default/sa/my-service-account"
     parent_id_path = "test/agent"
     selectors = [
       {
         type  = "k8s"
-        value = "ns:test"
+        value = "ns:default"
       },
       {
         type  = "k8s"
-        value = "sa:test-sa"
+        value = "sa:my-service-account"
       }
     ]
     dns_names = [
@@ -43,15 +43,34 @@ resource "cofide_connect_attestation_policy" "example_attestation_policy_kuberne
   kubernetes = {
     namespace_selector = {
       match_labels = {
-        "kubernetes.io/metadata.name" = "test"
+        "kubernetes.io/metadata.name" = "default"
       }
     }
     pod_selector = {
       match_labels = {
-        "test-label" = "test"
+        "app" = "my-app"
       }
+      match_expressions = [
+        {
+          key      = "environment"
+          operator = "In"
+          values   = ["production", "staging"]
+        }
+      ]
     }
-    spiffe_id_path_template = "test/workload"
+    spiffe_id_path_template = "ns/default/sa/my-service-account"
+  }
+}
+
+resource "cofide_connect_attestation_policy" "example_attestation_policy_tpm_node" {
+  name   = "example-ap-tpm"
+  org_id = "example-org-id"
+
+  tpm_node = {
+    attestation = {
+      ek_hash = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    }
+    selector_values = ["plugin_name:tpm"]
   }
 }
 ```

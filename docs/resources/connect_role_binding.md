@@ -13,14 +13,25 @@ Manages a Cofide Connect role binding. Grants a user or group a role on a specif
 ## Example Usage
 
 ```terraform
-resource "cofide_connect_role_binding" "example_role_binding" {
+resource "cofide_connect_role_binding" "example_role_binding_user" {
   role_id = "example-role-id"
   user = {
-    subject = "example-user-subject"
+    subject = "user@example.com"
   }
   resource = {
-    type = "example-resource-type"
-    id   = "example-resource-id"
+    type = "TrustZone"
+    id   = "example-tz-id"
+  }
+}
+
+resource "cofide_connect_role_binding" "example_role_binding_group" {
+  role_id = "example-role-id"
+  group = {
+    claim_value = "platform-engineers"
+  }
+  resource = {
+    type = "Organization"
+    id   = "example-org-id"
   }
 }
 ```
