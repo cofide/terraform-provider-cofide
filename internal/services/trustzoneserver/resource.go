@@ -8,6 +8,8 @@ import (
 	trustzoneserverpb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_zone_server/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/cofide/terraform-provider-cofide/internal/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,6 +18,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3"
 )
+
+// statusAttrTypes defines the attribute types for the status nested object.
+var statusAttrTypes = map[string]attr.Type{
+	"status":               tftypes.StringType,
+	"last_transition_time": tftypes.StringType,
+}
 
 var _ resource.Resource = &TrustZoneServerResource{}
 var _ resource.ResourceWithImportState = &TrustZoneServerResource{}
@@ -96,7 +104,11 @@ func (r *TrustZoneServerResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	state := trustZoneServerFromProto(createResp, plan.HelmValues)
+	state, diags := trustZoneServerFromProto(createResp, plan.HelmValues)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -130,7 +142,11 @@ func (r *TrustZoneServerResource) Read(ctx context.Context, req resource.ReadReq
 		)
 		return
 	}
-	newState := trustZoneServerFromProto(server, helmValues)
+	newState, diags := trustZoneServerFromProto(server, helmValues)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
@@ -184,7 +200,11 @@ func (r *TrustZoneServerResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	newState := trustZoneServerFromProto(updateResp, plan.HelmValues)
+	newState, diags := trustZoneServerFromProto(updateResp, plan.HelmValues)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
@@ -223,7 +243,7 @@ func (r *TrustZoneServerResource) ValidateConfig(ctx context.Context, req resour
 
 // trustZoneServerFromProto converts a TrustZoneServer proto to a TrustZoneServerModel.
 // helmValues is passed separately to preserve the original YAML/JSON format from the plan.
-func trustZoneServerFromProto(server *trustzoneserverpb.TrustZoneServer, helmValues tftypes.String) TrustZoneServerModel {
+func trustZoneServerFromProto(server *trustzoneserverpb.TrustZoneServer, helmValues tftypes.String) (TrustZoneServerModel, diag.Diagnostics) {
 	model := TrustZoneServerModel{
 		ID:          tftypes.StringValue(server.GetId()),
 		TrustZoneID: tftypes.StringValue(server.GetTrustZoneId()),
@@ -244,35 +264,33 @@ func trustZoneServerFromProto(server *trustzoneserverpb.TrustZoneServer, helmVal
 		model.KubernetesServiceAccount = tftypes.StringNull()
 	}
 
+	var diags diag.Diagnostics
 	if s := server.GetStatus(); s != nil {
-		model.Status = statusFromProto(s)
+		model.Status, diags = statusFromProto(s)
 	} else {
-		model.Status = &TrustZoneServerStatusModel{
-			Status:             tftypes.StringNull(),
-			LastTransitionTime: tftypes.StringNull(),
-		}
+		model.Status = tftypes.ObjectNull(statusAttrTypes)
 	}
 
 	if cfg := server.GetConnectK8SPsatConfig(); cfg != nil {
 		model.ConnectK8sPsatConfig = connectK8sPsatConfigFromProto(cfg)
 	}
 
-	return model
+	return model, diags
 }
 
-// statusFromProto converts a TrustZoneServer_Status proto to a TrustZoneServerStatusModel.
-func statusFromProto(s *trustzoneserverpb.TrustZoneServer_Status) *TrustZoneServerStatusModel {
-	model := &TrustZoneServerStatusModel{
-		Status: tftypes.StringValue(s.GetStatus().String()),
-	}
-
+// statusFromProto converts a TrustZoneServer_Status proto to a types.Object.
+func statusFromProto(s *trustzoneserverpb.TrustZoneServer_Status) (tftypes.Object, diag.Diagnostics) {
+	var lastTransitionTime tftypes.String
 	if t := s.GetLastTransitionTime(); t != nil {
-		model.LastTransitionTime = tftypes.StringValue(t.AsTime().Format("2006-01-02T15:04:05Z07:00"))
+		lastTransitionTime = tftypes.StringValue(t.AsTime().Format("2006-01-02T15:04:05Z07:00"))
 	} else {
-		model.LastTransitionTime = tftypes.StringNull()
+		lastTransitionTime = tftypes.StringNull()
 	}
 
-	return model
+	return tftypes.ObjectValue(statusAttrTypes, map[string]attr.Value{
+		"status":               tftypes.StringValue(s.GetStatus().String()),
+		"last_transition_time": lastTransitionTime,
+	})
 }
 
 // connectK8sPsatConfigToProto converts a ConnectK8sPsatConfigModel to a ConnectK8SPsatConfig proto.

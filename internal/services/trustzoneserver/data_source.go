@@ -57,6 +57,10 @@ func (d *TrustZoneServerDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 
 	helmValues := helmValuesFromProto(server.GetHelmValues())
-	state := trustZoneServerFromProto(server, helmValues)
+	state, diags := trustZoneServerFromProto(server, helmValues)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

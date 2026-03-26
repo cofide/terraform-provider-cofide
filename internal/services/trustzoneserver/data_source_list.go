@@ -76,7 +76,12 @@ func (d *TrustZoneServersDataSource) Read(ctx context.Context, req datasource.Re
 
 	for _, server := range servers {
 		helmValues := helmValuesFromProto(server.GetHelmValues())
-		state.TrustZoneServers = append(state.TrustZoneServers, trustZoneServerFromProto(server, helmValues))
+		serverModel, diags := trustZoneServerFromProto(server, helmValues)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		state.TrustZoneServers = append(state.TrustZoneServers, serverModel)
 	}
 
 	if state.TrustZoneServers == nil {
