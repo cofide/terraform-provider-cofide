@@ -140,7 +140,7 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	var oidcIssuerCaCert tftypes.String
 	if certBytes := createResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
 		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else if !plan.OidcIssuerCaCert.IsNull() {
+	} else if !plan.OidcIssuerCaCert.IsNull() && !plan.OidcIssuerCaCert.IsUnknown() {
 		oidcIssuerCaCert = plan.OidcIssuerCaCert
 	} else {
 		oidcIssuerCaCert = tftypes.StringNull()
@@ -299,7 +299,7 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	var oidcIssuerURLStr tftypes.String
 	if url := updateResp.GetOidcIssuerUrl(); url != "" {
 		oidcIssuerURLStr = tftypes.StringValue(url)
-	} else if !plan.OidcIssuerURL.IsNull() {
+	} else if !plan.OidcIssuerURL.IsNull() && !plan.OidcIssuerURL.IsUnknown() {
 		oidcIssuerURLStr = plan.OidcIssuerURL
 	} else {
 		oidcIssuerURLStr = tftypes.StringNull()
@@ -308,7 +308,7 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	var oidcIssuerCaCertStr tftypes.String
 	if certBytes := updateResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
 		oidcIssuerCaCertStr = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else if !plan.OidcIssuerCaCert.IsNull() {
+	} else if !plan.OidcIssuerCaCert.IsNull() && !plan.OidcIssuerCaCert.IsUnknown() {
 		oidcIssuerCaCertStr = plan.OidcIssuerCaCert
 	} else {
 		oidcIssuerCaCertStr = tftypes.StringNull()
