@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # This script prepares examples for tfplugindocs by concatenating
 # a full, runnable example module (variables, outputs, etc.) into a single
