@@ -122,7 +122,14 @@ func (r *TrustZoneServerResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	helmValues := helmValuesForState(server.GetHelmValues(), state.HelmValues)
+	helmValues, err := util.HelmValuesForState(server.GetHelmValues(), state.HelmValues)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error processing trust zone server data",
+			fmt.Sprintf("Could not process helm_values: %s", err),
+		)
+		return
+	}
 	newState := trustZoneServerFromProto(server, helmValues)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
@@ -164,7 +171,8 @@ func (r *TrustZoneServerResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	updateMask := &trustzoneserversvcpb.UpdateTrustZoneServerRequest_UpdateMask{
-		HelmValues: true,
+		HelmValues:           true,
+		ConnectK8SPsatConfig: true,
 	}
 
 	updateResp, err := r.client.TrustZoneServerV1Alpha1().UpdateTrustZoneServer(ctx, server, updateMask)
@@ -306,23 +314,6 @@ func parseHelmValues(valueStr tftypes.String) (*structpb.Struct, error) {
 	}
 
 	return helmValuesStruct, nil
-}
-
-// helmValuesForState returns a helm_values string for storage in state, preserving the original
-// YAML/JSON format from the plan when the API response matches semantically.
-func helmValuesForState(apiValues *structpb.Struct, prev tftypes.String) tftypes.String {
-	if apiValues == nil || len(apiValues.Fields) == 0 {
-		return tftypes.StringNull()
-	}
-	// Preserve previous format (YAML or JSON) to avoid spurious diffs.
-	if !prev.IsNull() && prev.ValueString() != "" {
-		return prev
-	}
-	jsonBytes, err := apiValues.MarshalJSON()
-	if err != nil {
-		return tftypes.StringNull()
-	}
-	return tftypes.StringValue(string(jsonBytes))
 }
 
 // helmValuesFromProto converts a structpb.Struct to a JSON string for use in data sources.

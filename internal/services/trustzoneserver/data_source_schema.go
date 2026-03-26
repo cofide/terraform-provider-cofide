@@ -17,17 +17,14 @@ func DataSourceSchema(_ context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the trust zone server.",
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 			},
 			"trust_zone_id": schema.StringAttribute{
 				Description: "The ID of the trust zone managed by this server.",
-				Optional:    true,
 				Computed:    true,
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "The ID of the cluster on which the server is deployed.",
-				Optional:    true,
 				Computed:    true,
 			},
 			"kubernetes_namespace": schema.StringAttribute{
@@ -40,7 +37,6 @@ func DataSourceSchema(_ context.Context) schema.Schema {
 			},
 			"org_id": schema.StringAttribute{
 				Description: "The ID of the organisation.",
-				Optional:    true,
 				Computed:    true,
 			},
 			"helm_values": schema.StringAttribute{
@@ -82,10 +78,6 @@ func DataSourceSchema(_ context.Context) schema.Schema {
 
 func (d *TrustZoneServerDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = DataSourceSchema(ctx)
-}
-
-func (d *TrustZoneServerDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
-	return []datasource.ConfigValidator{}
 }
 
 func ListDataSourceSchema(_ context.Context) schema.Schema {
