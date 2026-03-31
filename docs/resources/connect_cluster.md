@@ -164,7 +164,7 @@ output "cluster_id" {
 - `extra_helm_values` (String) Additional Helm values for the Cofide SPIRE Helm chart installation, in YAML format. Use `yamlencode()` to generate from a Terraform map.
 - `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL. Use `base64encode(file(...))` to supply a PEM certificate file.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 

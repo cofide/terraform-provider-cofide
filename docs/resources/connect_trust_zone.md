@@ -69,7 +69,7 @@ output "trust_zone_id" {
 ### Optional
 
 - `is_management_zone` (Boolean) Whether this is a management trust zone. Cannot be changed after creation.
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 

@@ -56,7 +56,7 @@ func ResourceSchema(_ context.Context) schema.Schema {
 				},
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organisation. Derived from the trust zone by Cofide Connect.",
+				Description: "The ID of the organization. Derived from the trust zone by Cofide Connect.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

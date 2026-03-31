@@ -126,7 +126,7 @@ output "ap_binding_id" {
 ### Optional
 
 - `federations` (List of Object) The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone. (see [below for nested schema](#nestedatt--federations))
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 

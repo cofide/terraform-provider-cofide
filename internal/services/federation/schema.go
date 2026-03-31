@@ -24,7 +24,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organisation.",
+				Description: "The ID of the organization.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{

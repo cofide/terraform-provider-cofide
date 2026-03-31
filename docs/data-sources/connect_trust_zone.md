@@ -56,7 +56,7 @@ output "trust_zone_id" {
 ### Optional
 
 - `name` (String) The name of the trust zone.
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 - `trust_domain` (String) The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`).
 
 ### Read-Only

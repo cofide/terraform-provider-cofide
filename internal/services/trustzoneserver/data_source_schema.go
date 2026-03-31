@@ -36,7 +36,7 @@ func DataSourceSchema(_ context.Context) schema.Schema {
 				Computed:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organisation.",
+				Description: "The ID of the organization.",
 				Computed:    true,
 			},
 			"helm_values": schema.StringAttribute{
@@ -93,7 +93,7 @@ func ListDataSourceSchema(_ context.Context) schema.Schema {
 				Optional:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "Filter by organisation ID.",
+				Description: "Filter by organization ID.",
 				Optional:    true,
 			},
 			"trust_zone_servers": schema.ListNestedAttribute{
@@ -122,7 +122,7 @@ func ListDataSourceSchema(_ context.Context) schema.Schema {
 							Computed:    true,
 						},
 						"org_id": schema.StringAttribute{
-							Description: "The ID of the organisation.",
+							Description: "The ID of the organization.",
 							Computed:    true,
 						},
 						"helm_values": schema.StringAttribute{

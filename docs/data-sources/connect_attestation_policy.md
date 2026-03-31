@@ -59,7 +59,7 @@ output "attestation_policy_id" {
 
 ### Optional
 
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 

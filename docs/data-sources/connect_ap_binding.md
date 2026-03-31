@@ -67,7 +67,7 @@ output "ap_binding_federations" {
 
 ### Optional
 
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 
