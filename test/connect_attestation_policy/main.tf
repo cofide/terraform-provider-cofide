@@ -56,10 +56,15 @@ resource "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
     attestation = {
       ek_hash = "5b3e0a049837688b09028ba84be190720bcc8f6cf74a487dc53b2ce9f376b5fb"
     }
-    selector_values = [
-      "test-selector"
-    ]
+    selector_values = var.selector_values
   }
+}
+
+# Use a variable rather than a literal list of strings for selector values to
+# cover https://github.com/cofide/terraform-provider-cofide/issues/113.
+variable "selector_values" {
+  type = list(string)
+  default = ["test-selector"]
 }
 
 data "cofide_connect_attestation_policy" "attestation_policy_static" {

@@ -1,6 +1,8 @@
 package attestationpolicy
 
 import (
+	"context"
+
 	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -9,7 +11,7 @@ import (
 )
 
 // modelToProto converts an AttestationPolicyModel to an equivalent AttestationPolicy protobuf.
-func modelToProto(model AttestationPolicyModel) *attestationpolicypb.AttestationPolicy {
+func modelToProto(ctx context.Context, model AttestationPolicyModel) *attestationpolicypb.AttestationPolicy {
 	proto := &attestationpolicypb.AttestationPolicy{
 		Id:    model.ID.ValueStringPointer(),
 		Name:  model.Name.ValueString(),
@@ -41,11 +43,13 @@ func modelToProto(model AttestationPolicyModel) *attestationpolicypb.Attestation
 	}
 
 	if model.TPMNode != nil {
+		var selectorValues []tftypes.String
+		model.TPMNode.SelectorValues.ElementsAs(ctx, &selectorValues, false)
 		tpmNodePolicy := &attestationpolicypb.APTPMNode{
 			Attestation: &attestationpolicypb.TPMAttestation{
 				EkHash: model.TPMNode.Attestation.EKHash.ValueStringPointer(),
 			},
-			SelectorValues: convertStringSlice(model.TPMNode.SelectorValues),
+			SelectorValues: convertStringSlice(selectorValues),
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_TpmNode{
 			TpmNode: tpmNodePolicy,
@@ -83,7 +87,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 
 	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
 		model.TPMNode = &APTPMNodeModel{
-			SelectorValues: convertProtoStringSlice(tpmNode.GetSelectorValues()),
+			SelectorValues: convertProtoSelectorValues(tpmNode.GetSelectorValues()),
 		}
 		if attestation := tpmNode.GetAttestation(); attestation != nil {
 			model.TPMNode.Attestation.EKHash = optionalStringValue(attestation.EkHash)
@@ -174,6 +178,15 @@ func convertProtoStringSlice(input []string) []tftypes.String {
 		result = append(result, tftypes.StringValue(t))
 	}
 	return result
+}
+
+// convertProtoSelectorValues converts a slice of strings from protobuf to a Terraform types.List.
+func convertProtoSelectorValues(input []string) tftypes.List {
+	elems := make([]attr.Value, 0, len(input))
+	for _, s := range input {
+		elems = append(elems, tftypes.StringValue(s))
+	}
+	return tftypes.ListValueMust(tftypes.StringType, elems)
 }
 
 // selectorAttrTypes defines the attribute types for a single selector object.

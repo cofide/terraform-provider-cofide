@@ -55,7 +55,7 @@ func (r *AttestationPolicyResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	policy := modelToProto(plan)
+	policy := modelToProto(ctx, plan)
 	createResp, err := r.client.AttestationPolicyV1Alpha1().CreateAttestationPolicy(ctx, policy)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -117,7 +117,7 @@ func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	policy := modelToProto(plan)
+	policy := modelToProto(ctx, plan)
 	policy.Id = &policyID
 
 	updateResp, err := r.client.AttestationPolicyV1Alpha1().UpdateAttestationPolicy(ctx, policy)
