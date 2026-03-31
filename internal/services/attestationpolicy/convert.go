@@ -5,13 +5,16 @@ import (
 
 	attestationpolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/attestation_policy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	spiretypes "github.com/spiffe/spire-api-sdk/proto/spire/api/types"
 )
 
 // modelToProto converts an AttestationPolicyModel to an equivalent AttestationPolicy protobuf.
-func modelToProto(ctx context.Context, model AttestationPolicyModel) *attestationpolicypb.AttestationPolicy {
+func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestationpolicypb.AttestationPolicy, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	proto := &attestationpolicypb.AttestationPolicy{
 		Id:    model.ID.ValueStringPointer(),
 		Name:  model.Name.ValueString(),
@@ -43,20 +46,20 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) *attestatio
 	}
 
 	if model.TPMNode != nil {
-		var selectorValues []tftypes.String
-		model.TPMNode.SelectorValues.ElementsAs(ctx, &selectorValues, false)
+		var selectorValues []string
+		diags.Append(model.TPMNode.SelectorValues.ElementsAs(ctx, &selectorValues, false)...)
 		tpmNodePolicy := &attestationpolicypb.APTPMNode{
 			Attestation: &attestationpolicypb.TPMAttestation{
 				EkHash: model.TPMNode.Attestation.EKHash.ValueStringPointer(),
 			},
-			SelectorValues: convertStringSlice(selectorValues),
+			SelectorValues: selectorValues,
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_TpmNode{
 			TpmNode: tpmNodePolicy,
 		}
 	}
 
-	return proto
+	return proto, diags
 }
 
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
@@ -181,7 +184,11 @@ func convertProtoStringSlice(input []string) []tftypes.String {
 }
 
 // convertProtoSelectorValues converts a slice of strings from protobuf to a Terraform types.List.
+// Returns a null list when input is empty.
 func convertProtoSelectorValues(input []string) tftypes.List {
+	if len(input) == 0 {
+		return tftypes.ListNull(tftypes.StringType)
+	}
 	elems := make([]attr.Value, 0, len(input))
 	for _, s := range input {
 		elems = append(elems, tftypes.StringValue(s))
