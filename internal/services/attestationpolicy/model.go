@@ -38,7 +38,7 @@ type APStaticModel struct {
 
 type APTPMNodeModel struct {
 	Attestation    TPMAttestationModel `tfsdk:"attestation"`
-	SelectorValues []tftypes.String    `tfsdk:"selector_values"`
+	SelectorValues tftypes.List        `tfsdk:"selector_values"`
 }
 
 type TPMAttestationModel struct {
