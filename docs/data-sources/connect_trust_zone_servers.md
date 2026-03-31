@@ -48,7 +48,7 @@ output "trust_zone_server_ids" {
 ### Optional
 
 - `cluster_id` (String) Filter by cluster ID.
-- `org_id` (String) Filter by organisation ID.
+- `org_id` (String) Filter by organization ID.
 - `trust_zone_id` (String) Filter by trust zone ID.
 
 ### Read-Only
@@ -66,7 +66,7 @@ Read-Only:
 - `id` (String) The ID of the trust zone server.
 - `kubernetes_namespace` (String) The Kubernetes namespace in which the server is deployed.
 - `kubernetes_service_account` (String) The name of the Kubernetes service account deployed with the server.
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 - `status` (Attributes) The current lifecycle status of the trust zone server. (see [below for nested schema](#nestedatt--trust_zone_servers--status))
 - `trust_zone_id` (String) The ID of the trust zone managed by this server.
 

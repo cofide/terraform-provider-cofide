@@ -122,7 +122,7 @@ output "trust_zone_server_id" {
 ### Read-Only
 
 - `id` (String) The ID of the trust zone server.
-- `org_id` (String) The ID of the organisation. Derived from the trust zone by Cofide Connect.
+- `org_id` (String) The ID of the organization. Derived from the trust zone by Cofide Connect.
 - `status` (Attributes) The current lifecycle status of the trust zone server. Set by Cofide Connect. (see [below for nested schema](#nestedatt--status))
 
 <a id="nestedatt--connect_k8s_psat_config"></a>
