@@ -182,7 +182,7 @@ output "attestation_policy_id" {
 ### Optional
 
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
 - `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
 

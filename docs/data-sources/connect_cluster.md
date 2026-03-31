@@ -70,7 +70,7 @@ output "cluster_oidc_issuer_url" {
 
 ### Optional
 
-- `org_id` (String) The ID of the organisation.
+- `org_id` (String) The ID of the organization.
 - `trust_zone_id` (String) The ID of the associated trust zone.
 
 ### Read-Only
