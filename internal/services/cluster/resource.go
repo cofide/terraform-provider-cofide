@@ -408,13 +408,13 @@ func k8sPsatConfigToProto(ctx context.Context, model *K8sPsatConfigModel) (*trus
 
 	var allowedNodeLabelKeys []string
 	if diags := model.AllowedNodeLabelKeys.ElementsAs(ctx, &allowedNodeLabelKeys, false); diags.HasError() {
-		return nil, fmt.Errorf("error reading allowed_node_label_keys")
+		return nil, fmt.Errorf("error reading allowed_node_label_keys: %s", diags[0].Detail())
 	}
 	cfg.AllowedNodeLabelKeys = allowedNodeLabelKeys
 
 	var allowedPodLabelKeys []string
 	if diags := model.AllowedPodLabelKeys.ElementsAs(ctx, &allowedPodLabelKeys, false); diags.HasError() {
-		return nil, fmt.Errorf("error reading allowed_pod_label_keys")
+		return nil, fmt.Errorf("error reading allowed_pod_label_keys: %s", diags[0].Detail())
 	}
 	cfg.AllowedPodLabelKeys = allowedPodLabelKeys
 
