@@ -14,7 +14,7 @@ type AttestationPolicyModel struct {
 type APKubernetesModel struct {
 	NamespaceSelector    *APLabelSelectorModel `tfsdk:"namespace_selector"`
 	PodSelector          *APLabelSelectorModel `tfsdk:"pod_selector"`
-	DnsNameTemplates     []tftypes.String      `tfsdk:"dns_name_templates"`
+	DnsNameTemplates     tftypes.List          `tfsdk:"dns_name_templates"`
 	SpiffeIDPathTemplate tftypes.String        `tfsdk:"spiffe_id_path_template"`
 }
 
@@ -24,16 +24,16 @@ type APLabelSelectorModel struct {
 }
 
 type APMatchExpressionModel struct {
-	Key      tftypes.String   `tfsdk:"key"`
-	Operator tftypes.String   `tfsdk:"operator"`
-	Values   []tftypes.String `tfsdk:"values"`
+	Key      tftypes.String `tfsdk:"key"`
+	Operator tftypes.String `tfsdk:"operator"`
+	Values   tftypes.List   `tfsdk:"values"`
 }
 
 type APStaticModel struct {
-	SpiffeIDPath tftypes.String   `tfsdk:"spiffe_id_path"`
-	ParentIdPath tftypes.String   `tfsdk:"parent_id_path"`
-	Selectors    tftypes.List     `tfsdk:"selectors"`
-	DNSNames     []tftypes.String `tfsdk:"dns_names"`
+	SpiffeIDPath tftypes.String `tfsdk:"spiffe_id_path"`
+	ParentIdPath tftypes.String `tfsdk:"parent_id_path"`
+	Selectors    tftypes.List   `tfsdk:"selectors"`
+	DNSNames     tftypes.List   `tfsdk:"dns_names"`
 }
 
 type APTPMNodeModel struct {

@@ -10,6 +10,7 @@ import (
 	trustproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/trust_provider/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/cofide/terraform-provider-cofide/internal/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -90,7 +91,7 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		cluster.OidcIssuerCaCert = decodedCert
 	}
 
-	trustProvider, err := trustProviderToProto(plan.TrustProvider)
+	trustProvider, err := trustProviderToProto(ctx, plan.TrustProvider)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating trust provider",
@@ -266,14 +267,14 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if plan.TrustProvider != nil && !plan.TrustProvider.Kind.IsNull() {
-		trustProvider, err := trustProviderToProto(plan.TrustProvider)
+		trustProvider, err := trustProviderToProto(ctx, plan.TrustProvider)
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating trust provider", fmt.Sprintf("Failed to create trust provider: %s", err))
 			return
 		}
 		cluster.TrustProvider = trustProvider
 	} else {
-		trustProvider, _ := trustProviderToProto(state.TrustProvider)
+		trustProvider, _ := trustProviderToProto(ctx, state.TrustProvider)
 		cluster.TrustProvider = trustProvider
 	}
 
@@ -377,13 +378,13 @@ func newTrustProvider(kind string) (*trustproviderpb.TrustProvider, error) {
 }
 
 // trustProviderToProto converts a TrustProviderModel to a TrustProvider proto message.
-func trustProviderToProto(model *TrustProviderModel) (*trustproviderpb.TrustProvider, error) {
+func trustProviderToProto(ctx context.Context, model *TrustProviderModel) (*trustproviderpb.TrustProvider, error) {
 	tp, err := newTrustProvider(model.Kind.ValueString())
 	if err != nil {
 		return nil, err
 	}
 	if model.K8sPsatConfig != nil {
-		cfg, err := k8sPsatConfigToProto(model.K8sPsatConfig)
+		cfg, err := k8sPsatConfigToProto(ctx, model.K8sPsatConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -393,7 +394,7 @@ func trustProviderToProto(model *TrustProviderModel) (*trustproviderpb.TrustProv
 }
 
 // k8sPsatConfigToProto converts a K8sPsatConfigModel to a K8SPsatConfig proto message.
-func k8sPsatConfigToProto(model *K8sPsatConfigModel) (*trustproviderpb.K8SPsatConfig, error) {
+func k8sPsatConfigToProto(ctx context.Context, model *K8sPsatConfigModel) (*trustproviderpb.K8SPsatConfig, error) {
 	cfg := &trustproviderpb.K8SPsatConfig{
 		Enabled: model.Enabled.ValueBool(),
 	}
@@ -405,13 +406,17 @@ func k8sPsatConfigToProto(model *K8sPsatConfigModel) (*trustproviderpb.K8SPsatCo
 		})
 	}
 
-	for _, key := range model.AllowedNodeLabelKeys {
-		cfg.AllowedNodeLabelKeys = append(cfg.AllowedNodeLabelKeys, key.ValueString())
+	var allowedNodeLabelKeys []string
+	if diags := model.AllowedNodeLabelKeys.ElementsAs(ctx, &allowedNodeLabelKeys, false); diags.HasError() {
+		return nil, fmt.Errorf("error reading allowed_node_label_keys")
 	}
+	cfg.AllowedNodeLabelKeys = allowedNodeLabelKeys
 
-	for _, key := range model.AllowedPodLabelKeys {
-		cfg.AllowedPodLabelKeys = append(cfg.AllowedPodLabelKeys, key.ValueString())
+	var allowedPodLabelKeys []string
+	if diags := model.AllowedPodLabelKeys.ElementsAs(ctx, &allowedPodLabelKeys, false); diags.HasError() {
+		return nil, fmt.Errorf("error reading allowed_pod_label_keys")
 	}
+	cfg.AllowedPodLabelKeys = allowedPodLabelKeys
 
 	if !model.ApiServerCaCert.IsNull() && model.ApiServerCaCert.ValueString() != "" {
 		decoded, err := base64.StdEncoding.DecodeString(model.ApiServerCaCert.ValueString())
@@ -456,10 +461,10 @@ func k8sPsatConfigForState(model, prev *K8sPsatConfigModel) *K8sPsatConfigModel 
 	if len(model.AllowedServiceAccounts) == 0 && len(prev.AllowedServiceAccounts) == 0 && prev.AllowedServiceAccounts != nil {
 		model.AllowedServiceAccounts = prev.AllowedServiceAccounts
 	}
-	if len(model.AllowedNodeLabelKeys) == 0 && len(prev.AllowedNodeLabelKeys) == 0 && prev.AllowedNodeLabelKeys != nil {
+	if model.AllowedNodeLabelKeys.IsNull() && !prev.AllowedNodeLabelKeys.IsNull() && len(prev.AllowedNodeLabelKeys.Elements()) == 0 {
 		model.AllowedNodeLabelKeys = prev.AllowedNodeLabelKeys
 	}
-	if len(model.AllowedPodLabelKeys) == 0 && len(prev.AllowedPodLabelKeys) == 0 && prev.AllowedPodLabelKeys != nil {
+	if model.AllowedPodLabelKeys.IsNull() && !prev.AllowedPodLabelKeys.IsNull() && len(prev.AllowedPodLabelKeys.Elements()) == 0 {
 		model.AllowedPodLabelKeys = prev.AllowedPodLabelKeys
 	}
 	return model
@@ -489,12 +494,24 @@ func k8sPsatConfigFromProto(cfg *trustproviderpb.K8SPsatConfig) *K8sPsatConfigMo
 		})
 	}
 
-	for _, key := range cfg.AllowedNodeLabelKeys {
-		model.AllowedNodeLabelKeys = append(model.AllowedNodeLabelKeys, tftypes.StringValue(key))
+	if len(cfg.AllowedNodeLabelKeys) > 0 {
+		nodeLabelKeyElems := make([]attr.Value, 0, len(cfg.AllowedNodeLabelKeys))
+		for _, key := range cfg.AllowedNodeLabelKeys {
+			nodeLabelKeyElems = append(nodeLabelKeyElems, tftypes.StringValue(key))
+		}
+		model.AllowedNodeLabelKeys = tftypes.ListValueMust(tftypes.StringType, nodeLabelKeyElems)
+	} else {
+		model.AllowedNodeLabelKeys = tftypes.ListNull(tftypes.StringType)
 	}
 
-	for _, key := range cfg.AllowedPodLabelKeys {
-		model.AllowedPodLabelKeys = append(model.AllowedPodLabelKeys, tftypes.StringValue(key))
+	if len(cfg.AllowedPodLabelKeys) > 0 {
+		podLabelKeyElems := make([]attr.Value, 0, len(cfg.AllowedPodLabelKeys))
+		for _, key := range cfg.AllowedPodLabelKeys {
+			podLabelKeyElems = append(podLabelKeyElems, tftypes.StringValue(key))
+		}
+		model.AllowedPodLabelKeys = tftypes.ListValueMust(tftypes.StringType, podLabelKeyElems)
+	} else {
+		model.AllowedPodLabelKeys = tftypes.ListNull(tftypes.StringType)
 	}
 
 	if len(cfg.ApiServerCaCert) > 0 {

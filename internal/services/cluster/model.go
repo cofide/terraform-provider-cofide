@@ -22,10 +22,10 @@ type TrustProviderModel struct {
 }
 
 type K8sPsatConfigModel struct {
-	Enabled                types.Bool           `tfsdk:"enabled"`
+	Enabled                types.Bool            `tfsdk:"enabled"`
 	AllowedServiceAccounts []ServiceAccountModel `tfsdk:"allowed_service_accounts"`
-	AllowedNodeLabelKeys   []types.String        `tfsdk:"allowed_node_label_keys"`
-	AllowedPodLabelKeys    []types.String        `tfsdk:"allowed_pod_label_keys"`
+	AllowedNodeLabelKeys   types.List            `tfsdk:"allowed_node_label_keys"`
+	AllowedPodLabelKeys    types.List            `tfsdk:"allowed_pod_label_keys"`
 	ApiServerCaCert        types.String          `tfsdk:"api_server_ca_cert"`
 	ApiServerURL           types.String          `tfsdk:"api_server_url"`
 	ApiServerTLSServerName types.String          `tfsdk:"api_server_tls_server_name"`

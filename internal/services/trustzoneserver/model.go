@@ -20,8 +20,8 @@ type TrustZoneServerStatusModel struct {
 }
 
 type ConnectK8sPsatConfigModel struct {
-	Audiences               []types.String `tfsdk:"audiences"`
-	SpireServerSpiffeIDPath types.String   `tfsdk:"spire_server_spiffe_id_path"`
+	Audiences               types.List   `tfsdk:"audiences"`
+	SpireServerSpiffeIDPath types.String `tfsdk:"spire_server_spiffe_id_path"`
 }
 
 type TrustZoneServersDataSourceModel struct {
