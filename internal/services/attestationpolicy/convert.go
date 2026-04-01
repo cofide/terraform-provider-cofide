@@ -22,10 +22,12 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 	}
 
 	if model.Kubernetes != nil {
+		var dnsNameTemplates []string
+		diags.Append(model.Kubernetes.DnsNameTemplates.ElementsAs(ctx, &dnsNameTemplates, false)...)
 		k8sPolicy := &attestationpolicypb.APKubernetes{
-			NamespaceSelector:    convertLabelSelector(model.Kubernetes.NamespaceSelector),
-			PodSelector:          convertLabelSelector(model.Kubernetes.PodSelector),
-			DnsNameTemplates:     convertStringSlice(model.Kubernetes.DnsNameTemplates),
+			NamespaceSelector:    convertLabelSelector(ctx, model.Kubernetes.NamespaceSelector, &diags),
+			PodSelector:          convertLabelSelector(ctx, model.Kubernetes.PodSelector, &diags),
+			DnsNameTemplates:     dnsNameTemplates,
 			SpiffeIdPathTemplate: model.Kubernetes.SpiffeIDPathTemplate.ValueStringPointer(),
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_Kubernetes{
@@ -34,11 +36,13 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 	}
 
 	if model.Static != nil {
+		var dnsNames []string
+		diags.Append(model.Static.DNSNames.ElementsAs(ctx, &dnsNames, false)...)
 		staticPolicy := &attestationpolicypb.APStatic{
 			SpiffeIdPath: model.Static.SpiffeIDPath.ValueStringPointer(),
 			ParentIdPath: model.Static.ParentIdPath.ValueStringPointer(),
 			Selectors:    convertSelectors(model.Static.Selectors),
-			DnsNames:     convertStringSlice(model.Static.DNSNames),
+			DnsNames:     dnsNames,
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_Static{
 			Static: staticPolicy,
@@ -74,7 +78,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 		model.Kubernetes = &APKubernetesModel{
 			NamespaceSelector:    convertProtoLabelSelector(k8s.NamespaceSelector),
 			PodSelector:          convertProtoLabelSelector(k8s.PodSelector),
-			DnsNameTemplates:     convertProtoStringSlice(k8s.GetDnsNameTemplates()),
+			DnsNameTemplates:     convertProtoSelectorValues(k8s.GetDnsNameTemplates()),
 			SpiffeIDPathTemplate: optionalStringValue(k8s.SpiffeIdPathTemplate),
 		}
 	}
@@ -84,7 +88,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 			SpiffeIDPath: optionalStringValue(static.SpiffeIdPath),
 			ParentIdPath: optionalStringValue(static.ParentIdPath),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
-			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
+			DNSNames:     convertProtoSelectorValues(static.GetDnsNames()),
 		}
 	}
 
@@ -100,7 +104,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 	return model
 }
 
-func convertLabelSelector(selector *APLabelSelectorModel) *attestationpolicypb.APLabelSelector {
+func convertLabelSelector(ctx context.Context, selector *APLabelSelectorModel, diags *diag.Diagnostics) *attestationpolicypb.APLabelSelector {
 	if selector == nil {
 		return nil
 	}
@@ -123,9 +127,9 @@ func convertLabelSelector(selector *APLabelSelectorModel) *attestationpolicypb.A
 			Key:      expr.Key.ValueString(),
 			Operator: expr.Operator.ValueString(),
 		}
-		for _, v := range expr.Values {
-			matchExpr.Values = append(matchExpr.Values, v.ValueString())
-		}
+		var values []string
+		diags.Append(expr.Values.ElementsAs(ctx, &values, false)...)
+		matchExpr.Values = values
 		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
 	}
 
@@ -155,31 +159,11 @@ func convertProtoLabelSelector(selector *attestationpolicypb.APLabelSelector) *A
 		matchExpr := APMatchExpressionModel{
 			Key:      tftypes.StringValue(expr.GetKey()),
 			Operator: tftypes.StringValue(expr.GetOperator()),
-		}
-		for _, v := range expr.GetValues() {
-			matchExpr.Values = append(matchExpr.Values, tftypes.StringValue(v))
+			Values:   convertProtoSelectorValues(expr.GetValues()),
 		}
 		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
 	}
 
-	return result
-}
-
-// convertStringSlice converts a slice of strings from Terraform to protobuf types.
-func convertStringSlice(input []tftypes.String) []string {
-	var result []string
-	for _, s := range input {
-		result = append(result, s.ValueString())
-	}
-	return result
-}
-
-// convertProtoStringSlice converts a slice of strings from protobuf to Terraform types.
-func convertProtoStringSlice(input []string) []tftypes.String {
-	var result []tftypes.String
-	for _, t := range input {
-		result = append(result, tftypes.StringValue(t))
-	}
 	return result
 }
 

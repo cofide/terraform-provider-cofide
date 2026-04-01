@@ -92,7 +92,12 @@ func (r *TrustZoneServerResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	if plan.ConnectK8sPsatConfig != nil {
-		server.ConnectK8SPsatConfig = connectK8sPsatConfigToProto(plan.ConnectK8sPsatConfig)
+		cfg, cfgDiags := connectK8sPsatConfigToProto(ctx, plan.ConnectK8sPsatConfig)
+		resp.Diagnostics.Append(cfgDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		server.ConnectK8SPsatConfig = cfg
 	}
 
 	createResp, err := r.client.TrustZoneServerV1Alpha1().CreateTrustZoneServer(ctx, server)
@@ -183,7 +188,12 @@ func (r *TrustZoneServerResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	if plan.ConnectK8sPsatConfig != nil {
-		server.ConnectK8SPsatConfig = connectK8sPsatConfigToProto(plan.ConnectK8sPsatConfig)
+		cfg, cfgDiags := connectK8sPsatConfigToProto(ctx, plan.ConnectK8sPsatConfig)
+		resp.Diagnostics.Append(cfgDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		server.ConnectK8SPsatConfig = cfg
 	}
 
 	updateMask := &trustzoneserversvcpb.UpdateTrustZoneServerRequest_UpdateMask{
@@ -294,25 +304,26 @@ func statusFromProto(s *trustzoneserverpb.TrustZoneServer_Status) (tftypes.Objec
 }
 
 // connectK8sPsatConfigToProto converts a ConnectK8sPsatConfigModel to a ConnectK8SPsatConfig proto.
-func connectK8sPsatConfigToProto(model *ConnectK8sPsatConfigModel) *trustzoneserverpb.ConnectK8SPsatConfig {
+func connectK8sPsatConfigToProto(ctx context.Context, model *ConnectK8sPsatConfigModel) (*trustzoneserverpb.ConnectK8SPsatConfig, diag.Diagnostics) {
 	cfg := &trustzoneserverpb.ConnectK8SPsatConfig{
 		SpireServerSpiffeIdPath: model.SpireServerSpiffeIDPath.ValueString(),
 	}
-	for _, a := range model.Audiences {
-		cfg.Audiences = append(cfg.Audiences, a.ValueString())
-	}
-	return cfg
+	var audiences []string
+	diags := model.Audiences.ElementsAs(ctx, &audiences, false)
+	cfg.Audiences = audiences
+	return cfg, diags
 }
 
 // connectK8sPsatConfigFromProto converts a ConnectK8SPsatConfig proto to a ConnectK8sPsatConfigModel.
 func connectK8sPsatConfigFromProto(cfg *trustzoneserverpb.ConnectK8SPsatConfig) *ConnectK8sPsatConfigModel {
-	model := &ConnectK8sPsatConfigModel{
-		SpireServerSpiffeIDPath: tftypes.StringValue(cfg.GetSpireServerSpiffeIdPath()),
-	}
+	elems := make([]attr.Value, 0, len(cfg.GetAudiences()))
 	for _, a := range cfg.GetAudiences() {
-		model.Audiences = append(model.Audiences, tftypes.StringValue(a))
+		elems = append(elems, tftypes.StringValue(a))
 	}
-	return model
+	return &ConnectK8sPsatConfigModel{
+		SpireServerSpiffeIDPath: tftypes.StringValue(cfg.GetSpireServerSpiffeIdPath()),
+		Audiences:               tftypes.ListValueMust(tftypes.StringType, elems),
+	}
 }
 
 // parseHelmValues parses the helm_values field from a YAML/JSON string to a structpb.Struct.

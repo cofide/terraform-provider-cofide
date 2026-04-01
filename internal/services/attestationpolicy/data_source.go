@@ -101,7 +101,7 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 		if ps := k8s.GetPodSelector(); ps != nil {
 			state.Kubernetes.PodSelector = convertProtoLabelSelector(ps)
 		}
-		state.Kubernetes.DnsNameTemplates = convertProtoStringSlice(k8s.GetDnsNameTemplates())
+		state.Kubernetes.DnsNameTemplates = convertProtoSelectorValues(k8s.GetDnsNameTemplates())
 		state.Kubernetes.SpiffeIDPathTemplate = types.StringValue(k8s.GetSpiffeIdPathTemplate())
 	}
 
@@ -110,7 +110,7 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 			SpiffeIDPath: types.StringValue(static.GetSpiffeIdPath()),
 			ParentIdPath: types.StringValue(static.GetParentIdPath()),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
-			DNSNames:     convertProtoStringSlice(static.GetDnsNames()),
+			DNSNames:     convertProtoSelectorValues(static.GetDnsNames()),
 		}
 	}
 
