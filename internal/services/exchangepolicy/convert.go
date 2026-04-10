@@ -39,12 +39,25 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 		proto.Action = &action
 	}
 
-	proto.SubjectIdentity = stringSetToProto(ctx, model.SubjectIdentity)
-	proto.SubjectIssuer = stringSetToProto(ctx, model.SubjectIssuer)
-	proto.ActorIdentity = stringSetToProto(ctx, model.ActorIdentity)
-	proto.ActorIssuer = stringSetToProto(ctx, model.ActorIssuer)
-	proto.ClientId = stringSetToProto(ctx, model.ClientID)
-	proto.TargetAudience = stringSetToProto(ctx, model.TargetAudience)
+	fields := []struct {
+		name  string
+		list  tftypes.List
+		dest  **exchangepolicypb.StringSet
+	}{
+		{"subject_identity", model.SubjectIdentity, &proto.SubjectIdentity},
+		{"subject_issuer", model.SubjectIssuer, &proto.SubjectIssuer},
+		{"actor_identity", model.ActorIdentity, &proto.ActorIdentity},
+		{"actor_issuer", model.ActorIssuer, &proto.ActorIssuer},
+		{"client_id", model.ClientID, &proto.ClientId},
+		{"target_audience", model.TargetAudience, &proto.TargetAudience},
+	}
+	for _, f := range fields {
+		ss, err := stringSetToProto(ctx, f.list)
+		if err != nil {
+			return nil, fmt.Errorf("field %s: %w", f.name, err)
+		}
+		*f.dest = ss
+	}
 
 	if !model.OutboundScopes.IsNull() && !model.OutboundScopes.IsUnknown() {
 		for _, v := range model.OutboundScopes.Elements() {
@@ -88,39 +101,41 @@ func protoToModel(proto *exchangepolicypb.ExchangePolicy) ExchangePolicyModel {
 }
 
 // stringSetToProto converts a tftypes.List of StringMatcherModel to a StringSet protobuf.
-func stringSetToProto(ctx context.Context, list tftypes.List) *exchangepolicypb.StringSet {
+func stringSetToProto(ctx context.Context, list tftypes.List) (*exchangepolicypb.StringSet, error) {
 	if list.IsNull() || list.IsUnknown() {
-		return nil
+		return nil, nil
 	}
 	var matchers []StringMatcherModel
 	list.ElementsAs(ctx, &matchers, false)
 	proto := &exchangepolicypb.StringSet{}
 	for _, m := range matchers {
-		matcher := stringMatcherToProto(m)
-		if matcher != nil {
-			proto.Matchers = append(proto.Matchers, matcher)
+		matcher, err := stringMatcherToProto(m)
+		if err != nil {
+			return nil, err
 		}
+		proto.Matchers = append(proto.Matchers, matcher)
 	}
-	return proto
+	return proto, nil
 }
 
 // stringMatcherToProto converts a StringMatcherModel to a StringMatcher protobuf.
-func stringMatcherToProto(model StringMatcherModel) *exchangepolicypb.StringMatcher {
+// Returns an error if neither Exact nor Glob is set.
+func stringMatcherToProto(model StringMatcherModel) (*exchangepolicypb.StringMatcher, error) {
 	if !model.Exact.IsNull() {
 		return &exchangepolicypb.StringMatcher{
 			Match: &exchangepolicypb.StringMatcher_Exact{
 				Exact: model.Exact.ValueString(),
 			},
-		}
+		}, nil
 	}
 	if !model.Glob.IsNull() {
 		return &exchangepolicypb.StringMatcher{
 			Match: &exchangepolicypb.StringMatcher_Glob{
 				Glob: model.Glob.ValueString(),
 			},
-		}
+		}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("string matcher must set exactly one of exact or glob")
 }
 
 // stringSetFromProto converts a StringSet protobuf to a tftypes.List of StringMatcherModel.

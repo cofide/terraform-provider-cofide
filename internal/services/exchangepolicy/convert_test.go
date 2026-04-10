@@ -323,12 +323,14 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestStringSetToProto_Nil(t *testing.T) {
-	got := stringSetToProto(context.Background(), types.ListNull(stringMatcherObjectType))
+	got, err := stringSetToProto(context.Background(), types.ListNull(stringMatcherObjectType))
+	require.NoError(t, err)
 	assert.Nil(t, got)
 }
 
 func TestStringSetToProto_Empty(t *testing.T) {
-	got := stringSetToProto(context.Background(), types.ListValueMust(stringMatcherObjectType, []attr.Value{}))
+	got, err := stringSetToProto(context.Background(), types.ListValueMust(stringMatcherObjectType, []attr.Value{}))
+	require.NoError(t, err)
 	assert.NotNil(t, got)
 	assert.Nil(t, got.Matchers)
 }
@@ -338,8 +340,9 @@ func TestStringMatcherToProto_BothNull(t *testing.T) {
 		Exact: types.StringNull(),
 		Glob:  types.StringNull(),
 	}
-	got := stringMatcherToProto(model)
+	got, err := stringMatcherToProto(model)
 	assert.Nil(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
 }
 
 func TestStringMatcherToProto_ExactTakesPrecedence(t *testing.T) {
@@ -347,9 +350,22 @@ func TestStringMatcherToProto_ExactTakesPrecedence(t *testing.T) {
 		Exact: types.StringValue("exact-value"),
 		Glob:  types.StringValue("glob-*"),
 	}
-	got := stringMatcherToProto(model)
+	got, err := stringMatcherToProto(model)
+	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "exact-value", got.GetExact())
+}
+
+func TestStringSetToProto_BothNullMatcher(t *testing.T) {
+	list := types.ListValueMust(stringMatcherObjectType, []attr.Value{
+		types.ObjectValueMust(stringMatcherAttrTypes, map[string]attr.Value{
+			"exact": types.StringNull(),
+			"glob":  types.StringNull(),
+		}),
+	})
+	got, err := stringSetToProto(context.Background(), list)
+	assert.Nil(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
 }
 
 func TestStringSetFromProto_Nil(t *testing.T) {
