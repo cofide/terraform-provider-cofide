@@ -349,15 +349,34 @@ func TestStringMatcherToProto_BothNull(t *testing.T) {
 	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
 }
 
-func TestStringMatcherToProto_ExactTakesPrecedence(t *testing.T) {
+func TestStringMatcherToProto_BothSet(t *testing.T) {
 	model := StringMatcherModel{
 		Exact: types.StringValue("exact-value"),
 		Glob:  types.StringValue("glob-*"),
 	}
 	got, err := stringMatcherToProto(model)
-	require.NoError(t, err)
-	require.NotNil(t, got)
-	assert.Equal(t, "exact-value", got.GetExact())
+	assert.Nil(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
+}
+
+func TestStringMatcherToProto_ExactUnknown(t *testing.T) {
+	model := StringMatcherModel{
+		Exact: types.StringUnknown(),
+		Glob:  types.StringNull(),
+	}
+	got, err := stringMatcherToProto(model)
+	assert.Nil(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
+}
+
+func TestStringMatcherToProto_GlobUnknown(t *testing.T) {
+	model := StringMatcherModel{
+		Exact: types.StringNull(),
+		Glob:  types.StringUnknown(),
+	}
+	got, err := stringMatcherToProto(model)
+	assert.Nil(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
 }
 
 func TestStringSetToProto_BothNullMatcher(t *testing.T) {
