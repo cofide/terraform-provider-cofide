@@ -19,7 +19,8 @@ func TestProtoToModel_Minimal(t *testing.T) {
 		TrustZoneId: "tz-1",
 	}
 
-	got := protoToModel(proto)
+	got, err := protoToModel(proto)
+	require.NoError(t, err)
 
 	assert.Equal(t, types.StringValue("ep-1"), got.ID)
 	assert.Equal(t, types.StringValue("org-1"), got.OrgID)
@@ -56,7 +57,8 @@ func TestProtoToModel_Full(t *testing.T) {
 		OutboundScopes: []string{"read", "write"},
 	}
 
-	got := protoToModel(proto)
+	got, err := protoToModel(proto)
+	require.NoError(t, err)
 
 	assert.Equal(t, types.StringValue("ALLOW"), got.Action)
 
@@ -91,7 +93,8 @@ func TestProtoToModel_DenyAction(t *testing.T) {
 		Action: &action,
 	}
 
-	got := protoToModel(proto)
+	got, err := protoToModel(proto)
+	require.NoError(t, err)
 	assert.Equal(t, types.StringValue("DENY"), got.Action)
 }
 
@@ -316,7 +319,8 @@ func TestRoundTrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			proto, err := modelToProto(context.Background(), tt.model)
 			require.NoError(t, err)
-			got := protoToModel(proto)
+			got, err := protoToModel(proto)
+			require.NoError(t, err)
 			assert.Equal(t, tt.model, got)
 		})
 	}
@@ -369,19 +373,32 @@ func TestStringSetToProto_BothNullMatcher(t *testing.T) {
 }
 
 func TestStringSetFromProto_Nil(t *testing.T) {
-	got := stringSetFromProto(nil)
+	got, err := stringSetFromProto(nil)
+	require.NoError(t, err)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got)
 }
 
 func TestStringSetFromProto_Empty(t *testing.T) {
 	// An empty StringSet (no matchers) is treated as absent.
-	got := stringSetFromProto(&exchangepolicypb.StringSet{})
+	got, err := stringSetFromProto(&exchangepolicypb.StringSet{})
+	require.NoError(t, err)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got)
 }
 
 func TestStringMatcherFromProto_Unknown(t *testing.T) {
-	// A matcher with no match type set should return null fields.
-	got := stringMatcherFromProto(&exchangepolicypb.StringMatcher{})
-	assert.True(t, got.Exact.IsNull())
-	assert.True(t, got.Glob.IsNull())
+	// A matcher with no match type set should return an error.
+	got, err := stringMatcherFromProto(&exchangepolicypb.StringMatcher{})
+	assert.Zero(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
+}
+
+func TestStringSetFromProto_UnknownMatcher(t *testing.T) {
+	ss := &exchangepolicypb.StringSet{
+		Matchers: []*exchangepolicypb.StringMatcher{
+			{}, // no match type set
+		},
+	}
+	got, err := stringSetFromProto(ss)
+	assert.Zero(t, got)
+	assert.ErrorContains(t, err, "string matcher must set exactly one of exact or glob")
 }

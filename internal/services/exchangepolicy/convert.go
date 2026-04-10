@@ -71,18 +71,34 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 }
 
 // protoToModel converts an ExchangePolicy protobuf to an equivalent ExchangePolicyModel.
-func protoToModel(proto *exchangepolicypb.ExchangePolicy) ExchangePolicyModel {
+func protoToModel(proto *exchangepolicypb.ExchangePolicy) (ExchangePolicyModel, error) {
+	type stringSetField struct {
+		name string
+		ss   *exchangepolicypb.StringSet
+		dest *tftypes.List
+	}
+
 	model := ExchangePolicyModel{
-		ID:              tftypes.StringValue(proto.GetId()),
-		OrgID:           tftypes.StringValue(proto.GetOrgId()),
-		Name:            tftypes.StringValue(proto.GetName()),
-		TrustZoneID:     tftypes.StringValue(proto.GetTrustZoneId()),
-		SubjectIdentity: stringSetFromProto(proto.GetSubjectIdentity()),
-		SubjectIssuer:   stringSetFromProto(proto.GetSubjectIssuer()),
-		ActorIdentity:   stringSetFromProto(proto.GetActorIdentity()),
-		ActorIssuer:     stringSetFromProto(proto.GetActorIssuer()),
-		ClientID:        stringSetFromProto(proto.GetClientId()),
-		TargetAudience:  stringSetFromProto(proto.GetTargetAudience()),
+		ID:          tftypes.StringValue(proto.GetId()),
+		OrgID:       tftypes.StringValue(proto.GetOrgId()),
+		Name:        tftypes.StringValue(proto.GetName()),
+		TrustZoneID: tftypes.StringValue(proto.GetTrustZoneId()),
+	}
+
+	fields := []stringSetField{
+		{"subject_identity", proto.GetSubjectIdentity(), &model.SubjectIdentity},
+		{"subject_issuer", proto.GetSubjectIssuer(), &model.SubjectIssuer},
+		{"actor_identity", proto.GetActorIdentity(), &model.ActorIdentity},
+		{"actor_issuer", proto.GetActorIssuer(), &model.ActorIssuer},
+		{"client_id", proto.GetClientId(), &model.ClientID},
+		{"target_audience", proto.GetTargetAudience(), &model.TargetAudience},
+	}
+	for _, f := range fields {
+		list, err := stringSetFromProto(f.ss)
+		if err != nil {
+			return ExchangePolicyModel{}, fmt.Errorf("field %s: %w", f.name, err)
+		}
+		*f.dest = list
 	}
 
 	if proto.Action != nil {
@@ -97,7 +113,7 @@ func protoToModel(proto *exchangepolicypb.ExchangePolicy) ExchangePolicyModel {
 	}
 	model.OutboundScopes = tftypes.ListValueMust(tftypes.StringType, scopes)
 
-	return model
+	return model, nil
 }
 
 // stringSetToProto converts a tftypes.List of StringMatcherModel to a StringSet protobuf.
@@ -140,32 +156,39 @@ func stringMatcherToProto(model StringMatcherModel) (*exchangepolicypb.StringMat
 
 // stringSetFromProto converts a StringSet protobuf to a tftypes.List of StringMatcherModel.
 // An empty StringSet (no matchers) is treated as absent and returns a null list.
-func stringSetFromProto(proto *exchangepolicypb.StringSet) tftypes.List {
+func stringSetFromProto(proto *exchangepolicypb.StringSet) (tftypes.List, error) {
 	if proto == nil || len(proto.GetMatchers()) == 0 {
-		return tftypes.ListNull(stringMatcherObjectType)
+		return tftypes.ListNull(stringMatcherObjectType), nil
 	}
 	elems := make([]attr.Value, 0, len(proto.GetMatchers()))
 	for _, m := range proto.GetMatchers() {
-		mm := stringMatcherFromProto(m)
+		mm, err := stringMatcherFromProto(m)
+		if err != nil {
+			return tftypes.List{}, err
+		}
 		elems = append(elems, tftypes.ObjectValueMust(stringMatcherAttrTypes, map[string]attr.Value{
 			"exact": mm.Exact,
 			"glob":  mm.Glob,
 		}))
 	}
-	return tftypes.ListValueMust(stringMatcherObjectType, elems)
+	return tftypes.ListValueMust(stringMatcherObjectType, elems), nil
 }
 
 // stringMatcherFromProto converts a StringMatcher protobuf to a StringMatcherModel.
-func stringMatcherFromProto(proto *exchangepolicypb.StringMatcher) StringMatcherModel {
-	model := StringMatcherModel{
-		Exact: tftypes.StringNull(),
-		Glob:  tftypes.StringNull(),
-	}
+// Returns an error if neither Exact nor Glob is set.
+func stringMatcherFromProto(proto *exchangepolicypb.StringMatcher) (StringMatcherModel, error) {
 	switch m := proto.GetMatch().(type) {
 	case *exchangepolicypb.StringMatcher_Exact:
-		model.Exact = tftypes.StringValue(m.Exact)
+		return StringMatcherModel{
+			Exact: tftypes.StringValue(m.Exact),
+			Glob:  tftypes.StringNull(),
+		}, nil
 	case *exchangepolicypb.StringMatcher_Glob:
-		model.Glob = tftypes.StringValue(m.Glob)
+		return StringMatcherModel{
+			Exact: tftypes.StringNull(),
+			Glob:  tftypes.StringValue(m.Glob),
+		}, nil
+	default:
+		return StringMatcherModel{}, fmt.Errorf("string matcher must set exactly one of exact or glob")
 	}
-	return model
 }

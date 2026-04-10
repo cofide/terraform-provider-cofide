@@ -68,7 +68,11 @@ func (r *ExchangePolicyResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	state := protoToModel(createResp)
+	state, err := protoToModel(createResp)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid exchange policy response", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -102,7 +106,11 @@ func (r *ExchangePolicyResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	newState := protoToModel(getResp)
+	newState, err := protoToModel(getResp)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid exchange policy response", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 
@@ -148,7 +156,11 @@ func (r *ExchangePolicyResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	newState := protoToModel(updateResp)
+	newState, err := protoToModel(updateResp)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid exchange policy response", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 

@@ -56,6 +56,10 @@ func (d *ExchangePolicyDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	state := protoToModel(policy)
+	state, err := protoToModel(policy)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid exchange policy response", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
