@@ -135,23 +135,25 @@ func stringSetToProto(ctx context.Context, list tftypes.List) (*exchangepolicypb
 }
 
 // stringMatcherToProto converts a StringMatcherModel to a StringMatcher protobuf.
-// Returns an error if neither Exact nor Glob is set.
+// Returns an error if exactly one of Exact or Glob is not set to a known value.
 func stringMatcherToProto(model StringMatcherModel) (*exchangepolicypb.StringMatcher, error) {
-	if !model.Exact.IsNull() {
+	exactSet := !model.Exact.IsNull() && !model.Exact.IsUnknown()
+	globSet := !model.Glob.IsNull() && !model.Glob.IsUnknown()
+	if exactSet == globSet {
+		return nil, fmt.Errorf("string matcher must set exactly one of exact or glob")
+	}
+	if exactSet {
 		return &exchangepolicypb.StringMatcher{
 			Match: &exchangepolicypb.StringMatcher_Exact{
 				Exact: model.Exact.ValueString(),
 			},
 		}, nil
 	}
-	if !model.Glob.IsNull() {
-		return &exchangepolicypb.StringMatcher{
-			Match: &exchangepolicypb.StringMatcher_Glob{
-				Glob: model.Glob.ValueString(),
-			},
-		}, nil
-	}
-	return nil, fmt.Errorf("string matcher must set exactly one of exact or glob")
+	return &exchangepolicypb.StringMatcher{
+		Match: &exchangepolicypb.StringMatcher_Glob{
+			Glob: model.Glob.ValueString(),
+		},
+	}, nil
 }
 
 // stringSetFromProto converts a StringSet protobuf to a tftypes.List of StringMatcherModel.
