@@ -44,7 +44,7 @@ func resourceSchema() schema.Schema {
 				Required:    true,
 			},
 			"action": schema.StringAttribute{
-				Description: "Action to take when all conditions match. One of `ALLOW`, or `DENY`. Defaults to allow when unset.",
+				Description: "Action to take when all conditions match. One of `ALLOW`, or `DENY`. Defaults to ALLOW when unset.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{

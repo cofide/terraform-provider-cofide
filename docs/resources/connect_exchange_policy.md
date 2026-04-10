@@ -116,7 +116,7 @@ output "exchange_policy_id" {
 
 ### Optional
 
-- `action` (String) Action to take when all conditions match. One of `ALLOW`, or `DENY`. Defaults to allow when unset.
+- `action` (String) Action to take when all conditions match. One of `ALLOW`, or `DENY`. Defaults to ALLOW when unset.
 - `actor_identity` (Attributes List) Match conditions on the actor identity of the inbound token. (see [below for nested schema](#nestedatt--actor_identity))
 - `actor_issuer` (Attributes List) Match conditions on the issuer of the inbound actor token. (see [below for nested schema](#nestedatt--actor_issuer))
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--client_id))
