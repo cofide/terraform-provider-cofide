@@ -75,7 +75,12 @@ func (d *ExchangePoliciesDataSource) Read(ctx context.Context, req datasource.Re
 	}
 
 	for _, policy := range policies {
-		state.ExchangePolicies = append(state.ExchangePolicies, protoToModel(policy))
+		m, err := protoToModel(policy)
+		if err != nil {
+			resp.Diagnostics.AddError("Invalid exchange policy response", err.Error())
+			return
+		}
+		state.ExchangePolicies = append(state.ExchangePolicies, m)
 	}
 
 	if state.ExchangePolicies == nil {
