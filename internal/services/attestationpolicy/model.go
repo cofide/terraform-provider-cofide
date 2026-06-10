@@ -34,6 +34,7 @@ type APStaticModel struct {
 	ParentIdPath tftypes.String `tfsdk:"parent_id_path"`
 	Selectors    tftypes.List   `tfsdk:"selectors"`
 	DNSNames     tftypes.List   `tfsdk:"dns_names"`
+	StoreSvid    tftypes.Bool   `tfsdk:"store_svid"`
 }
 
 type APTPMNodeModel struct {

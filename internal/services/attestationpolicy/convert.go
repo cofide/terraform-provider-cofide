@@ -43,6 +43,7 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 			ParentIdPath: model.Static.ParentIdPath.ValueStringPointer(),
 			Selectors:    convertSelectors(model.Static.Selectors),
 			DnsNames:     dnsNames,
+			StoreSvid:    !model.Static.StoreSvid.IsNull() && !model.Static.StoreSvid.IsUnknown() && model.Static.StoreSvid.ValueBool(),
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_Static{
 			Static: staticPolicy,
@@ -89,6 +90,7 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 			ParentIdPath: optionalStringValue(static.ParentIdPath),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
 			DNSNames:     convertProtoSelectorValues(static.GetDnsNames()),
+			StoreSvid:    tftypes.BoolValue(static.GetStoreSvid()),
 		}
 	}
 
