@@ -7,7 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -45,7 +47,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"kubernetes_context": schema.StringAttribute{
 				Description: "The Kubernetes context of the cluster.",
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString(""),
 			},
 			"trust_provider": schema.SingleNestedAttribute{
 				Description: "The trust provider of the cluster.",
@@ -126,7 +130,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"external_server": schema.BoolAttribute{
 				Description: "Whether the SPIRE server runs externally to this cluster. Set to `true` for clusters that delegate to a centralized SPIRE server.",
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 			"oidc_issuer_url": schema.StringAttribute{
 				Description: "The OIDC issuer URL of the cluster.",
