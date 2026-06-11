@@ -31,6 +31,7 @@ func TestProtoToModel_Minimal(t *testing.T) {
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.SubjectIssuer)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.ActorIdentity)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.ActorIssuer)
+	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.SubjectAudience)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.ClientID)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.TargetAudience)
 	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{}), got.OutboundScopes)
@@ -211,6 +212,7 @@ func TestRoundTrip(t *testing.T) {
 				SubjectIssuer:   nullMatchers,
 				ActorIdentity:   nullMatchers,
 				ActorIssuer:     nullMatchers,
+				SubjectAudience: nullMatchers,
 				ClientID:        nullMatchers,
 				TargetAudience:  nullMatchers,
 				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
@@ -248,6 +250,12 @@ func TestRoundTrip(t *testing.T) {
 						"glob":  types.StringValue("spiffe://issuer.example.org/*"),
 					}),
 				}),
+				SubjectAudience: types.ListValueMust(stringMatcherObjectType, []attr.Value{
+					types.ObjectValueMust(stringMatcherAttrTypes, map[string]attr.Value{
+						"exact": types.StringValue("https://audience.example.org"),
+						"glob":  types.StringNull(),
+					}),
+				}),
 				ClientID: types.ListValueMust(stringMatcherObjectType, []attr.Value{
 					types.ObjectValueMust(stringMatcherAttrTypes, map[string]attr.Value{
 						"exact": types.StringValue("my-client"),
@@ -278,6 +286,7 @@ func TestRoundTrip(t *testing.T) {
 				SubjectIssuer:   nullMatchers,
 				ActorIdentity:   nullMatchers,
 				ActorIssuer:     nullMatchers,
+				SubjectAudience: nullMatchers,
 				ClientID:        nullMatchers,
 				TargetAudience:  nullMatchers,
 				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
@@ -308,6 +317,7 @@ func TestRoundTrip(t *testing.T) {
 				SubjectIssuer:  nullMatchers,
 				ActorIdentity:  nullMatchers,
 				ActorIssuer:    nullMatchers,
+				SubjectAudience: nullMatchers,
 				ClientID:       nullMatchers,
 				TargetAudience: nullMatchers,
 				OutboundScopes: types.ListValueMust(types.StringType, []attr.Value{}),

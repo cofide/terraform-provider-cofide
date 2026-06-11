@@ -12,6 +12,7 @@ type ExchangePolicyModel struct {
 	SubjectIssuer   tftypes.List   `tfsdk:"subject_issuer"`
 	ActorIdentity   tftypes.List   `tfsdk:"actor_identity"`
 	ActorIssuer     tftypes.List   `tfsdk:"actor_issuer"`
+	SubjectAudience tftypes.List   `tfsdk:"subject_audience"`
 	ClientID        tftypes.List   `tfsdk:"client_id"`
 	TargetAudience  tftypes.List   `tfsdk:"target_audience"`
 	OutboundScopes  tftypes.List   `tfsdk:"outbound_scopes"`

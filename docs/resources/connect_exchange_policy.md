@@ -49,6 +49,10 @@ resource "cofide_connect_exchange_policy" "example" {
     { glob = "spiffe://example.org/ns/bar/sa/*" }
   ]
 
+  subject_audience = [
+    { exact = "https://audience.ep-tz.cofide.dev" }
+  ]
+
   target_audience = [
     { exact = "https://api.example.org" }
   ]
@@ -121,6 +125,7 @@ output "exchange_policy_id" {
 - `actor_issuer` (Attributes List) Match conditions on the issuer of the inbound actor token. (see [below for nested schema](#nestedatt--actor_issuer))
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--client_id))
 - `outbound_scopes` (List of String) Outbound scopes to grant. Only relevant when action is allow.
+- `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--subject_identity))
 - `subject_issuer` (Attributes List) Match conditions on the issuer of the inbound subject token. (see [below for nested schema](#nestedatt--subject_issuer))
 - `target_audience` (Attributes List) Match conditions on the requested target audience. (see [below for nested schema](#nestedatt--target_audience))
@@ -150,6 +155,15 @@ Optional:
 
 <a id="nestedatt--client_id"></a>
 ### Nested Schema for `client_id`
+
+Optional:
+
+- `exact` (String) Exact string match.
+- `glob` (String) Glob pattern match (e.g. `spiffe://trust.domain/ns/*/sa/*`).
+
+
+<a id="nestedatt--subject_audience"></a>
+### Nested Schema for `subject_audience`
 
 Optional:
 

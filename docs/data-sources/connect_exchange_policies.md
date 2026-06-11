@@ -69,6 +69,7 @@ Read-Only:
 - `name` (String) The name of the exchange policy.
 - `org_id` (String) The ID of the organization.
 - `outbound_scopes` (List of String) Outbound scopes to grant.
+- `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--exchange_policies--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--exchange_policies--subject_identity))
 - `subject_issuer` (Attributes List) Match conditions on the issuer of the inbound subject token. (see [below for nested schema](#nestedatt--exchange_policies--subject_issuer))
 - `target_audience` (Attributes List) Match conditions on the requested target audience. (see [below for nested schema](#nestedatt--exchange_policies--target_audience))
@@ -94,6 +95,15 @@ Read-Only:
 
 <a id="nestedatt--exchange_policies--client_id"></a>
 ### Nested Schema for `exchange_policies.client_id`
+
+Read-Only:
+
+- `exact` (String) Exact string match.
+- `glob` (String) Glob pattern match.
+
+
+<a id="nestedatt--exchange_policies--subject_audience"></a>
+### Nested Schema for `exchange_policies.subject_audience`
 
 Read-Only:
 
