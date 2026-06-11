@@ -8,6 +8,10 @@ resource "cofide_connect_exchange_policy" "example" {
     { glob = "spiffe://example.org/ns/bar/sa/*" }
   ]
 
+  subject_audience = [
+    { exact = "https://audience.ep-tz.cofide.dev" }
+  ]
+
   target_audience = [
     { exact = "https://api.example.org" }
   ]

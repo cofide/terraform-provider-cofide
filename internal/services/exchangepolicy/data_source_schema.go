@@ -77,6 +77,7 @@ func exchangePolicyNestedAttributes() map[string]schema.Attribute {
 		"subject_issuer":   stringSetDataSourceAttribute("Match conditions on the issuer of the inbound subject token."),
 		"actor_identity":   stringSetDataSourceAttribute("Match conditions on the actor identity of the inbound token."),
 		"actor_issuer":     stringSetDataSourceAttribute("Match conditions on the issuer of the inbound actor token."),
+		"subject_audience": stringSetDataSourceAttribute("Match conditions on the audience claim of the inbound subject token."),
 		"client_id":        stringSetDataSourceAttribute("Match conditions on the OAuth client_id presenting the exchange request."),
 		"target_audience":  stringSetDataSourceAttribute("Match conditions on the requested target audience."),
 		"outbound_scopes": schema.ListAttribute{

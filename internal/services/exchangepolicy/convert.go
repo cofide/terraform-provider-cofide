@@ -48,6 +48,7 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 		{"subject_issuer", model.SubjectIssuer, &proto.SubjectIssuer},
 		{"actor_identity", model.ActorIdentity, &proto.ActorIdentity},
 		{"actor_issuer", model.ActorIssuer, &proto.ActorIssuer},
+		{"subject_audience", model.SubjectAudience, &proto.SubjectAudience},
 		{"client_id", model.ClientID, &proto.ClientId},
 		{"target_audience", model.TargetAudience, &proto.TargetAudience},
 	}
@@ -90,6 +91,7 @@ func protoToModel(proto *exchangepolicypb.ExchangePolicy) (ExchangePolicyModel, 
 		{"subject_issuer", proto.GetSubjectIssuer(), &model.SubjectIssuer},
 		{"actor_identity", proto.GetActorIdentity(), &model.ActorIdentity},
 		{"actor_issuer", proto.GetActorIssuer(), &model.ActorIssuer},
+		{"subject_audience", proto.GetSubjectAudience(), &model.SubjectAudience},
 		{"client_id", proto.GetClientId(), &model.ClientID},
 		{"target_audience", proto.GetTargetAudience(), &model.TargetAudience},
 	}

@@ -61,6 +61,7 @@ func resourceSchema() schema.Schema {
 			"subject_issuer":   stringSetResourceAttribute("Match conditions on the issuer of the inbound subject token."),
 			"actor_identity":   stringSetResourceAttribute("Match conditions on the actor identity of the inbound token."),
 			"actor_issuer":     stringSetResourceAttribute("Match conditions on the issuer of the inbound actor token."),
+			"subject_audience": stringSetResourceAttribute("Match conditions on the audience claim of the inbound subject token."),
 			"client_id":        stringSetResourceAttribute("Match conditions on the OAuth client_id presenting the exchange request."),
 			"target_audience":  stringSetResourceAttribute("Match conditions on the requested target audience."),
 			"outbound_scopes": schema.ListAttribute{

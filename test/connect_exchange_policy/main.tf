@@ -18,6 +18,10 @@ resource "cofide_connect_exchange_policy" "allow_policy" {
     { glob = "spiffe://ep-tz.cofide.dev/ns/bar/sa/*" }
   ]
 
+  subject_audience = [
+    { exact = "https://audience.ep-tz.cofide.dev" }
+  ]
+
   target_audience = [
     { exact = "https://api.ep-tz.cofide.dev" }
   ]
