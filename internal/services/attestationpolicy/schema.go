@@ -149,7 +149,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 						ElementType: tftypes.StringType,
 					},
 					"store_svid": schema.BoolAttribute{
-						Description: "When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if the svidstore agent plugin is enabled). Defaults to false.",
+						Description: "When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if an svidstore agent plugin is enabled). Defaults to false.",
 						Optional:    true,
 						Computed:    true,
 					},
