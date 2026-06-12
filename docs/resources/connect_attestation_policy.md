@@ -257,6 +257,7 @@ Required:
 Optional:
 
 - `dns_names` (List of String) The list of DNS names for the static attestation policy.
+- `store_svid` (Boolean) When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if an svidstore agent plugin is enabled). Defaults to false.
 
 <a id="nestedatt--static--selectors"></a>
 ### Nested Schema for `static.selectors`
