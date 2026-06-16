@@ -16,6 +16,6 @@ This project is the official Terraform provider for Cofide.
 
 ### Optional
 
-- `api_token` (String, Sensitive) API token used to communicate with the Cofide Connect API. Alternatively, can be configured using the `COFIDE_API_TOKEN` environment variable.
+- `api_token` (String, Sensitive) API token used to communicate with the Cofide Connect API. Can be configured via the `COFIDE_API_TOKEN` environment variable or read from `~/.cofide/credentials` (JSON key: `access_token`).
 - `connect_url` (String) Cofide Connect service URL. Alternatively, can be configured using the `COFIDE_CONNECT_URL` environment variable.
 - `insecure_skip_verify` (Boolean) Skip TLS certificate verification (should only be used for local testing). Alternatively, can be configured using the `COFIDE_INSECURE_SKIP_VERIFY` environment variable.

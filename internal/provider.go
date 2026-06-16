@@ -17,6 +17,7 @@ import (
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/cofide/terraform-provider-cofide/internal/client"
 	"github.com/cofide/terraform-provider-cofide/internal/consts"
+	"github.com/cofide/terraform-provider-cofide/internal/credentials"
 	"github.com/cofide/terraform-provider-cofide/internal/services/apbinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
@@ -61,7 +62,7 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 		Description: "This project is the official Terraform provider for Cofide.",
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
-				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Alternatively, can be configured using the `%s` environment variable.", consts.APITokenEnvVarKey),
+				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Can be configured via the `%s` environment variable or read from `~/.cofide/credentials` (JSON key: `access_token`).", consts.APITokenEnvVarKey),
 				Optional:    true,
 				Sensitive:   true,
 			},
@@ -96,6 +97,14 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if apiToken == "" {
 		apiToken = os.Getenv(consts.APITokenEnvVarKey)
 	}
+	if apiToken == "" {
+		token, err := credentials.LoadFromFile()
+		if err != nil {
+			tflog.Warn(ctx, "Failed to read credentials file", map[string]interface{}{"error": err.Error()})
+		} else {
+			apiToken = token
+		}
+	}
 
 	connectURL := config.ConnectURL.ValueString()
 	if connectURL == "" {
@@ -114,7 +123,7 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if apiToken == "" {
 		resp.Diagnostics.AddError(
 			"Missing API Token Configuration",
-			"API token must be specified either in provider configuration or via COFIDE_API_TOKEN environment variable",
+			"API token must be specified in provider configuration, via the COFIDE_API_TOKEN environment variable, or via the credentials file at ~/.cofide/credentials.",
 		)
 		return
 	}
