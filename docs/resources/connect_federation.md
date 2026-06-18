@@ -66,10 +66,7 @@ output "federation_id" {
 - `remote_trust_zone_id` (String) The ID of the associated remote trust zone.
 - `trust_zone_id` (String) The ID of the associated trust zone.
 
-### Optional
-
-- `org_id` (String) The ID of the organization.
-
 ### Read-Only
 
 - `id` (String) The ID of the federation.
+- `org_id` (String) The ID of the organization. Derived from the trust zone by Cofide Connect.

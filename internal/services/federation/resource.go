@@ -60,10 +60,6 @@ func (f *FederationResource) Create(ctx context.Context, req resource.CreateRequ
 		RemoteTrustZoneId: plan.RemoteTrustZoneID.ValueStringPointer(),
 	}
 
-	if !plan.OrgID.IsNull() {
-		federation.OrgId = plan.OrgID.ValueStringPointer()
-	}
-
 	createResp, err := f.client.FederationV1Alpha1().CreateFederation(ctx, federation)
 	if err != nil {
 		resp.Diagnostics.AddError(

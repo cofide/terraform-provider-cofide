@@ -164,11 +164,11 @@ output "cluster_id" {
 - `kubernetes_context` (String) The Kubernetes context of the cluster.
 - `oidc_issuer_ca_cert` (String) The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL. Use `base64encode(file(...))` to supply a PEM certificate file.
 - `oidc_issuer_url` (String) The OIDC issuer URL of the cluster.
-- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 
 - `id` (String) The ID of the cluster.
+- `org_id` (String) The ID of the organization. Derived from the trust zone by Cofide Connect.
 
 <a id="nestedatt--trust_provider"></a>
 ### Nested Schema for `trust_provider`

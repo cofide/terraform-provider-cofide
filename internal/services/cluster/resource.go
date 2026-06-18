@@ -70,10 +70,6 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
 	}
 
-	if util.IsStringAttributeNonEmpty(plan.OrgID) {
-		cluster.OrgId = plan.OrgID.ValueStringPointer()
-	}
-
 	if util.IsStringAttributeNonEmpty(plan.OidcIssuerURL) {
 		cluster.OidcIssuerUrl = plan.OidcIssuerURL.ValueStringPointer()
 	}
@@ -247,10 +243,6 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		KubernetesContext: plan.KubernetesContext.ValueStringPointer(),
 		Profile:           plan.Profile.ValueStringPointer(),
 		ExternalServer:    plan.ExternalServer.ValueBoolPointer(),
-	}
-
-	if util.IsStringAttributeNonEmpty(plan.OrgID) {
-		cluster.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
 	if util.IsStringAttributeNonEmpty(plan.OidcIssuerURL) {

@@ -3,7 +3,6 @@ package apbinding
 import (
 	"context"
 
-	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -26,11 +25,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organization.",
-				Optional:    true,
+				Description: "The ID of the organization. Derived from the trust zone by Cofide Connect.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
