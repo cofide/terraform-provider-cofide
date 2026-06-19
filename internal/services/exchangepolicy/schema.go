@@ -2,6 +2,7 @@ package exchangepolicy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -13,6 +14,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// authExactlyOneVariantValidator enforces that exactly one auth variant attribute
+// is non-null. It lives on the auth object so it fires even when no variant is
+// set (unlike per-variant ExactlyOneOf validators, which only fire when the
+// attribute they are attached to is non-null).
+//
+// When adding a new auth variant: add it as Optional inside the auth Attributes
+// map. This validator requires no modification.
+type authExactlyOneVariantValidator struct{}
+
+func (authExactlyOneVariantValidator) Description(_ context.Context) string {
+	return "Exactly one auth variant must be set."
+}
+
+func (authExactlyOneVariantValidator) MarkdownDescription(_ context.Context) string {
+	return "Exactly one auth variant must be set."
+}
+
+func (authExactlyOneVariantValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	set := 0
+	for _, attr := range req.ConfigValue.Attributes() {
+		if !attr.IsNull() && !attr.IsUnknown() {
+			set++
+		}
+	}
+	if set != 1 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid auth configuration",
+			fmt.Sprintf("Exactly one auth variant must be set, but got %d.", set),
+		)
+	}
+}
 
 func resourceSchema() schema.Schema {
 	return schema.Schema{
@@ -71,6 +108,52 @@ func resourceSchema() schema.Schema {
 				ElementType: tftypes.StringType,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"external_hooks": schema.ListNestedAttribute{
+				Description: "Post-matching hooks that transform outbound token claims before Credex mints them.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "Name of the hook, unique within the policy.",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "Optional description of the hook.",
+							Optional:    true,
+						},
+						"url": schema.StringAttribute{
+							Description: "URL of the external hook endpoint.",
+							Required:    true,
+						},
+						"auth": schema.SingleNestedAttribute{
+							Description: "Authentication configuration for the hook endpoint. Exactly one auth variant must be set.",
+							Required:    true,
+							Validators: []validator.Object{
+								// authExactlyOneVariantValidator fires on the auth object itself so it
+								// catches both empty auth blocks and multiple variants being set.
+								// When adding a new auth variant, add it as Optional below — no change here.
+								authExactlyOneVariantValidator{},
+							},
+							Attributes: map[string]schema.Attribute{
+								"spiffe_mtls": schema.SingleNestedAttribute{
+									Description: "Authenticate to the hook using SPIFFE mTLS.",
+									Optional:    true,
+									Attributes: map[string]schema.Attribute{
+										"spiffe_id": schema.StringAttribute{
+											Description: "SPIFFE ID to present when connecting to the hook endpoint.",
+											Required:    true,
+										},
+									},
+								},
+							},
+						},
+						"timeout": schema.Int64Attribute{
+							Description: "Timeout for the hook request, in seconds.",
+							Optional:    true,
+						},
+					},
 				},
 			},
 		},

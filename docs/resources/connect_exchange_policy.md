@@ -124,6 +124,7 @@ output "exchange_policy_id" {
 - `actor_identity` (Attributes List) Match conditions on the actor identity of the inbound token. (see [below for nested schema](#nestedatt--actor_identity))
 - `actor_issuer` (Attributes List) Match conditions on the issuer of the inbound actor token. (see [below for nested schema](#nestedatt--actor_issuer))
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--client_id))
+- `external_hooks` (Attributes List) Post-matching hooks that transform outbound token claims before Credex mints them. (see [below for nested schema](#nestedatt--external_hooks))
 - `outbound_scopes` (List of String) Outbound scopes to grant. Only relevant when action is allow.
 - `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--subject_identity))
@@ -160,6 +161,37 @@ Optional:
 
 - `exact` (String) Exact string match.
 - `glob` (String) Glob pattern match (e.g. `spiffe://trust.domain/ns/*/sa/*`).
+
+
+<a id="nestedatt--external_hooks"></a>
+### Nested Schema for `external_hooks`
+
+Required:
+
+- `auth` (Attributes) Authentication configuration for the hook endpoint. Exactly one auth variant must be set. (see [below for nested schema](#nestedatt--external_hooks--auth))
+- `name` (String) Name of the hook, unique within the policy.
+- `url` (String) URL of the external hook endpoint.
+
+Optional:
+
+- `description` (String) Optional description of the hook.
+- `timeout` (Number) Timeout for the hook request, in seconds.
+
+<a id="nestedatt--external_hooks--auth"></a>
+### Nested Schema for `external_hooks.auth`
+
+Optional:
+
+- `spiffe_mtls` (Attributes) Authenticate to the hook using SPIFFE mTLS. (see [below for nested schema](#nestedatt--external_hooks--auth--spiffe_mtls))
+
+<a id="nestedatt--external_hooks--auth--spiffe_mtls"></a>
+### Nested Schema for `external_hooks.auth.spiffe_mtls`
+
+Required:
+
+- `spiffe_id` (String) SPIFFE ID to present when connecting to the hook endpoint.
+
+
 
 
 <a id="nestedatt--subject_audience"></a>

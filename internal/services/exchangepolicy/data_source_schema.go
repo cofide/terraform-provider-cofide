@@ -85,6 +85,46 @@ func exchangePolicyNestedAttributes() map[string]schema.Attribute {
 			Computed:    true,
 			ElementType: tftypes.StringType,
 		},
+		"external_hooks": schema.ListNestedAttribute{
+			Description: "Post-matching hooks that transform outbound token claims before Credex mints them.",
+			Computed:    true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: "Name of the hook, unique within the policy.",
+						Computed:    true,
+					},
+					"description": schema.StringAttribute{
+						Description: "Optional description of the hook.",
+						Computed:    true,
+					},
+					"url": schema.StringAttribute{
+						Description: "URL of the external hook endpoint.",
+						Computed:    true,
+					},
+					"auth": schema.SingleNestedAttribute{
+						Description: "Authentication configuration for the hook endpoint.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"spiffe_mtls": schema.SingleNestedAttribute{
+								Description: "Authenticate to the hook using SPIFFE mTLS.",
+								Computed:    true,
+								Attributes: map[string]schema.Attribute{
+									"spiffe_id": schema.StringAttribute{
+										Description: "SPIFFE ID presented when connecting to the hook endpoint.",
+										Computed:    true,
+									},
+								},
+							},
+						},
+					},
+					"timeout": schema.Int64Attribute{
+						Description: "Timeout for the hook request, in seconds.",
+						Computed:    true,
+					},
+				},
+			},
+		},
 	}
 }
 

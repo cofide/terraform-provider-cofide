@@ -35,6 +35,7 @@ func TestProtoToModel_Minimal(t *testing.T) {
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.ClientID)
 	assert.Equal(t, types.ListNull(stringMatcherObjectType), got.TargetAudience)
 	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{}), got.OutboundScopes)
+	assert.Equal(t, types.ListNull(externalHookObjectType), got.ExternalHooks)
 }
 
 func TestProtoToModel_Full(t *testing.T) {
@@ -196,6 +197,7 @@ func TestModelToProto_WithStringSetMatchers(t *testing.T) {
 // does not serialize, so round-trip models use OrgID: StringValue("").
 func TestRoundTrip(t *testing.T) {
 	nullMatchers := types.ListNull(stringMatcherObjectType)
+	nullHooks := types.ListNull(externalHookObjectType)
 	tests := []struct {
 		name  string
 		model ExchangePolicyModel
@@ -216,6 +218,7 @@ func TestRoundTrip(t *testing.T) {
 				ClientID:        nullMatchers,
 				TargetAudience:  nullMatchers,
 				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
+				ExternalHooks:   nullHooks,
 			},
 		},
 		{
@@ -272,6 +275,7 @@ func TestRoundTrip(t *testing.T) {
 					types.StringValue("read"),
 					types.StringValue("write"),
 				}),
+				ExternalHooks: nullHooks,
 			},
 		},
 		{
@@ -290,6 +294,7 @@ func TestRoundTrip(t *testing.T) {
 				ClientID:        nullMatchers,
 				TargetAudience:  nullMatchers,
 				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
+				ExternalHooks:   nullHooks,
 			},
 		},
 		{
@@ -314,13 +319,76 @@ func TestRoundTrip(t *testing.T) {
 						"glob":  types.StringValue("spiffe://example.org/ns/*/sa/*"),
 					}),
 				}),
-				SubjectIssuer:  nullMatchers,
-				ActorIdentity:  nullMatchers,
-				ActorIssuer:    nullMatchers,
+				SubjectIssuer:   nullMatchers,
+				ActorIdentity:   nullMatchers,
+				ActorIssuer:     nullMatchers,
 				SubjectAudience: nullMatchers,
-				ClientID:       nullMatchers,
-				TargetAudience: nullMatchers,
-				OutboundScopes: types.ListValueMust(types.StringType, []attr.Value{}),
+				ClientID:        nullMatchers,
+				TargetAudience:  nullMatchers,
+				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
+				ExternalHooks:   nullHooks,
+			},
+		},
+		{
+			name: "policy with external hooks (spiffe mTLS auth, timeout)",
+			model: ExchangePolicyModel{
+				ID:              types.StringValue("ep-5"),
+				OrgID:           types.StringValue(""),
+				Name:            types.StringValue("hooked-policy"),
+				TrustZoneID:     types.StringValue("tz-5"),
+				Action:          types.StringNull(),
+				SubjectIdentity: nullMatchers,
+				SubjectIssuer:   nullMatchers,
+				ActorIdentity:   nullMatchers,
+				ActorIssuer:     nullMatchers,
+				SubjectAudience: nullMatchers,
+				ClientID:        nullMatchers,
+				TargetAudience:  nullMatchers,
+				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
+				ExternalHooks: types.ListValueMust(externalHookObjectType, []attr.Value{
+					types.ObjectValueMust(externalHookAttrTypes, map[string]attr.Value{
+						"name":        types.StringValue("enricher"),
+						"description": types.StringValue("adds custom claims"),
+						"url":         types.StringValue("https://hooks.example.com/enrich"),
+						"auth": types.ObjectValueMust(authAttrTypes, map[string]attr.Value{
+							"spiffe_mtls": types.ObjectValueMust(spiffeMtlsAttrTypes, map[string]attr.Value{
+								"spiffe_id": types.StringValue("spiffe://example.org/hooks/enricher"),
+							}),
+						}),
+						"timeout": types.Int64Value(30),
+					}),
+				}),
+			},
+		},
+		{
+			name: "policy with external hook (no timeout, no description)",
+			model: ExchangePolicyModel{
+				ID:              types.StringValue("ep-6"),
+				OrgID:           types.StringValue(""),
+				Name:            types.StringValue("minimal-hook-policy"),
+				TrustZoneID:     types.StringValue("tz-6"),
+				Action:          types.StringNull(),
+				SubjectIdentity: nullMatchers,
+				SubjectIssuer:   nullMatchers,
+				ActorIdentity:   nullMatchers,
+				ActorIssuer:     nullMatchers,
+				SubjectAudience: nullMatchers,
+				ClientID:        nullMatchers,
+				TargetAudience:  nullMatchers,
+				OutboundScopes:  types.ListValueMust(types.StringType, []attr.Value{}),
+				ExternalHooks: types.ListValueMust(externalHookObjectType, []attr.Value{
+					types.ObjectValueMust(externalHookAttrTypes, map[string]attr.Value{
+						"name":        types.StringValue("validator"),
+						"description": types.StringNull(),
+						"url":         types.StringValue("https://hooks.example.com/validate"),
+						"auth": types.ObjectValueMust(authAttrTypes, map[string]attr.Value{
+							"spiffe_mtls": types.ObjectValueMust(spiffeMtlsAttrTypes, map[string]attr.Value{
+								"spiffe_id": types.StringValue("spiffe://example.org/hooks/validator"),
+							}),
+						}),
+						"timeout": types.Int64Null(),
+					}),
+				}),
 			},
 		},
 	}
