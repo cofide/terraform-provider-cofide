@@ -126,11 +126,11 @@ output "ap_binding_id" {
 ### Optional
 
 - `federations` (List of Object) The federated trust zones which will be visible to workloads matching the policy in this binding. Each entry specifies the `trust_zone_id` of a federated trust zone. (see [below for nested schema](#nestedatt--federations))
-- `org_id` (String) The ID of the organization.
 
 ### Read-Only
 
 - `id` (String) The ID of the attestation policy binding.
+- `org_id` (String) The ID of the organization. Derived from the trust zone by Cofide Connect.
 
 <a id="nestedatt--federations"></a>
 ### Nested Schema for `federations`

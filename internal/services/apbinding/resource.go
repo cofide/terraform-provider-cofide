@@ -7,7 +7,6 @@ import (
 	apbindingpb "github.com/cofide/cofide-api-sdk/gen/go/proto/ap_binding/v1alpha1"
 	apbindinginsvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/ap_binding_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
-	"github.com/cofide/terraform-provider-cofide/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -68,10 +67,6 @@ func (a *APBindingResource) Create(ctx context.Context, req resource.CreateReque
 		TrustZoneId: plan.TrustZoneID.ValueStringPointer(),
 		PolicyId:    plan.PolicyID.ValueStringPointer(),
 		Federations: federations,
-	}
-
-	if util.IsStringAttributeNonEmpty(plan.OrgID) {
-		binding.OrgId = plan.OrgID.ValueStringPointer()
 	}
 
 	createResp, err := a.client.APBindingV1Alpha1().CreateAPBinding(ctx, binding)
@@ -189,28 +184,15 @@ func (a *APBindingResource) Update(ctx context.Context, req resource.UpdateReque
 		Federations: federations,
 	}
 
-	if util.IsStringAttributeNonEmpty(plan.OrgID) {
-		binding.OrgId = plan.OrgID.ValueStringPointer()
-	}
-
 	updateResp, err := a.client.APBindingV1Alpha1().UpdateAPBinding(ctx, binding)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating AP binding", err.Error())
 		return
 	}
 
-	var orgIDStr tftypes.String
-	if orgID := updateResp.GetOrgId(); orgID != "" {
-		orgIDStr = tftypes.StringValue(orgID)
-	} else if !plan.OrgID.IsNull() {
-		orgIDStr = plan.OrgID
-	} else {
-		orgIDStr = tftypes.StringNull()
-	}
-
 	newState := APBindingModel{
 		ID:          tftypes.StringValue(updateResp.GetId()),
-		OrgID:       orgIDStr,
+		OrgID:       tftypes.StringValue(updateResp.GetOrgId()),
 		TrustZoneID: tftypes.StringValue(updateResp.GetTrustZoneId()),
 		PolicyID:    tftypes.StringValue(updateResp.GetPolicyId()),
 	}

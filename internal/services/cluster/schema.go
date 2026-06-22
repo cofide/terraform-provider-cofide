@@ -33,11 +33,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organization.",
-				Optional:    true,
+				Description: "The ID of the organization. Derived from the trust zone by Cofide Connect.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
