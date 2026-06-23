@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	exchangepolicypb "github.com/cofide/cofide-api-sdk/gen/go/proto/exchange_policy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const actionPrefix = "EXCHANGE_POLICY_ACTION_"
@@ -20,6 +22,28 @@ var stringMatcherAttrTypes = map[string]attr.Type{
 var stringMatcherObjectType = tftypes.ObjectType{
 	AttrTypes: stringMatcherAttrTypes,
 }
+
+// spiffeMtlsAttrTypes holds the attribute types for the spiffe_mtls auth variant.
+var spiffeMtlsAttrTypes = map[string]attr.Type{
+	"spiffe_id": tftypes.StringType,
+}
+
+// authAttrTypes holds one entry per supported auth variant. When a new proto
+// oneof variant is added, add its attr type here and handle it in the convert
+// functions below; ExternalHookModel itself does not need to change.
+var authAttrTypes = map[string]attr.Type{
+	"spiffe_mtls": tftypes.ObjectType{AttrTypes: spiffeMtlsAttrTypes},
+}
+
+var externalHookAttrTypes = map[string]attr.Type{
+	"name":        tftypes.StringType,
+	"description": tftypes.StringType,
+	"url":         tftypes.StringType,
+	"auth":        tftypes.ObjectType{AttrTypes: authAttrTypes},
+	"timeout":     tftypes.Int64Type,
+}
+
+var externalHookObjectType = tftypes.ObjectType{AttrTypes: externalHookAttrTypes}
 
 // modelToProto converts an ExchangePolicyModel to an equivalent ExchangePolicy protobuf.
 func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepolicypb.ExchangePolicy, error) {
@@ -68,6 +92,12 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 		}
 	}
 
+	hooks, err := externalHooksToProto(ctx, model.ExternalHooks)
+	if err != nil {
+		return nil, err
+	}
+	proto.ExternalHooks = hooks
+
 	return proto, nil
 }
 
@@ -115,6 +145,8 @@ func protoToModel(proto *exchangepolicypb.ExchangePolicy) (ExchangePolicyModel, 
 	}
 	model.OutboundScopes = tftypes.ListValueMust(tftypes.StringType, scopes)
 
+	model.ExternalHooks = externalHooksFromProto(proto.GetExternalHooks())
+
 	return model, nil
 }
 
@@ -124,7 +156,9 @@ func stringSetToProto(ctx context.Context, list tftypes.List) (*exchangepolicypb
 		return nil, nil
 	}
 	var matchers []StringMatcherModel
-	list.ElementsAs(ctx, &matchers, false)
+	if diags := list.ElementsAs(ctx, &matchers, false); diags.HasError() {
+		return nil, fmt.Errorf("failed to convert string matchers: %v", diags)
+	}
 	proto := &exchangepolicypb.StringSet{}
 	for _, m := range matchers {
 		matcher, err := stringMatcherToProto(m)
@@ -195,4 +229,103 @@ func stringMatcherFromProto(proto *exchangepolicypb.StringMatcher) (StringMatche
 	default:
 		return StringMatcherModel{}, fmt.Errorf("string matcher must set exactly one of exact or glob")
 	}
+}
+
+// externalHooksToProto converts the ExternalHooks list in a model to a slice
+// of ExternalHook protobufs. Returns nil when the list is null or unknown.
+func externalHooksToProto(ctx context.Context, list tftypes.List) ([]*exchangepolicypb.ExternalHook, error) {
+	if list.IsNull() || list.IsUnknown() {
+		return nil, nil
+	}
+	var hooks []ExternalHookModel
+	if diags := list.ElementsAs(ctx, &hooks, false); diags.HasError() {
+		return nil, fmt.Errorf("failed to convert external hooks: %v", diags)
+	}
+	result := make([]*exchangepolicypb.ExternalHook, 0, len(hooks))
+	for i, h := range hooks {
+		pb, err := externalHookToProto(h)
+		if err != nil {
+			return nil, fmt.Errorf("external_hook[%d]: %w", i, err)
+		}
+		result = append(result, pb)
+	}
+	return result, nil
+}
+
+// externalHookToProto converts a single ExternalHookModel to an ExternalHook protobuf.
+func externalHookToProto(model ExternalHookModel) (*exchangepolicypb.ExternalHook, error) {
+	pb := &exchangepolicypb.ExternalHook{
+		Name: model.Name.ValueString(),
+		Url:  model.URL.ValueString(),
+	}
+	if !model.Description.IsNull() && !model.Description.IsUnknown() {
+		pb.Description = model.Description.ValueString()
+	}
+	if !model.Auth.IsNull() && !model.Auth.IsUnknown() {
+		// Each auth variant is a separate attribute inside the auth object.
+		// When a new proto oneof variant is added, add a new case here.
+		authAttrs := model.Auth.Attributes()
+		if sm, ok := authAttrs["spiffe_mtls"].(tftypes.Object); ok && !sm.IsNull() && !sm.IsUnknown() {
+			if spiffeIDAttr, ok := sm.Attributes()["spiffe_id"].(tftypes.String); ok && !spiffeIDAttr.IsNull() && !spiffeIDAttr.IsUnknown() {
+				pb.Auth = &exchangepolicypb.ExternalHook_SpiffeMtls{
+					SpiffeMtls: &exchangepolicypb.SpiffeMtlsAuth{SpiffeId: spiffeIDAttr.ValueString()},
+				}
+			}
+		}
+	}
+	if !model.Timeout.IsNull() && !model.Timeout.IsUnknown() {
+		pb.Timeout = durationpb.New(time.Duration(model.Timeout.ValueInt64()) * time.Second)
+	}
+	return pb, nil
+}
+
+// externalHooksFromProto converts a slice of ExternalHook protobufs to a
+// tftypes.List of external hook objects. Returns a null list when hooks is empty.
+func externalHooksFromProto(hooks []*exchangepolicypb.ExternalHook) tftypes.List {
+	if len(hooks) == 0 {
+		return tftypes.ListNull(externalHookObjectType)
+	}
+	elems := make([]attr.Value, 0, len(hooks))
+	for _, h := range hooks {
+		elems = append(elems, externalHookFromProto(h))
+	}
+	return tftypes.ListValueMust(externalHookObjectType, elems)
+}
+
+// externalHookFromProto converts a single ExternalHook protobuf to a tftypes.Object.
+func externalHookFromProto(pb *exchangepolicypb.ExternalHook) tftypes.Object {
+	description := tftypes.StringNull()
+	if pb.GetDescription() != "" {
+		description = tftypes.StringValue(pb.GetDescription())
+	}
+
+	// Build the auth object. All auth variant attributes must be present; unused
+	// variants are set to null. When a new proto oneof variant is added, add its
+	// null value here and populate it in the relevant case below.
+	authAttrs := map[string]attr.Value{
+		"spiffe_mtls": tftypes.ObjectNull(spiffeMtlsAttrTypes),
+	}
+	switch a := pb.GetAuth().(type) {
+	case *exchangepolicypb.ExternalHook_SpiffeMtls:
+		authAttrs["spiffe_mtls"] = tftypes.ObjectValueMust(spiffeMtlsAttrTypes, map[string]attr.Value{
+			"spiffe_id": tftypes.StringValue(a.SpiffeMtls.GetSpiffeId()),
+		})
+	}
+	authObj := tftypes.ObjectNull(authAttrTypes)
+	if pb.GetAuth() != nil {
+		authObj = tftypes.ObjectValueMust(authAttrTypes, authAttrs)
+	}
+
+	timeout := tftypes.Int64Null()
+	if pb.GetTimeout() != nil {
+		timeout = tftypes.Int64Value(int64(pb.GetTimeout().AsDuration().Seconds()))
+	}
+
+	return tftypes.ObjectValueMust(externalHookAttrTypes, map[string]attr.Value{
+		"name":        tftypes.StringValue(pb.GetName()),
+		"description": description,
+		"url":         tftypes.StringValue(pb.GetUrl()),
+		"auth":        authObj,
+		"timeout":     timeout,
+	})
 }

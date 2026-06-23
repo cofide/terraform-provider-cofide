@@ -65,6 +65,7 @@ Read-Only:
 - `actor_identity` (Attributes List) Match conditions on the actor identity of the inbound token. (see [below for nested schema](#nestedatt--exchange_policies--actor_identity))
 - `actor_issuer` (Attributes List) Match conditions on the issuer of the inbound actor token. (see [below for nested schema](#nestedatt--exchange_policies--actor_issuer))
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--exchange_policies--client_id))
+- `external_hooks` (Attributes List) Post-matching hooks that transform outbound token claims before Credex mints them. (see [below for nested schema](#nestedatt--exchange_policies--external_hooks))
 - `id` (String) The ID of the exchange policy.
 - `name` (String) The name of the exchange policy.
 - `org_id` (String) The ID of the organization.
@@ -100,6 +101,34 @@ Read-Only:
 
 - `exact` (String) Exact string match.
 - `glob` (String) Glob pattern match.
+
+
+<a id="nestedatt--exchange_policies--external_hooks"></a>
+### Nested Schema for `exchange_policies.external_hooks`
+
+Read-Only:
+
+- `auth` (Attributes) Authentication configuration for the hook endpoint. (see [below for nested schema](#nestedatt--exchange_policies--external_hooks--auth))
+- `description` (String) Optional description of the hook.
+- `name` (String) Name of the hook, unique within the policy.
+- `timeout` (Number) Timeout for the hook request, in seconds.
+- `url` (String) URL of the external hook endpoint.
+
+<a id="nestedatt--exchange_policies--external_hooks--auth"></a>
+### Nested Schema for `exchange_policies.external_hooks.auth`
+
+Read-Only:
+
+- `spiffe_mtls` (Attributes) Authenticate to the hook using SPIFFE mTLS. (see [below for nested schema](#nestedatt--exchange_policies--external_hooks--auth--spiffe_mtls))
+
+<a id="nestedatt--exchange_policies--external_hooks--auth--spiffe_mtls"></a>
+### Nested Schema for `exchange_policies.external_hooks.auth.spiffe_mtls`
+
+Read-Only:
+
+- `spiffe_id` (String) SPIFFE ID presented when connecting to the hook endpoint.
+
+
 
 
 <a id="nestedatt--exchange_policies--subject_audience"></a>
