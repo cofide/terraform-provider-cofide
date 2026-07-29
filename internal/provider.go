@@ -27,6 +27,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
+	"github.com/cofide/terraform-provider-cofide/internal/services/workloadsuppressionrule"
 )
 
 var _ provider.Provider = &CofideProvider{}
@@ -164,6 +165,7 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		rolebinding.NewResource,
 		trustzone.NewResource,
 		trustzoneserver.NewResource,
+		workloadsuppressionrule.NewResource,
 	}
 }
 
@@ -179,5 +181,7 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		organization.NewDataSource,
 		trustzoneserver.NewDataSource,
 		trustzoneserver.NewListDataSource,
+		workloadsuppressionrule.NewDataSource,
+		workloadsuppressionrule.NewListDataSource,
 	}
 }
