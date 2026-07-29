@@ -22,6 +22,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
     dns_names = [
       "test.workload"
     ]
+    store_svid = true
   }
 }
 
@@ -63,7 +64,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
 # Use a variable rather than a literal list of strings for selector values to
 # cover https://github.com/cofide/terraform-provider-cofide/issues/113.
 variable "selector_values" {
-  type = list(string)
+  type    = list(string)
   default = ["test-selector"]
 }
 
@@ -85,10 +86,42 @@ data "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
   ]
 }
 
+data "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
+  name   = "test-ap-3"
+  org_id = data.cofide_connect_organization.org.id
+
+  depends_on = [
+    cofide_connect_attestation_policy.attestation_policy_tpm_node
+  ]
+}
+
 output "attestation_policy_static_id" {
   value = data.cofide_connect_attestation_policy.attestation_policy_static.id
 }
 
 output "attestation_policy_kubernetes_id" {
   value = data.cofide_connect_attestation_policy.attestation_policy_kubernetes.id
+}
+
+# store_svid, as read back from the resource state and from the data source.
+output "attestation_policy_static_store_svid_resource" {
+  value = cofide_connect_attestation_policy.attestation_policy_static.static.store_svid
+}
+
+output "attestation_policy_static_store_svid_data_source" {
+  value = data.cofide_connect_attestation_policy.attestation_policy_static.static.store_svid
+}
+
+# The data source previously ignored tpm_node policies altogether.
+output "attestation_policy_tpm_node_ek_hash" {
+  value = data.cofide_connect_attestation_policy.attestation_policy_tpm_node.tpm_node.attestation.ek_hash
+}
+
+output "attestation_policy_tpm_node_selector_values" {
+  value = data.cofide_connect_attestation_policy.attestation_policy_tpm_node.tpm_node.selector_values
+}
+
+# The kubernetes policy, read back through the data source.
+output "attestation_policy_kubernetes_spiffe_id_path_template" {
+  value = data.cofide_connect_attestation_policy.attestation_policy_kubernetes.kubernetes.spiffe_id_path_template
 }

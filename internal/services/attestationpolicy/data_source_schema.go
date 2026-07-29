@@ -138,6 +138,10 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 						Computed:    true,
 						ElementType: tftypes.StringType,
 					},
+					"store_svid": schema.BoolAttribute{
+						Description: "When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if an svidstore agent plugin is enabled). Defaults to false.",
+						Computed:    true,
+					},
 				},
 			},
 			"tpm_node": schema.SingleNestedAttribute{
