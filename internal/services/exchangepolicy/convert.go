@@ -35,6 +35,18 @@ var authAttrTypes = map[string]attr.Type{
 	"spiffe_mtls": tftypes.ObjectType{AttrTypes: spiffeMtlsAttrTypes},
 }
 
+var oauthAsAttrTypes = map[string]attr.Type{
+	"grant_type": tftypes.StringType,
+	"issuer_url": tftypes.StringType,
+	"token_url":  tftypes.StringType,
+	"audiences":  tftypes.ListType{ElemType: tftypes.StringType},
+	"timeout":    tftypes.Int64Type,
+}
+
+var outboundIssuerAttrTypes = map[string]attr.Type{
+	"oauth_as": tftypes.ObjectType{AttrTypes: oauthAsAttrTypes},
+}
+
 var externalHookAttrTypes = map[string]attr.Type{
 	"name":        tftypes.StringType,
 	"description": tftypes.StringType,
@@ -92,6 +104,21 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 		}
 	}
 
+	if !model.OutboundIdentity.IsNull() && !model.OutboundIdentity.IsUnknown() {
+		proto.OutboundIdentity = model.OutboundIdentity.ValueString()
+	}
+
+	if !model.OutboundIssuer.IsNull() && !model.OutboundIssuer.IsUnknown() {
+		issuerAttrs := model.OutboundIssuer.Attributes()
+		if oauthAs, ok := issuerAttrs["oauth_as"].(tftypes.Object); ok && !oauthAs.IsNull() && !oauthAs.IsUnknown() {
+			oauthAsProto, err := oauthAsToProto(oauthAs)
+			if err != nil {
+				return nil, err
+			}
+			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_OauthAs{OauthAs: oauthAsProto}
+		}
+	}
+
 	hooks, err := externalHooksToProto(ctx, model.ExternalHooks)
 	if err != nil {
 		return nil, err
@@ -145,9 +172,88 @@ func protoToModel(proto *exchangepolicypb.ExchangePolicy) (ExchangePolicyModel, 
 	}
 	model.OutboundScopes = tftypes.ListValueMust(tftypes.StringType, scopes)
 
+	model.OutboundIssuer = outboundIssuerFromProto(proto)
+
+	if proto.GetOutboundIdentity() != "" {
+		model.OutboundIdentity = tftypes.StringValue(proto.GetOutboundIdentity())
+	} else {
+		model.OutboundIdentity = tftypes.StringNull()
+	}
+
 	model.ExternalHooks = externalHooksFromProto(proto.GetExternalHooks())
 
 	return model, nil
+}
+
+// outboundIssuerFromProto converts the OutboundIssuer oneof field of an ExchangePolicy
+// protobuf to a tftypes.Object. Returns a null object when no issuer is set.
+func outboundIssuerFromProto(proto *exchangepolicypb.ExchangePolicy) tftypes.Object {
+	switch v := proto.GetOutboundIssuer().(type) {
+	case *exchangepolicypb.ExchangePolicy_OauthAs:
+		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
+			"oauth_as": oauthAsFromProto(v.OauthAs),
+		})
+	default:
+		return tftypes.ObjectNull(outboundIssuerAttrTypes)
+	}
+}
+
+// oauthAsFromProto converts an OutboundOAuthAS protobuf to a tftypes.Object.
+func oauthAsFromProto(pb *exchangepolicypb.OutboundOAuthAS) tftypes.Object {
+	grantType := tftypes.StringNull()
+	if pb.GetGrantType() != "" {
+		grantType = tftypes.StringValue(pb.GetGrantType())
+	}
+	issuerURL := tftypes.StringNull()
+	if pb.GetIssuerUrl() != "" {
+		issuerURL = tftypes.StringValue(pb.GetIssuerUrl())
+	}
+	tokenURL := tftypes.StringNull()
+	if pb.GetTokenUrl() != "" {
+		tokenURL = tftypes.StringValue(pb.GetTokenUrl())
+	}
+	audiences := make([]attr.Value, len(pb.GetAudiences()))
+	for i, a := range pb.GetAudiences() {
+		audiences[i] = tftypes.StringValue(a)
+	}
+	timeout := tftypes.Int64Null()
+	if pb.GetTimeout() != nil {
+		timeout = tftypes.Int64Value(int64(pb.GetTimeout().AsDuration().Seconds()))
+	}
+	return tftypes.ObjectValueMust(oauthAsAttrTypes, map[string]attr.Value{
+		"grant_type": grantType,
+		"issuer_url": issuerURL,
+		"token_url":  tokenURL,
+		"audiences":  tftypes.ListValueMust(tftypes.StringType, audiences),
+		"timeout":    timeout,
+	})
+}
+
+// oauthAsToProto converts a tftypes.Object representing an oauth_as config to an
+// OutboundOAuthAS protobuf.
+func oauthAsToProto(obj tftypes.Object) (*exchangepolicypb.OutboundOAuthAS, error) {
+	attrs := obj.Attributes()
+	pb := &exchangepolicypb.OutboundOAuthAS{}
+	if v, ok := attrs["grant_type"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.GrantType = v.ValueString()
+	}
+	if v, ok := attrs["issuer_url"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.IssuerUrl = v.ValueString()
+	}
+	if v, ok := attrs["token_url"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.TokenUrl = v.ValueString()
+	}
+	if v, ok := attrs["audiences"].(tftypes.List); ok && !v.IsNull() && !v.IsUnknown() {
+		for _, elem := range v.Elements() {
+			if s, ok := elem.(tftypes.String); ok {
+				pb.Audiences = append(pb.Audiences, s.ValueString())
+			}
+		}
+	}
+	if v, ok := attrs["timeout"].(tftypes.Int64); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.Timeout = durationpb.New(time.Duration(v.ValueInt64()) * time.Second)
+	}
+	return pb, nil
 }
 
 // stringSetToProto converts a tftypes.List of StringMatcherModel to a StringSet protobuf.

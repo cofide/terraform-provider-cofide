@@ -85,6 +85,43 @@ func exchangePolicyNestedAttributes() map[string]schema.Attribute {
 			Computed:    true,
 			ElementType: tftypes.StringType,
 		},
+		"outbound_issuer": schema.SingleNestedAttribute{
+			Description: "Outbound token issuer configuration.",
+			Computed:    true,
+			Attributes: map[string]schema.Attribute{
+				"oauth_as": schema.SingleNestedAttribute{
+					Description: "External OAuth 2.0 authorisation server used as the outbound issuer.",
+					Computed:    true,
+					Attributes: map[string]schema.Attribute{
+						"grant_type": schema.StringAttribute{
+							Description: "OAuth 2.0 grant type.",
+							Computed:    true,
+						},
+						"issuer_url": schema.StringAttribute{
+							Description: "Issuer URL of the OAuth 2.0 authorisation server.",
+							Computed:    true,
+						},
+						"token_url": schema.StringAttribute{
+							Description: "Token endpoint URL of the OAuth 2.0 authorisation server.",
+							Computed:    true,
+						},
+						"audiences": schema.ListAttribute{
+							Description: "Audiences requested in the outbound token.",
+							Computed:    true,
+							ElementType: tftypes.StringType,
+						},
+						"timeout": schema.Int64Attribute{
+							Description: "Timeout for token requests to the authorisation server, in seconds.",
+							Computed:    true,
+						},
+					},
+				},
+			},
+		},
+		"outbound_identity": schema.StringAttribute{
+			Description: "Outbound identity to assert in the exchanged token.",
+			Computed:    true,
+		},
 		"external_hooks": schema.ListNestedAttribute{
 			Description: "Post-matching hooks that transform outbound token claims before Credex mints them.",
 			Computed:    true,

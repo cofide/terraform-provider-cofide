@@ -59,6 +59,8 @@ output "exchange_policy_id" {
 - `external_hooks` (Attributes List) Post-matching hooks that transform outbound token claims before Credex mints them. (see [below for nested schema](#nestedatt--external_hooks))
 - `name` (String) The name of the exchange policy.
 - `org_id` (String) The ID of the organization.
+- `outbound_identity` (String) Outbound identity to assert in the exchanged token.
+- `outbound_issuer` (Attributes) Outbound token issuer configuration. (see [below for nested schema](#nestedatt--outbound_issuer))
 - `outbound_scopes` (List of String) Outbound scopes to grant.
 - `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--subject_identity))
@@ -118,6 +120,26 @@ Read-Only:
 
 - `spiffe_id` (String) SPIFFE ID presented when connecting to the hook endpoint.
 
+
+
+
+<a id="nestedatt--outbound_issuer"></a>
+### Nested Schema for `outbound_issuer`
+
+Read-Only:
+
+- `oauth_as` (Attributes) External OAuth 2.0 authorisation server used as the outbound issuer. (see [below for nested schema](#nestedatt--outbound_issuer--oauth_as))
+
+<a id="nestedatt--outbound_issuer--oauth_as"></a>
+### Nested Schema for `outbound_issuer.oauth_as`
+
+Read-Only:
+
+- `audiences` (List of String) Audiences requested in the outbound token.
+- `grant_type` (String) OAuth 2.0 grant type.
+- `issuer_url` (String) Issuer URL of the OAuth 2.0 authorisation server.
+- `timeout` (Number) Timeout for token requests to the authorisation server, in seconds.
+- `token_url` (String) Token endpoint URL of the OAuth 2.0 authorisation server.
 
 
 

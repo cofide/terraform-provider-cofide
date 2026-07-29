@@ -9,30 +9,35 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// authExactlyOneVariantValidator enforces that exactly one auth variant attribute
-// is non-null. It lives on the auth object so it fires even when no variant is
-// set (unlike per-variant ExactlyOneOf validators, which only fire when the
-// attribute they are attached to is non-null).
+// exactlyOneVariantValidator enforces that exactly one variant attribute of an
+// object representing a protobuf oneof is non-null. It lives on the object
+// itself so it fires even when no variant is set (unlike per-variant
+// ExactlyOneOf validators, which only fire when the attribute they are attached
+// to is non-null).
 //
-// When adding a new auth variant: add it as Optional inside the auth Attributes
+// When adding a new variant: add it as Optional inside the object's Attributes
 // map. This validator requires no modification.
-type authExactlyOneVariantValidator struct{}
-
-func (authExactlyOneVariantValidator) Description(_ context.Context) string {
-	return "Exactly one auth variant must be set."
+type exactlyOneVariantValidator struct {
+	// name is the attribute name of the object, used in diagnostics.
+	name string
 }
 
-func (authExactlyOneVariantValidator) MarkdownDescription(_ context.Context) string {
-	return "Exactly one auth variant must be set."
+func (v exactlyOneVariantValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("Exactly one %s variant must be set.", v.name)
 }
 
-func (authExactlyOneVariantValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v exactlyOneVariantValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v exactlyOneVariantValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -45,8 +50,45 @@ func (authExactlyOneVariantValidator) ValidateObject(_ context.Context, req vali
 	if set != 1 {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
-			"Invalid auth configuration",
-			fmt.Sprintf("Exactly one auth variant must be set, but got %d.", set),
+			fmt.Sprintf("Invalid %s configuration", v.name),
+			fmt.Sprintf("Exactly one %s variant must be set, but got %d.", v.name, set),
+		)
+	}
+}
+
+// oauthAsValidator enforces that at least one of issuer_url or token_url is
+// configured. It lives on the oauth_as object rather than on the two URL
+// attributes because a per-attribute AtLeastOneOf validator only fires when the
+// attribute it is attached to is non-null, so it would not catch both being
+// omitted. grant_type is not checked here: it is Required in the schema, so
+// Terraform enforces it whenever oauth_as is set.
+//
+// Unknown values count as set, since their eventual value is not knowable at
+// validation time.
+type oauthAsValidator struct{}
+
+func (oauthAsValidator) Description(_ context.Context) string {
+	return "At least one of issuer_url or token_url must be set."
+}
+
+func (oauthAsValidator) MarkdownDescription(ctx context.Context) string {
+	return oauthAsValidator{}.Description(ctx)
+}
+
+func (oauthAsValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	attrs := req.ConfigValue.Attributes()
+	isSet := func(name string) bool {
+		attr, ok := attrs[name]
+		return ok && !attr.IsNull()
+	}
+	if !isSet("issuer_url") && !isSet("token_url") {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid oauth_as configuration",
+			"At least one of issuer_url or token_url is required when oauth_as is set.",
 		)
 	}
 }
@@ -110,6 +152,72 @@ func ResourceSchema() schema.Schema {
 					listplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"outbound_issuer": schema.SingleNestedAttribute{
+				Description: "Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. Exactly one outbound_issuer variant must be set.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Validators: []validator.Object{
+					// exactlyOneVariantValidator fires on the outbound_issuer object itself
+					// so it catches both empty blocks and multiple variants being set.
+					// When adding a new issuer variant, add it as Optional below — no change here.
+					exactlyOneVariantValidator{name: "outbound_issuer"},
+				},
+				Attributes: map[string]schema.Attribute{
+					"oauth_as": schema.SingleNestedAttribute{
+						Description: "Use an external OAuth 2.0 authorisation server as the outbound issuer. At least one of `issuer_url` or `token_url` is required.",
+						Optional:    true,
+						Validators: []validator.Object{
+							oauthAsValidator{},
+						},
+						Attributes: map[string]schema.Attribute{
+							"grant_type": schema.StringAttribute{
+								Description: "OAuth 2.0 grant type.",
+								Required:    true,
+							},
+							"issuer_url": schema.StringAttribute{
+								Description: "Issuer URL of the OAuth 2.0 authorisation server.",
+								Optional:    true,
+								Computed:    true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"token_url": schema.StringAttribute{
+								Description: "Token endpoint URL of the OAuth 2.0 authorisation server.",
+								Optional:    true,
+								Computed:    true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"audiences": schema.ListAttribute{
+								Description: "Audiences to request in the outbound token.",
+								Optional:    true,
+								Computed:    true,
+								ElementType: tftypes.StringType,
+								PlanModifiers: []planmodifier.List{
+									listplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"timeout": schema.Int64Attribute{
+								Description: "Timeout for token requests to the authorisation server, in seconds.",
+								Optional:    true,
+							},
+						},
+					},
+				},
+			},
+			"outbound_identity": schema.StringAttribute{
+				Description: "Outbound identity to assert in the exchanged token. When set, Credex will use this identity rather than the inbound subject identity.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"external_hooks": schema.ListNestedAttribute{
 				Description: "Post-matching hooks that transform outbound token claims before Credex mints them.",
 				Optional:    true,
@@ -131,10 +239,10 @@ func ResourceSchema() schema.Schema {
 							Description: "Authentication configuration for the hook endpoint. Exactly one auth variant must be set.",
 							Required:    true,
 							Validators: []validator.Object{
-								// authExactlyOneVariantValidator fires on the auth object itself so it
+								// exactlyOneVariantValidator fires on the auth object itself so it
 								// catches both empty auth blocks and multiple variants being set.
 								// When adding a new auth variant, add it as Optional below — no change here.
-								authExactlyOneVariantValidator{},
+								exactlyOneVariantValidator{name: "auth"},
 							},
 							Attributes: map[string]schema.Attribute{
 								"spiffe_mtls": schema.SingleNestedAttribute{
