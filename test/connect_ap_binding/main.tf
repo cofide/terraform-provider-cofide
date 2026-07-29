@@ -39,7 +39,6 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
 }
 
 resource "cofide_connect_ap_binding" "ap_binding" {
-  org_id        = data.cofide_connect_organization.org.id
   trust_zone_id = cofide_connect_trust_zone.trust_zone.id
   policy_id     = cofide_connect_attestation_policy.attestation_policy_static.id
   federations = [

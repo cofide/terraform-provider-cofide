@@ -15,7 +15,6 @@ resource "cofide_connect_trust_zone" "trust_zone_b" {
 }
 
 resource "cofide_connect_federation" "federation" {
-  org_id               = cofide_connect_trust_zone.trust_zone_a.org_id
   trust_zone_id        = cofide_connect_trust_zone.trust_zone_a.id
   remote_trust_zone_id = cofide_connect_trust_zone.trust_zone_b.id
 }

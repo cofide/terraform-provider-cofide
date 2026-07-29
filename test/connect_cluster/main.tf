@@ -10,7 +10,6 @@ resource "cofide_connect_trust_zone" "trust_zone" {
 
 resource "cofide_connect_cluster" "cluster" {
   name               = "test-cluster"
-  org_id             = data.cofide_connect_organization.org.id
   trust_zone_id      = cofide_connect_trust_zone.trust_zone.id
   profile            = "kubernetes"
   kubernetes_context = "test-cluster-context"
@@ -56,8 +55,8 @@ resource "cofide_connect_cluster" "cluster" {
 }
 
 data "cofide_connect_cluster" "cluster" {
-  name          = cofide_connect_cluster.cluster.name
-  org_id        = data.cofide_connect_organization.org.id
+  name   = cofide_connect_cluster.cluster.name
+  org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
     cofide_connect_cluster.cluster
