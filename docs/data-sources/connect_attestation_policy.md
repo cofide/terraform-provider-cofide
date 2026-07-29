@@ -126,6 +126,7 @@ Read-Only:
 - `parent_id_path` (String) The SPIFFE ID path of the parent node for workloads matching this policy.
 - `selectors` (Attributes List) The list of selectors for the static attestation policy. (see [below for nested schema](#nestedatt--static--selectors))
 - `spiffe_id_path` (String) The SPIFFE ID path assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).
+- `store_svid` (Boolean) When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if an svidstore agent plugin is enabled). Defaults to false.
 
 <a id="nestedatt--static--selectors"></a>
 ### Nested Schema for `static.selectors`

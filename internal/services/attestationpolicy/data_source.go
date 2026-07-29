@@ -7,7 +7,6 @@ import (
 	attestationpolicysvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/attestation_policy_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type AttestationPolicyDataSource struct {
@@ -87,32 +86,9 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	state := AttestationPolicyModel{
-		ID:    types.StringValue(policy.GetId()),
-		Name:  types.StringValue(policy.GetName()),
-		OrgID: types.StringValue(policy.GetOrgId()),
-	}
-
-	if k8s := policy.GetKubernetes(); k8s != nil {
-		state.Kubernetes = &APKubernetesModel{}
-		if ns := k8s.GetNamespaceSelector(); ns != nil {
-			state.Kubernetes.NamespaceSelector = convertProtoLabelSelector(ns)
-		}
-		if ps := k8s.GetPodSelector(); ps != nil {
-			state.Kubernetes.PodSelector = convertProtoLabelSelector(ps)
-		}
-		state.Kubernetes.DnsNameTemplates = convertProtoSelectorValues(k8s.GetDnsNameTemplates())
-		state.Kubernetes.SpiffeIDPathTemplate = types.StringValue(k8s.GetSpiffeIdPathTemplate())
-	}
-
-	if static := policy.GetStatic(); static != nil {
-		state.Static = &APStaticModel{
-			SpiffeIDPath: types.StringValue(static.GetSpiffeIdPath()),
-			ParentIdPath: types.StringValue(static.GetParentIdPath()),
-			Selectors:    convertProtoSelectors(static.GetSelectors()),
-			DNSNames:     convertProtoSelectorValues(static.GetDnsNames()),
-		}
-	}
+	// Use the shared conversion rather than an inline copy, so the data source
+	// cannot drift from the resource as policy fields are added.
+	state := protoToModel(policy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
