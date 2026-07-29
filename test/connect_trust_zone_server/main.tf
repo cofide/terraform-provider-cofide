@@ -10,7 +10,6 @@ resource "cofide_connect_trust_zone" "trust_zone" {
 
 resource "cofide_connect_cluster" "cluster" {
   name               = "tzserver-cluster"
-  org_id             = data.cofide_connect_organization.org.id
   trust_zone_id      = cofide_connect_trust_zone.trust_zone.id
   profile            = "kubernetes"
   kubernetes_context = "tzserver-cluster-context"
@@ -37,7 +36,7 @@ resource "cofide_connect_trust_zone_server" "server" {
   })
 
   connect_k8s_psat_config = {
-    audiences                  = ["spire-server"]
+    audiences                   = ["spire-server"]
     spire_server_spiffe_id_path = "/ns/spire/sa/spire-server"
   }
 }

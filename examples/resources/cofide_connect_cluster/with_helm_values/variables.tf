@@ -10,12 +10,6 @@ variable "trust_zone_id" {
   default     = "example-tz-id"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
-  type        = string
-  default     = "example-org-id"
-}
-
 variable "kubernetes_context" {
   description = "The Kubernetes context to use."
   type        = string

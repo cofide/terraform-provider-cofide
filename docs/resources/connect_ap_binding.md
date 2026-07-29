@@ -26,12 +26,6 @@ terraform {
 provider "cofide" {}
 
 
-variable "org_id" {
-  description = "The ID of the organization."
-  type        = string
-  default     = "example-org-id"
-}
-
 variable "trust_zone_id" {
   description = "The ID of the trust zone."
   type        = string
@@ -46,7 +40,6 @@ variable "policy_id" {
 
 
 resource "cofide_connect_ap_binding" "example" {
-  org_id        = var.org_id
   trust_zone_id = var.trust_zone_id
   policy_id     = var.policy_id
 }
@@ -71,12 +64,6 @@ terraform {
 provider "cofide" {}
 
 
-variable "org_id" {
-  description = "The ID of the organization."
-  type        = string
-  default     = "example-org-id"
-}
-
 variable "trust_zone_id" {
   description = "The ID of the trust zone."
   type        = string
@@ -97,7 +84,6 @@ variable "remote_trust_zone_id" {
 
 
 resource "cofide_connect_ap_binding" "example" {
-  org_id        = var.org_id
   trust_zone_id = var.trust_zone_id
   policy_id     = var.policy_id
 

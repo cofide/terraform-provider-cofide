@@ -38,12 +38,6 @@ variable "trust_zone_id" {
   default     = "example-tz-id"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
-  type        = string
-  default     = "example-org-id"
-}
-
 variable "kubernetes_context" {
   description = "The Kubernetes context to use."
   type        = string
@@ -54,7 +48,6 @@ variable "kubernetes_context" {
 resource "cofide_connect_cluster" "example" {
   name               = var.name
   trust_zone_id      = var.trust_zone_id
-  org_id             = var.org_id
   profile            = "kubernetes"
   kubernetes_context = var.kubernetes_context
   external_server    = false
@@ -96,12 +89,6 @@ variable "trust_zone_id" {
   default     = "example-tz-id"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
-  type        = string
-  default     = "example-org-id"
-}
-
 variable "kubernetes_context" {
   description = "The Kubernetes context to use."
   type        = string
@@ -118,7 +105,6 @@ variable "oidc_issuer_url" {
 resource "cofide_connect_cluster" "example" {
   name                = var.name
   trust_zone_id       = var.trust_zone_id
-  org_id              = var.org_id
   profile             = "kubernetes"
   kubernetes_context  = var.kubernetes_context
   external_server     = false
