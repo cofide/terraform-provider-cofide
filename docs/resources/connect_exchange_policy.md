@@ -40,7 +40,7 @@ variable "trust_zone_id" {
 
 
 resource "cofide_connect_exchange_policy" "example" {
-  name         = var.name
+  name          = var.name
   trust_zone_id = var.trust_zone_id
   action        = "ALLOW"
 
@@ -125,6 +125,8 @@ output "exchange_policy_id" {
 - `actor_issuer` (Attributes List) Match conditions on the issuer of the inbound actor token. (see [below for nested schema](#nestedatt--actor_issuer))
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--client_id))
 - `external_hooks` (Attributes List) Post-matching hooks that transform outbound token claims before Credex mints them. (see [below for nested schema](#nestedatt--external_hooks))
+- `outbound_identity` (String) Outbound identity to assert in the exchanged token. When set, Credex will use this identity rather than the inbound subject identity.
+- `outbound_issuer` (Attributes) Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. Exactly one outbound_issuer variant must be set. (see [below for nested schema](#nestedatt--outbound_issuer))
 - `outbound_scopes` (List of String) Outbound scopes to grant. Only relevant when action is allow.
 - `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--subject_identity))
@@ -191,6 +193,29 @@ Required:
 
 - `spiffe_id` (String) SPIFFE ID to present when connecting to the hook endpoint.
 
+
+
+
+<a id="nestedatt--outbound_issuer"></a>
+### Nested Schema for `outbound_issuer`
+
+Optional:
+
+- `oauth_as` (Attributes) Use an external OAuth 2.0 authorisation server as the outbound issuer. At least one of `issuer_url` or `token_url` is required. (see [below for nested schema](#nestedatt--outbound_issuer--oauth_as))
+
+<a id="nestedatt--outbound_issuer--oauth_as"></a>
+### Nested Schema for `outbound_issuer.oauth_as`
+
+Required:
+
+- `grant_type` (String) OAuth 2.0 grant type.
+
+Optional:
+
+- `audiences` (List of String) Audiences to request in the outbound token.
+- `issuer_url` (String) Issuer URL of the OAuth 2.0 authorisation server.
+- `timeout` (Number) Timeout for token requests to the authorisation server, in seconds.
+- `token_url` (String) Token endpoint URL of the OAuth 2.0 authorisation server.
 
 
 

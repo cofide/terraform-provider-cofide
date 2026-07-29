@@ -15,8 +15,10 @@ type ExchangePolicyModel struct {
 	SubjectAudience tftypes.List   `tfsdk:"subject_audience"`
 	ClientID        tftypes.List   `tfsdk:"client_id"`
 	TargetAudience  tftypes.List   `tfsdk:"target_audience"`
-	OutboundScopes  tftypes.List   `tfsdk:"outbound_scopes"`
-	ExternalHooks   tftypes.List   `tfsdk:"external_hooks"`
+	OutboundScopes   tftypes.List   `tfsdk:"outbound_scopes"`
+	OutboundIssuer   tftypes.Object `tfsdk:"outbound_issuer"`
+	OutboundIdentity tftypes.String `tfsdk:"outbound_identity"`
+	ExternalHooks    tftypes.List   `tfsdk:"external_hooks"`
 }
 
 type StringMatcherModel struct {
