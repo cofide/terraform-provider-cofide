@@ -149,7 +149,7 @@ func (r *RoleBindingResource) ImportState(ctx context.Context, req resource.Impo
 }
 
 func (r *RoleBindingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resourceSchema()
+	resp.Schema = ResourceSchema()
 }
 
 func (r *RoleBindingResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

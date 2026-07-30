@@ -81,7 +81,7 @@ func makeValidateRequest(t *testing.T, user, group tftypes.Value) resource.Valid
 	})
 	return resource.ValidateConfigRequest{
 		Config: tfsdk.Config{
-			Schema: resourceSchema(),
+			Schema: ResourceSchema(),
 			Raw:    raw,
 		},
 	}
