@@ -36,7 +36,7 @@ This is a Terraform provider built with `terraform-plugin-framework` that manage
 - `schema.go` — defines the Terraform schema for the resource
 - `data_source_schema.go` — defines the schema for the data source
 - `model.go` — defines the Go struct (`*Model`) that maps to Terraform state via `tfsdk:` tags
-- `convert.go` — bidirectional conversion between the model and the protobuf API types (not all resources have this; simpler ones do conversion inline)
+- `convert.go` — bidirectional conversion between the model and the protobuf API types (some resources still do conversion inline, but new code should use `convert.go` — see Key conventions)
 
 **Protobuf types**: Come from `github.com/cofide/cofide-api-sdk/gen/go/proto/...`. Each resource calls the corresponding versioned SDK client (e.g. `t.client.TrustZoneV1Alpha1()`).
 
@@ -58,6 +58,8 @@ This is a Terraform provider built with `terraform-plugin-framework` that manage
 
 ## Key conventions
 
+- A resource and its data sources share one `*Model` struct, so their schemas must describe the same shape. Data source schemas mirror the resource schema attribute for attribute, differing only in `Required`/`Optional`/`Computed` and plan modifiers. List data sources nest that same shape under a list attribute, alongside their filter attributes. `internal/schema_shape_test.go` enforces this; add new resources to its table.
+- Proto-to-model conversion lives in a single `protoToModel` in `convert.go`, used by both the resource `Read`/`Create`/`Update` and the data source `Read`. Do not hand-roll a second copy in `data_source.go`: the copies drift, and the resulting bugs (a missing field, or a whole oneof variant silently dropped) only surface against a live Connect deployment.
 - Resources that support `ImportState` use `resource.ImportStatePassthroughID` to import by ID.
 - gRPC `codes.NotFound` on Read removes the resource from state (drift detection), rather than erroring.
 - Provider config can be supplied via HCL attributes or environment variables (`COFIDE_API_TOKEN`, `COFIDE_CONNECT_URL`, `COFIDE_INSECURE_SKIP_VERIFY`).
