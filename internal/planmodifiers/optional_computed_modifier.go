@@ -13,6 +13,7 @@ type OptionalComputedModifier struct{}
 
 var _ planmodifier.String = OptionalComputedModifier{}
 var _ planmodifier.Bool = OptionalComputedModifier{}
+var _ planmodifier.Object = OptionalComputedModifier{}
 
 func (m OptionalComputedModifier) Description(_ context.Context) string {
 	return "Handles optional+computed attributes: preserves state on update if config is removed, and marks as unknown on create if not configured."
@@ -37,5 +38,14 @@ func (m OptionalComputedModifier) PlanModifyBool(ctx context.Context, req planmo
 	// existing state value. Mark it as unknown.
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = types.BoolUnknown()
+	}
+}
+
+func (m OptionalComputedModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	// If the user is not setting a value in config, we can't know the final
+	// value until apply. It could be a new value from the API, or the
+	// existing state value. Mark it as unknown.
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = types.ObjectUnknown(req.ConfigValue.AttributeTypes(ctx))
 	}
 }
