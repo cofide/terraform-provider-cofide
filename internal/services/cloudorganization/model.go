@@ -6,15 +6,16 @@ import (
 )
 
 type CloudOrganizationModel struct {
-	ID               types.String          `tfsdk:"id"`
-	OrgID            types.String          `tfsdk:"org_id"`
-	Name             types.String          `tfsdk:"name"`
-	AWS              *AWSOrganizationModel `tfsdk:"aws"`
-	DiscoveryEnabled types.Bool            `tfsdk:"discovery_enabled"`
-	Status           types.String          `tfsdk:"status"`
-	LastDiscoveredAt types.String          `tfsdk:"last_discovered_at"`
-	CreatedAt        types.String          `tfsdk:"created_at"`
-	LastUpdatedAt    types.String          `tfsdk:"last_updated_at"`
+	ID                types.String          `tfsdk:"id"`
+	OrgID             types.String          `tfsdk:"org_id"`
+	Name              types.String          `tfsdk:"name"`
+	AWS               *AWSOrganizationModel `tfsdk:"aws"`
+	DiscoveryEnabled  types.Bool            `tfsdk:"discovery_enabled"`
+	DiscoveryInterval types.String          `tfsdk:"discovery_interval"`
+	Status            types.String          `tfsdk:"status"`
+	LastDiscoveredAt  types.String          `tfsdk:"last_discovered_at"`
+	CreatedAt         types.String          `tfsdk:"created_at"`
+	LastUpdatedAt     types.String          `tfsdk:"last_updated_at"`
 }
 
 type AWSOrganizationModel struct {

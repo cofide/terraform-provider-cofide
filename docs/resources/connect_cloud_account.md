@@ -126,9 +126,10 @@ resource "cofide_connect_cloud_account" "example" {
     account_id = var.aws_account_id
 
     lambda_discovery_config = {
-      audience          = "spiffe://example.org/lambda-discovery"
-      regions           = ["us-east-1", "eu-west-1"]
-      discovery_enabled = true
+      audience           = "spiffe://example.org/lambda-discovery"
+      regions            = ["us-east-1", "eu-west-1"]
+      discovery_enabled  = true
+      discovery_interval = "5m"
 
       role_chain = [
         {
@@ -192,6 +193,7 @@ Required:
 Optional:
 
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
+- `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.
 - `regions` (List of String) AWS regions to discover resources in.
 
 Read-Only:
@@ -224,6 +226,7 @@ Required:
 Optional:
 
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
+- `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.
 - `regions` (List of String) AWS regions to discover resources in.
 
 Read-Only:

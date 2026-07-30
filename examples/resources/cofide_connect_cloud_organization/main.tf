@@ -13,5 +13,6 @@ resource "cofide_connect_cloud_organization" "example" {
     ]
   }
 
-  discovery_enabled = true
+  discovery_enabled  = true
+  discovery_interval = "5m"
 }

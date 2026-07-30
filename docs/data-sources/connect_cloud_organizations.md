@@ -62,6 +62,7 @@ Read-Only:
 - `aws` (Attributes) AWS-specific configuration for the cloud organization. (see [below for nested schema](#nestedatt--cloud_organizations--aws))
 - `created_at` (String) The timestamp (RFC3339) of resource creation.
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this cloud organization.
+- `discovery_interval` (String) How frequently discovery runs for this cloud organization (a Go duration string, e.g. `1m`, `1h`).
 - `id` (String) The ID of the cloud organization.
 - `last_discovered_at` (String) The timestamp (RFC3339) of the last successful discovery.
 - `last_updated_at` (String) The timestamp (RFC3339) of the last resource update.

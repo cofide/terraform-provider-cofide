@@ -3,6 +3,7 @@ package cloudorganization
 import (
 	"context"
 
+	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cloudprovider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -53,6 +54,15 @@ func ResourceSchema(_ context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
+			},
+			"discovery_interval": schema.StringAttribute{
+				Description: "How frequently discovery runs for this cloud organization (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					planmodifiers.OptionalComputedModifier{},
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"status": schema.StringAttribute{
 				Description: "The current status of cloud resource discovery (e.g. `DISCOVERING`, `ERROR`).",

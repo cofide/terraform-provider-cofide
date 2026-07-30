@@ -52,7 +52,13 @@ func (c *CloudOrganizationResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	createResp, err := c.client.CloudOrganizationV1Alpha1().CreateCloudOrganization(ctx, modelToProto(plan))
+	cloudOrganization, diags := modelToProto(plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	createResp, err := c.client.CloudOrganizationV1Alpha1().CreateCloudOrganization(ctx, cloudOrganization)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating cloud organization",
@@ -108,7 +114,11 @@ func (c *CloudOrganizationResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	cloudOrganization := modelToProto(plan)
+	cloudOrganization, diags := modelToProto(plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	cloudOrganization.Id = state.ID.ValueString()
 
 	// No update_mask is passed: the API performs a full replacement of the

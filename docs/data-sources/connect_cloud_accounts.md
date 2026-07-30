@@ -87,6 +87,7 @@ Read-Only:
 
 - `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
+- `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`).
 - `last_successful_discovery` (String) The timestamp (RFC3339) of the last successful discovery run.
 - `regions` (List of String) AWS regions to discover resources in.
 - `role_chain` (Attributes List) Ordered chain of IAM roles to assume. (see [below for nested schema](#nestedatt--cloud_accounts--aws--agent_core_discovery_config--role_chain))
@@ -110,6 +111,7 @@ Read-Only:
 
 - `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
+- `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`).
 - `last_successful_discovery` (String) The timestamp (RFC3339) of the last successful discovery run.
 - `regions` (List of String) AWS regions to discover resources in.
 - `role_chain` (Attributes List) Ordered chain of IAM roles to assume. (see [below for nested schema](#nestedatt--cloud_accounts--aws--lambda_discovery_config--role_chain))

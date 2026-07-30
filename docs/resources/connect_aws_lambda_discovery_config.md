@@ -43,10 +43,11 @@ variable "discovery_role_arn" {
 # discovery rather than Terraform: only the Lambda discovery config is
 # managed here, referencing the account by ID.
 resource "cofide_connect_aws_lambda_discovery_config" "example" {
-  cloud_account_id  = var.cloud_account_id
-  audience          = "spiffe://example.org/lambda-discovery"
-  regions           = ["us-east-1", "eu-west-1"]
-  discovery_enabled = true
+  cloud_account_id   = var.cloud_account_id
+  audience           = "spiffe://example.org/lambda-discovery"
+  regions            = ["us-east-1", "eu-west-1"]
+  discovery_enabled  = true
+  discovery_interval = "5m"
 
   role_chain = [
     {
@@ -74,6 +75,7 @@ output "status" {
 ### Optional
 
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
+- `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.
 - `regions` (List of String) AWS regions to discover resources in.
 
 ### Read-Only

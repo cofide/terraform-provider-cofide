@@ -66,7 +66,8 @@ resource "cofide_connect_cloud_organization" "example" {
     ]
   }
 
-  discovery_enabled = true
+  discovery_enabled  = true
+  discovery_interval = "5m"
 }
 
 
@@ -88,6 +89,7 @@ output "cloud_organization_id" {
 ### Optional
 
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this cloud organization.
+- `discovery_interval` (String) How frequently discovery runs for this cloud organization (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.
 
 ### Read-Only
 

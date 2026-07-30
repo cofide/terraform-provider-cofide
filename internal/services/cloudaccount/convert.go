@@ -64,11 +64,18 @@ func lambdaDiscoveryConfigToProto(ctx context.Context, model *AWSDiscoveryConfig
 		return nil, diags
 	}
 
+	discoveryInterval, intervalDiags := cloudprovider.DurationToProto(model.DiscoveryInterval)
+	diags.Append(intervalDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	return &cloudaccountpb.AWSLambdaDiscoveryConfig{
-		Audience:         model.Audience.ValueString(),
-		Regions:          regions,
-		DiscoveryEnabled: model.DiscoveryEnabled.ValueBool(),
-		RoleChain:        cloudprovider.RoleChainToProto(model.RoleChain),
+		Audience:          model.Audience.ValueString(),
+		Regions:           regions,
+		DiscoveryEnabled:  model.DiscoveryEnabled.ValueBool(),
+		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
+		DiscoveryInterval: discoveryInterval,
 	}, diags
 }
 
@@ -82,11 +89,18 @@ func agentCoreDiscoveryConfigToProto(ctx context.Context, model *AWSDiscoveryCon
 		return nil, diags
 	}
 
+	discoveryInterval, intervalDiags := cloudprovider.DurationToProto(model.DiscoveryInterval)
+	diags.Append(intervalDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	return &cloudaccountpb.AWSAgentCoreDiscoveryConfig{
-		Audience:         model.Audience.ValueString(),
-		Regions:          regions,
-		DiscoveryEnabled: model.DiscoveryEnabled.ValueBool(),
-		RoleChain:        cloudprovider.RoleChainToProto(model.RoleChain),
+		Audience:          model.Audience.ValueString(),
+		Regions:           regions,
+		DiscoveryEnabled:  model.DiscoveryEnabled.ValueBool(),
+		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
+		DiscoveryInterval: discoveryInterval,
 	}, diags
 }
 
@@ -127,6 +141,7 @@ func lambdaDiscoveryConfigFromProto(proto *cloudaccountpb.AWSLambdaDiscoveryConf
 		Regions:                 cloudprovider.StringListFromProto(proto.GetRegions()),
 		DiscoveryEnabled:        tftypes.BoolValue(proto.GetDiscoveryEnabled()),
 		RoleChain:               cloudprovider.RoleChainFromProto(proto.GetRoleChain()),
+		DiscoveryInterval:       cloudprovider.DurationToString(proto.GetDiscoveryInterval()),
 		Status:                  cloudprovider.DiscoveryStatusToString(proto.GetStatus()),
 		LastSuccessfulDiscovery: cloudprovider.TimestampToString(proto.GetLastSuccessfulDiscovery()),
 		StatusLastUpdatedAt:     cloudprovider.TimestampToString(proto.GetStatusLastUpdatedAt()),
@@ -143,6 +158,7 @@ func agentCoreDiscoveryConfigFromProto(proto *cloudaccountpb.AWSAgentCoreDiscove
 		Regions:                 cloudprovider.StringListFromProto(proto.GetRegions()),
 		DiscoveryEnabled:        tftypes.BoolValue(proto.GetDiscoveryEnabled()),
 		RoleChain:               cloudprovider.RoleChainFromProto(proto.GetRoleChain()),
+		DiscoveryInterval:       cloudprovider.DurationToString(proto.GetDiscoveryInterval()),
 		Status:                  cloudprovider.DiscoveryStatusToString(proto.GetStatus()),
 		LastSuccessfulDiscovery: cloudprovider.TimestampToString(proto.GetLastSuccessfulDiscovery()),
 		StatusLastUpdatedAt:     cloudprovider.TimestampToString(proto.GetStatusLastUpdatedAt()),

@@ -3,6 +3,7 @@ package cloudaccount
 import (
 	"context"
 	"testing"
+	"time"
 
 	cloudaccountpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cloud_account/v1alpha1"
 	cloudproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cloud_provider/v1alpha1"
@@ -10,6 +11,7 @@ import (
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -44,10 +46,11 @@ func TestProtoToModel_Full(t *testing.T) {
 			Aws: &cloudaccountpb.AWSAccount{
 				AccountId: "123456789012",
 				LambdaDiscoveryConfig: &cloudaccountpb.AWSLambdaDiscoveryConfig{
-					Audience:         "lambda-aud",
-					Regions:          []string{"eu-west-1"},
-					DiscoveryEnabled: true,
-					Status:           cloudproviderpb.DiscoveryStatus_DISCOVERY_STATUS_DISCOVERING,
+					Audience:          "lambda-aud",
+					Regions:           []string{"eu-west-1"},
+					DiscoveryEnabled:  true,
+					Status:            cloudproviderpb.DiscoveryStatus_DISCOVERY_STATUS_DISCOVERING,
+					DiscoveryInterval: durationpb.New(time.Minute),
 					RoleChain: []*cloudproviderpb.AWSAssumeRoleConfig{
 						{IamRoleArn: "arn:aws:iam::123456789012:role/lambda"},
 					},
@@ -79,6 +82,7 @@ func TestProtoToModel_Full(t *testing.T) {
 	require.NotNil(t, got.AWS.LambdaDiscoveryConfig)
 	assert.Equal(t, tftypes.StringValue("lambda-aud"), got.AWS.LambdaDiscoveryConfig.Audience)
 	assert.Equal(t, tftypes.StringValue("DISCOVERING"), got.AWS.LambdaDiscoveryConfig.Status)
+	assert.Equal(t, tftypes.StringValue("1m0s"), got.AWS.LambdaDiscoveryConfig.DiscoveryInterval)
 	assert.Equal(t, []cloudprovider.RoleChainModel{
 		{IAMRoleARN: tftypes.StringValue("arn:aws:iam::123456789012:role/lambda"), ExternalID: tftypes.StringNull()},
 	}, got.AWS.LambdaDiscoveryConfig.RoleChain)
@@ -98,9 +102,10 @@ func TestModelToProto(t *testing.T) {
 		AWS: &AWSAccountModel{
 			AccountID: tftypes.StringValue("123456789012"),
 			LambdaDiscoveryConfig: &AWSDiscoveryConfigModel{
-				Audience:         tftypes.StringValue("lambda-aud"),
-				Regions:          tftypes.ListNull(tftypes.StringType),
-				DiscoveryEnabled: tftypes.BoolValue(true),
+				Audience:          tftypes.StringValue("lambda-aud"),
+				Regions:           tftypes.ListNull(tftypes.StringType),
+				DiscoveryEnabled:  tftypes.BoolValue(true),
+				DiscoveryInterval: tftypes.StringValue("1m"),
 				RoleChain: []cloudprovider.RoleChainModel{
 					{IAMRoleARN: tftypes.StringValue("arn:aws:iam::123456789012:role/lambda"), ExternalID: tftypes.StringNull()},
 				},
@@ -120,5 +125,6 @@ func TestModelToProto(t *testing.T) {
 	assert.False(t, got.GetManagedByDiscovery())
 	assert.Equal(t, "123456789012", got.GetAws().GetAccountId())
 	assert.Equal(t, "lambda-aud", got.GetAws().GetLambdaDiscoveryConfig().GetAudience())
+	assert.Equal(t, durationpb.New(time.Minute), got.GetAws().GetLambdaDiscoveryConfig().GetDiscoveryInterval())
 	assert.Nil(t, got.GetAws().GetAgentCoreDiscoveryConfig())
 }

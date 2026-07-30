@@ -10,9 +10,10 @@ resource "cofide_connect_cloud_account" "example" {
     account_id = var.aws_account_id
 
     lambda_discovery_config = {
-      audience          = "spiffe://example.org/lambda-discovery"
-      regions           = ["us-east-1", "eu-west-1"]
-      discovery_enabled = true
+      audience           = "spiffe://example.org/lambda-discovery"
+      regions            = ["us-east-1", "eu-west-1"]
+      discovery_enabled  = true
+      discovery_interval = "5m"
 
       role_chain = [
         {

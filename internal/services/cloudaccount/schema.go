@@ -33,6 +33,15 @@ func awsDiscoveryConfigAttributes(roleChainDescription string) map[string]schema
 			Optional:    true,
 		},
 		"role_chain": cloudprovider.RoleChainAttribute(roleChainDescription),
+		"discovery_interval": schema.StringAttribute{
+			Description: "How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.",
+			Optional:    true,
+			Computed:    true,
+			PlanModifiers: []planmodifier.String{
+				planmodifiers.OptionalComputedModifier{},
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
 		"status": schema.StringAttribute{
 			Description: "The current status of cloud resource discovery (e.g. `DISCOVERING`, `ERROR`).",
 			Computed:    true,

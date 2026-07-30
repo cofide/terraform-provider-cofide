@@ -42,6 +42,10 @@ func awsDiscoveryConfigNestedAttributes() map[string]schema.Attribute {
 				},
 			},
 		},
+		"discovery_interval": schema.StringAttribute{
+			Description: "How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`).",
+			Computed:    true,
+		},
 		"status": schema.StringAttribute{
 			Description: "The current status of cloud resource discovery (e.g. `DISCOVERING`, `ERROR`).",
 			Computed:    true,

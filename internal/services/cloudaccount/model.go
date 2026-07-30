@@ -31,6 +31,7 @@ type AWSDiscoveryConfigModel struct {
 	Regions                 types.List                     `tfsdk:"regions"`
 	DiscoveryEnabled        types.Bool                     `tfsdk:"discovery_enabled"`
 	RoleChain               []cloudprovider.RoleChainModel `tfsdk:"role_chain"`
+	DiscoveryInterval       types.String                   `tfsdk:"discovery_interval"`
 	Status                  types.String                   `tfsdk:"status"`
 	LastSuccessfulDiscovery types.String                   `tfsdk:"last_successful_discovery"`
 	StatusLastUpdatedAt     types.String                   `tfsdk:"status_last_updated_at"`

@@ -2,12 +2,15 @@ package cloudorganization
 
 import (
 	"testing"
+	"time"
 
 	cloudorganizationpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cloud_organization/v1alpha1"
 	cloudproviderpb "github.com/cofide/cofide-api-sdk/gen/go/proto/cloud_provider/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cloudprovider"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -27,10 +30,11 @@ func TestProtoToModel(t *testing.T) {
 				},
 			},
 		},
-		DiscoveryEnabled: true,
-		LastDiscoveredAt: now,
-		CreatedAt:        now,
-		LastUpdatedAt:    now,
+		DiscoveryEnabled:  true,
+		DiscoveryInterval: durationpb.New(time.Minute),
+		LastDiscoveredAt:  now,
+		CreatedAt:         now,
+		LastUpdatedAt:     now,
 	}
 
 	got := protoToModel(proto)
@@ -39,6 +43,7 @@ func TestProtoToModel(t *testing.T) {
 	assert.Equal(t, tftypes.StringValue("org-1"), got.OrgID)
 	assert.Equal(t, tftypes.StringValue("test-cloud-org"), got.Name)
 	assert.Equal(t, tftypes.BoolValue(true), got.DiscoveryEnabled)
+	assert.Equal(t, tftypes.StringValue("1m0s"), got.DiscoveryInterval)
 	assert.Equal(t, tftypes.StringValue("DISCOVERING"), got.Status)
 	assert.Equal(t, cloudprovider.TimestampToString(now), got.LastDiscoveredAt)
 	assert.Equal(t, cloudprovider.TimestampToString(now), got.CreatedAt)
@@ -64,14 +69,17 @@ func TestModelToProto(t *testing.T) {
 				{IAMRoleARN: tftypes.StringValue("arn:aws:iam::123456789012:role/first"), ExternalID: tftypes.StringNull()},
 			},
 		},
-		DiscoveryEnabled: tftypes.BoolValue(true),
+		DiscoveryEnabled:  tftypes.BoolValue(true),
+		DiscoveryInterval: tftypes.StringValue("1m"),
 	}
 
-	got := modelToProto(model)
+	got, diags := modelToProto(model)
+	require.False(t, diags.HasError())
 
 	assert.Equal(t, "org-1", got.GetOrgId())
 	assert.Equal(t, "test-cloud-org", got.GetName())
 	assert.True(t, got.GetDiscoveryEnabled())
+	assert.Equal(t, durationpb.New(time.Minute), got.GetDiscoveryInterval())
 	assert.Equal(t, "o-fakeorgid12", got.GetAws().GetAwsOrgId())
 	assert.Equal(t, "aud", got.GetAws().GetAudience())
 	assert.Equal(t, []*cloudproviderpb.AWSAssumeRoleConfig{
