@@ -11,7 +11,7 @@ import (
 var _ datasource.DataSource = &ExchangePolicyDataSource{}
 var _ datasource.DataSource = &ExchangePoliciesDataSource{}
 
-func dataSourceSchema() schema.Schema {
+func DataSourceSchema() schema.Schema {
 	attrs := exchangePolicyNestedAttributes()
 	attrs["id"] = schema.StringAttribute{
 		Description: "The ID of the exchange policy.",
@@ -23,7 +23,7 @@ func dataSourceSchema() schema.Schema {
 	}
 }
 
-func listDataSourceSchema() schema.Schema {
+func ListDataSourceSchema() schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Provides information about Cofide Connect exchange policies.",
 		Attributes: map[string]schema.Attribute{
@@ -148,9 +148,9 @@ func stringSetDataSourceAttribute(description string) schema.Attribute {
 }
 
 func (d *ExchangePolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = dataSourceSchema()
+	resp.Schema = DataSourceSchema()
 }
 
 func (d *ExchangePoliciesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = listDataSourceSchema()
+	resp.Schema = ListDataSourceSchema()
 }

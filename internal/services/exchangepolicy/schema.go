@@ -51,7 +51,7 @@ func (authExactlyOneVariantValidator) ValidateObject(_ context.Context, req vali
 	}
 }
 
-func resourceSchema() schema.Schema {
+func ResourceSchema() schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a Cofide Connect exchange policy. Exchange policies govern Credex token exchanges within a trust zone by specifying match conditions on inbound tokens and determining whether exchanges are permitted or denied.",
 		Attributes: map[string]schema.Attribute{
@@ -192,5 +192,5 @@ func stringSetResourceAttribute(description string) schema.Attribute {
 }
 
 func (r *ExchangePolicyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resourceSchema()
+	resp.Schema = ResourceSchema()
 }
