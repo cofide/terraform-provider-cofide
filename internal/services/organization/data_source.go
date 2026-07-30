@@ -25,7 +25,7 @@ func (d *OrganizationDataSource) Metadata(ctx context.Context, req datasource.Me
 }
 
 func (d *OrganizationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = getOrganizationDataSourceSchema()
+	resp.Schema = DataSourceSchema()
 }
 
 func (d *OrganizationDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {

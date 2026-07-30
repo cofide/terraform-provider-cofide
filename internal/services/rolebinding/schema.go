@@ -7,7 +7,7 @@ import (
 
 var _ resource.ResourceWithConfigValidators = (*RoleBindingResource)(nil)
 
-func resourceSchema() schema.Schema {
+func ResourceSchema() schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of `user` or `group` must be provided.",
 		Attributes: map[string]schema.Attribute{

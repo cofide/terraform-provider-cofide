@@ -58,7 +58,7 @@ This is a Terraform provider built with `terraform-plugin-framework` that manage
 
 ## Key conventions
 
-- A resource and its data sources share one `*Model` struct, so their schemas must describe the same shape. Data source schemas mirror the resource schema attribute for attribute, differing only in `Required`/`Optional`/`Computed` and plan modifiers. List data sources nest that same shape under a list attribute, alongside their filter attributes. `internal/schema_shape_test.go` enforces this; add new resources to its table.
+- A resource and its data sources share one `*Model` struct, so their schemas must describe the same shape. Data source schemas mirror the resource schema attribute for attribute, differing only in `Required`/`Optional`/`Computed` and plan modifiers. List data sources nest that same shape under a list attribute, alongside their filter attributes. `internal/schema_shape_test.go` enforces this; add new resources to its table. `internal/schema_model_test.go` separately anchors every schema to its model struct, catching a field missing from both schemas; add new resources and data sources to its table too.
 - Proto-to-model conversion lives in a single `protoToModel` in `convert.go`, used by both the resource `Read`/`Create`/`Update` and the data source `Read`. Do not hand-roll a second copy in `data_source.go`: the copies drift, and the resulting bugs (a missing field, or a whole oneof variant silently dropped) only surface against a live Connect deployment.
 - Resources that support `ImportState` use `resource.ImportStatePassthroughID` to import by ID.
 - gRPC `codes.NotFound` on Read removes the resource from state (drift detection), rather than erroring.
