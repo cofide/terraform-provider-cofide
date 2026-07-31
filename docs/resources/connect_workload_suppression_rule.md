@@ -3,12 +3,12 @@
 page_title: "cofide_connect_workload_suppression_rule Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
-  Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (currently only kubernetes_pod) must be configured.
+  Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (kubernetes_pod, aws_lambda_function, or aws_agentcore_runtime) must be configured.
 ---
 
 # cofide_connect_workload_suppression_rule (Resource)
 
-Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (currently only `kubernetes_pod`) must be configured.
+Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (`kubernetes_pod`, `aws_lambda_function`, or `aws_agentcore_runtime`) must be configured.
 
 ## Example Usage
 
@@ -76,6 +76,8 @@ output "workload_suppression_rule_id" {
 
 ### Optional
 
+- `aws_agentcore_runtime` (Attributes) Matches AWS Bedrock AgentCore Runtime workloads. (see [below for nested schema](#nestedatt--aws_agentcore_runtime))
+- `aws_lambda_function` (Attributes) Matches AWS Lambda function workloads. (see [below for nested schema](#nestedatt--aws_lambda_function))
 - `description` (String) A human-readable explanation of why the rule exists.
 - `enabled` (Boolean) Whether the rule is currently active. Disabled rules are retained but have no suppression effect.
 - `kubernetes_pod` (Attributes) Matches Kubernetes pod workloads. (see [below for nested schema](#nestedatt--kubernetes_pod))
@@ -86,6 +88,27 @@ output "workload_suppression_rule_id" {
 - `created_at` (String) The time the rule was created, in RFC3339 format.
 - `id` (String) The ID of the workload suppression rule.
 - `last_updated_at` (String) The time the rule was last updated, in RFC3339 format.
+
+<a id="nestedatt--aws_agentcore_runtime"></a>
+### Nested Schema for `aws_agentcore_runtime`
+
+Optional:
+
+- `agent_runtime_names` (List of String) Matches runtimes with these agent runtime names.
+- `cloud_account_ids` (List of String) Matches only runtimes discovered within these cloud accounts.
+- `regions` (List of String) Matches runtimes in these AWS regions.
+
+
+<a id="nestedatt--aws_lambda_function"></a>
+### Nested Schema for `aws_lambda_function`
+
+Optional:
+
+- `cloud_account_ids` (List of String) Matches only functions discovered within these cloud accounts.
+- `function_names` (List of String) Matches functions with these function names.
+- `regions` (List of String) Matches functions in these AWS regions.
+- `tags` (Map of String) Matches functions with these AWS tags.
+
 
 <a id="nestedatt--kubernetes_pod"></a>
 ### Nested Schema for `kubernetes_pod`

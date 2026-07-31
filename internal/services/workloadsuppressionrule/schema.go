@@ -17,7 +17,7 @@ var _ resource.ResourceWithConfigValidators = (*WorkloadSuppressionRuleResource)
 
 func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (currently only `kubernetes_pod`) must be configured.",
+		MarkdownDescription: "Manages a Cofide Connect workload suppression rule. Suppression rules hide matching workloads from the Connect findings view. Exactly one matcher (`kubernetes_pod`, `aws_lambda_function`, or `aws_agentcore_runtime`) must be configured.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the workload suppression rule.",
@@ -78,6 +78,53 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 			},
+			"aws_lambda_function": schema.SingleNestedAttribute{
+				Description: "Matches AWS Lambda function workloads.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"cloud_account_ids": schema.ListAttribute{
+						Description: "Matches only functions discovered within these cloud accounts.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"regions": schema.ListAttribute{
+						Description: "Matches functions in these AWS regions.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"function_names": schema.ListAttribute{
+						Description: "Matches functions with these function names.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"tags": schema.MapAttribute{
+						Description: "Matches functions with these AWS tags.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+				},
+			},
+			"aws_agentcore_runtime": schema.SingleNestedAttribute{
+				Description: "Matches AWS Bedrock AgentCore Runtime workloads.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"cloud_account_ids": schema.ListAttribute{
+						Description: "Matches only runtimes discovered within these cloud accounts.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"regions": schema.ListAttribute{
+						Description: "Matches runtimes in these AWS regions.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+					"agent_runtime_names": schema.ListAttribute{
+						Description: "Matches runtimes with these agent runtime names.",
+						Optional:    true,
+						ElementType: tftypes.StringType,
+					},
+				},
+			},
 			"created_at": schema.StringAttribute{
 				Description: "The time the rule was created, in RFC3339 format.",
 				Computed:    true,
@@ -99,11 +146,11 @@ type exactlyOneOfMatcherValidator struct{}
 var _ resource.ConfigValidator = exactlyOneOfMatcherValidator{}
 
 func (v exactlyOneOfMatcherValidator) Description(_ context.Context) string {
-	return "exactly one matcher (currently only 'kubernetes_pod') must be configured"
+	return "exactly one matcher ('kubernetes_pod', 'aws_lambda_function', or 'aws_agentcore_runtime') must be configured"
 }
 
 func (v exactlyOneOfMatcherValidator) MarkdownDescription(_ context.Context) string {
-	return "exactly one matcher (currently only `kubernetes_pod`) must be configured"
+	return "exactly one matcher (`kubernetes_pod`, `aws_lambda_function`, or `aws_agentcore_runtime`) must be configured"
 }
 
 func (v exactlyOneOfMatcherValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -114,11 +161,11 @@ func (v exactlyOneOfMatcherValidator) ValidateResource(ctx context.Context, req 
 		return
 	}
 
-	valid, reason := isExactlyOneNonNil(data.KubernetesPod)
+	valid, reason := isExactlyOneNonNil(data.KubernetesPod, data.AWSLambdaFunction, data.AWSAgentCoreRuntime)
 	if !valid {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one matcher block (kubernetes_pod) must be configured, but "+reason+" were provided.",
+			"Exactly one matcher block (kubernetes_pod, aws_lambda_function, aws_agentcore_runtime) must be configured, but "+reason+" were provided.",
 		)
 		return
 	}

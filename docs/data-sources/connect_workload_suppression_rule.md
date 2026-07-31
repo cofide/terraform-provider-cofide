@@ -55,6 +55,8 @@ output "workload_suppression_rule_enabled" {
 
 ### Read-Only
 
+- `aws_agentcore_runtime` (Attributes) Matches AWS Bedrock AgentCore Runtime workloads. (see [below for nested schema](#nestedatt--aws_agentcore_runtime))
+- `aws_lambda_function` (Attributes) Matches AWS Lambda function workloads. (see [below for nested schema](#nestedatt--aws_lambda_function))
 - `created_at` (String) The time the rule was created, in RFC3339 format.
 - `description` (String) A human-readable explanation of why the rule exists.
 - `enabled` (Boolean) Whether the rule is currently active.
@@ -62,6 +64,27 @@ output "workload_suppression_rule_enabled" {
 - `last_updated_at` (String) The time the rule was last updated, in RFC3339 format.
 - `name` (String) The name of the workload suppression rule.
 - `org_id` (String) The ID of the organization.
+
+<a id="nestedatt--aws_agentcore_runtime"></a>
+### Nested Schema for `aws_agentcore_runtime`
+
+Read-Only:
+
+- `agent_runtime_names` (List of String) Matches runtimes with these agent runtime names.
+- `cloud_account_ids` (List of String) Matches only runtimes discovered within these cloud accounts.
+- `regions` (List of String) Matches runtimes in these AWS regions.
+
+
+<a id="nestedatt--aws_lambda_function"></a>
+### Nested Schema for `aws_lambda_function`
+
+Read-Only:
+
+- `cloud_account_ids` (List of String) Matches only functions discovered within these cloud accounts.
+- `function_names` (List of String) Matches functions with these function names.
+- `regions` (List of String) Matches functions in these AWS regions.
+- `tags` (Map of String) Matches functions with these AWS tags.
+
 
 <a id="nestedatt--kubernetes_pod"></a>
 ### Nested Schema for `kubernetes_pod`

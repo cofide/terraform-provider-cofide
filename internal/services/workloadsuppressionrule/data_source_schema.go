@@ -38,6 +38,55 @@ func kubernetesPodMatcherDataSourceAttributes() map[string]schema.Attribute {
 	}
 }
 
+// awsLambdaFunctionMatcherDataSourceAttributes returns the Computed attributes shared
+// by the aws_lambda_function matcher block in both the singular and list data sources.
+func awsLambdaFunctionMatcherDataSourceAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"cloud_account_ids": schema.ListAttribute{
+			Description: "Matches only functions discovered within these cloud accounts.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+		"regions": schema.ListAttribute{
+			Description: "Matches functions in these AWS regions.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+		"function_names": schema.ListAttribute{
+			Description: "Matches functions with these function names.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+		"tags": schema.MapAttribute{
+			Description: "Matches functions with these AWS tags.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+	}
+}
+
+// awsAgentCoreRuntimeMatcherDataSourceAttributes returns the Computed attributes shared
+// by the aws_agentcore_runtime matcher block in both the singular and list data sources.
+func awsAgentCoreRuntimeMatcherDataSourceAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"cloud_account_ids": schema.ListAttribute{
+			Description: "Matches only runtimes discovered within these cloud accounts.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+		"regions": schema.ListAttribute{
+			Description: "Matches runtimes in these AWS regions.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+		"agent_runtime_names": schema.ListAttribute{
+			Description: "Matches runtimes with these agent runtime names.",
+			Computed:    true,
+			ElementType: tftypes.StringType,
+		},
+	}
+}
+
 func DataSourceSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Provides information about a Cofide Connect workload suppression rule.",
@@ -66,6 +115,16 @@ func DataSourceSchema(_ context.Context) schema.Schema {
 				Description: "Matches Kubernetes pod workloads.",
 				Computed:    true,
 				Attributes:  kubernetesPodMatcherDataSourceAttributes(),
+			},
+			"aws_lambda_function": schema.SingleNestedAttribute{
+				Description: "Matches AWS Lambda function workloads.",
+				Computed:    true,
+				Attributes:  awsLambdaFunctionMatcherDataSourceAttributes(),
+			},
+			"aws_agentcore_runtime": schema.SingleNestedAttribute{
+				Description: "Matches AWS Bedrock AgentCore Runtime workloads.",
+				Computed:    true,
+				Attributes:  awsAgentCoreRuntimeMatcherDataSourceAttributes(),
 			},
 			"created_at": schema.StringAttribute{
 				Description: "The time the rule was created, in RFC3339 format.",
@@ -125,6 +184,16 @@ func ListDataSourceSchema(_ context.Context) schema.Schema {
 							Description: "Matches Kubernetes pod workloads.",
 							Computed:    true,
 							Attributes:  kubernetesPodMatcherDataSourceAttributes(),
+						},
+						"aws_lambda_function": schema.SingleNestedAttribute{
+							Description: "Matches AWS Lambda function workloads.",
+							Computed:    true,
+							Attributes:  awsLambdaFunctionMatcherDataSourceAttributes(),
+						},
+						"aws_agentcore_runtime": schema.SingleNestedAttribute{
+							Description: "Matches AWS Bedrock AgentCore Runtime workloads.",
+							Computed:    true,
+							Attributes:  awsAgentCoreRuntimeMatcherDataSourceAttributes(),
 						},
 						"created_at": schema.StringAttribute{
 							Description: "The time the rule was created, in RFC3339 format.",

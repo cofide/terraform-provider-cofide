@@ -117,3 +117,103 @@ func TestModelToProto_NoMatcher(t *testing.T) {
 	require.False(t, diags.HasError(), diags)
 	assert.Nil(t, got.GetMatcher())
 }
+
+func TestProtoToModel_AWSLambdaFunctionMatcher(t *testing.T) {
+	proto := &workloadsuppressionrulepb.WorkloadSuppressionRule{
+		Id:    "rule-5",
+		OrgId: "org-5",
+		Name:  "lambda-rule",
+		Matcher: &workloadsuppressionrulepb.WorkloadSuppressionRule_AwsLambdaFunction{
+			AwsLambdaFunction: &workloadsuppressionrulepb.AWSLambdaFunctionMatcher{
+				CloudAccountIds: []string{"acct-1"},
+				Regions:         []string{"us-east-1", "us-west-2"},
+				FunctionNames:   []string{"my-function"},
+				Tags:            map[string]string{"env": "prod"},
+			},
+		},
+	}
+
+	got := protoToModel(proto)
+
+	require.NotNil(t, got.AWSLambdaFunction)
+	assert.Nil(t, got.KubernetesPod)
+	assert.Nil(t, got.AWSAgentCoreRuntime)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("acct-1")}), got.AWSLambdaFunction.CloudAccountIDs)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("us-east-1"), types.StringValue("us-west-2")}), got.AWSLambdaFunction.Regions)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("my-function")}), got.AWSLambdaFunction.FunctionNames)
+	assert.Equal(t, types.MapValueMust(types.StringType, map[string]attr.Value{"env": types.StringValue("prod")}), got.AWSLambdaFunction.Tags)
+}
+
+func TestModelToProto_AWSLambdaFunctionMatcher(t *testing.T) {
+	ctx := context.Background()
+
+	model := WorkloadSuppressionRuleModel{
+		ID:    types.StringValue("rule-6"),
+		OrgID: types.StringValue("org-6"),
+		Name:  types.StringValue("lambda-rule"),
+		AWSLambdaFunction: &AWSLambdaFunctionMatcherModel{
+			CloudAccountIDs: types.ListValueMust(types.StringType, []attr.Value{types.StringValue("acct-1")}),
+			Regions:         types.ListNull(types.StringType),
+			FunctionNames:   types.ListValueMust(types.StringType, []attr.Value{types.StringValue("my-function")}),
+			Tags:            types.MapValueMust(types.StringType, map[string]attr.Value{"env": types.StringValue("prod")}),
+		},
+	}
+
+	got, diags := modelToProto(ctx, model)
+	require.False(t, diags.HasError(), diags)
+
+	lambda := got.GetAwsLambdaFunction()
+	require.NotNil(t, lambda)
+	assert.Equal(t, []string{"acct-1"}, lambda.GetCloudAccountIds())
+	assert.Empty(t, lambda.GetRegions())
+	assert.Equal(t, []string{"my-function"}, lambda.GetFunctionNames())
+	assert.Equal(t, map[string]string{"env": "prod"}, lambda.GetTags())
+}
+
+func TestProtoToModel_AWSAgentCoreRuntimeMatcher(t *testing.T) {
+	proto := &workloadsuppressionrulepb.WorkloadSuppressionRule{
+		Id:    "rule-7",
+		OrgId: "org-7",
+		Name:  "agentcore-rule",
+		Matcher: &workloadsuppressionrulepb.WorkloadSuppressionRule_AwsAgentcoreRuntime{
+			AwsAgentcoreRuntime: &workloadsuppressionrulepb.AWSAgentCoreRuntimeMatcher{
+				CloudAccountIds:   []string{"acct-2"},
+				Regions:           []string{"eu-west-1"},
+				AgentRuntimeNames: []string{"my-agent", "other-agent"},
+			},
+		},
+	}
+
+	got := protoToModel(proto)
+
+	require.NotNil(t, got.AWSAgentCoreRuntime)
+	assert.Nil(t, got.KubernetesPod)
+	assert.Nil(t, got.AWSLambdaFunction)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("acct-2")}), got.AWSAgentCoreRuntime.CloudAccountIDs)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("eu-west-1")}), got.AWSAgentCoreRuntime.Regions)
+	assert.Equal(t, types.ListValueMust(types.StringType, []attr.Value{types.StringValue("my-agent"), types.StringValue("other-agent")}), got.AWSAgentCoreRuntime.AgentRuntimeNames)
+}
+
+func TestModelToProto_AWSAgentCoreRuntimeMatcher(t *testing.T) {
+	ctx := context.Background()
+
+	model := WorkloadSuppressionRuleModel{
+		ID:    types.StringValue("rule-8"),
+		OrgID: types.StringValue("org-8"),
+		Name:  types.StringValue("agentcore-rule"),
+		AWSAgentCoreRuntime: &AWSAgentCoreRuntimeMatcherModel{
+			CloudAccountIDs:   types.ListNull(types.StringType),
+			Regions:           types.ListValueMust(types.StringType, []attr.Value{types.StringValue("eu-west-1")}),
+			AgentRuntimeNames: types.ListValueMust(types.StringType, []attr.Value{types.StringValue("my-agent")}),
+		},
+	}
+
+	got, diags := modelToProto(ctx, model)
+	require.False(t, diags.HasError(), diags)
+
+	runtime := got.GetAwsAgentcoreRuntime()
+	require.NotNil(t, runtime)
+	assert.Empty(t, runtime.GetCloudAccountIds())
+	assert.Equal(t, []string{"eu-west-1"}, runtime.GetRegions())
+	assert.Equal(t, []string{"my-agent"}, runtime.GetAgentRuntimeNames())
+}
