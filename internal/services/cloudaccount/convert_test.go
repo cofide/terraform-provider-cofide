@@ -47,6 +47,7 @@ func TestProtoToModel_Full(t *testing.T) {
 				AccountId: "123456789012",
 				LambdaDiscoveryConfig: &cloudaccountpb.AWSLambdaDiscoveryConfig{
 					Audience:          "lambda-aud",
+					AssumeThroughOidc: true,
 					Regions:           []string{"eu-west-1"},
 					DiscoveryEnabled:  true,
 					Status:            cloudproviderpb.DiscoveryStatus_DISCOVERY_STATUS_DISCOVERING,
@@ -56,7 +57,8 @@ func TestProtoToModel_Full(t *testing.T) {
 					},
 				},
 				AgentCoreDiscoveryConfig: &cloudaccountpb.AWSAgentCoreDiscoveryConfig{
-					Audience: "agent-core-aud",
+					Audience:          "agent-core-aud",
+					AssumeThroughOidc: false,
 					RoleChain: []*cloudproviderpb.AWSAssumeRoleConfig{
 						{IamRoleArn: "arn:aws:iam::123456789012:role/agent-core"},
 					},
@@ -81,6 +83,7 @@ func TestProtoToModel_Full(t *testing.T) {
 
 	require.NotNil(t, got.AWS.LambdaDiscoveryConfig)
 	assert.Equal(t, tftypes.StringValue("lambda-aud"), got.AWS.LambdaDiscoveryConfig.Audience)
+	assert.True(t, got.AWS.LambdaDiscoveryConfig.AssumeThroughOidc.ValueBool())
 	assert.Equal(t, tftypes.StringValue("DISCOVERING"), got.AWS.LambdaDiscoveryConfig.Status)
 	assert.Equal(t, tftypes.StringValue("1m0s"), got.AWS.LambdaDiscoveryConfig.DiscoveryInterval)
 	assert.Equal(t, []cloudprovider.RoleChainModel{
@@ -89,6 +92,7 @@ func TestProtoToModel_Full(t *testing.T) {
 
 	require.NotNil(t, got.AWS.AgentCoreDiscoveryConfig)
 	assert.Equal(t, tftypes.StringValue("agent-core-aud"), got.AWS.AgentCoreDiscoveryConfig.Audience)
+	assert.False(t, got.AWS.AgentCoreDiscoveryConfig.AssumeThroughOidc.ValueBool())
 	assert.True(t, got.AWS.AgentCoreDiscoveryConfig.Regions.IsNull())
 }
 
@@ -103,6 +107,7 @@ func TestModelToProto(t *testing.T) {
 			AccountID: tftypes.StringValue("123456789012"),
 			LambdaDiscoveryConfig: &AWSDiscoveryConfigModel{
 				Audience:          tftypes.StringValue("lambda-aud"),
+				AssumeThroughOidc: tftypes.BoolValue(true),
 				Regions:           tftypes.ListNull(tftypes.StringType),
 				DiscoveryEnabled:  tftypes.BoolValue(true),
 				DiscoveryInterval: tftypes.StringValue("1m"),
@@ -125,6 +130,7 @@ func TestModelToProto(t *testing.T) {
 	assert.False(t, got.GetManagedByDiscovery())
 	assert.Equal(t, "123456789012", got.GetAws().GetAccountId())
 	assert.Equal(t, "lambda-aud", got.GetAws().GetLambdaDiscoveryConfig().GetAudience())
+	assert.True(t, got.GetAws().GetLambdaDiscoveryConfig().GetAssumeThroughOidc())
 	assert.Equal(t, durationpb.New(time.Minute), got.GetAws().GetLambdaDiscoveryConfig().GetDiscoveryInterval())
 	assert.Nil(t, got.GetAws().GetAgentCoreDiscoveryConfig())
 }

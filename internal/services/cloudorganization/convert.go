@@ -31,9 +31,10 @@ func awsOrganizationToProto(model *AWSOrganizationModel) *cloudorganizationpb.AW
 	}
 
 	return &cloudorganizationpb.AWSOrganization{
-		AwsOrgId:  model.AWSOrgID.ValueString(),
-		Audience:  model.Audience.ValueString(),
-		RoleChain: cloudprovider.RoleChainToProto(model.RoleChain),
+		AwsOrgId:          model.AWSOrgID.ValueString(),
+		Audience:          model.Audience.ValueString(),
+		AssumeThroughOidc: model.AssumeThroughOidc.ValueBool(),
+		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
 	}
 }
 
@@ -59,8 +60,9 @@ func awsOrganizationFromProto(proto *cloudorganizationpb.AWSOrganization) *AWSOr
 	}
 
 	return &AWSOrganizationModel{
-		AWSOrgID:  tftypes.StringValue(proto.GetAwsOrgId()),
-		Audience:  tftypes.StringValue(proto.GetAudience()),
-		RoleChain: cloudprovider.RoleChainFromProto(proto.GetRoleChain()),
+		AWSOrgID:          tftypes.StringValue(proto.GetAwsOrgId()),
+		Audience:          tftypes.StringValue(proto.GetAudience()),
+		AssumeThroughOidc: tftypes.BoolValue(proto.GetAssumeThroughOidc()),
+		RoleChain:         cloudprovider.RoleChainFromProto(proto.GetRoleChain()),
 	}
 }

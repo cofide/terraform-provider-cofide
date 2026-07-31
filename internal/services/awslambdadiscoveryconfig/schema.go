@@ -7,6 +7,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/cloudprovider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -31,8 +32,14 @@ func ResourceSchema(_ context.Context) schema.Schema {
 				},
 			},
 			"audience": schema.StringAttribute{
-				Description: "Audience value for the initial SPIFFE JWT-based assume role call.",
+				Description: "Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.",
 				Required:    true,
+			},
+			"assume_through_oidc": schema.BoolAttribute{
+				Description: "Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity (the default) or via ambient credentials such as EKS Pod Identity (`false`).",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 			},
 			"regions": schema.ListAttribute{
 				Description: "AWS regions to discover resources in.",

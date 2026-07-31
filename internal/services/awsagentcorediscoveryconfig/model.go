@@ -9,6 +9,7 @@ type Model struct {
 	ID                      types.String                   `tfsdk:"id"`
 	CloudAccountID          types.String                   `tfsdk:"cloud_account_id"`
 	Audience                types.String                   `tfsdk:"audience"`
+	AssumeThroughOidc       types.Bool                     `tfsdk:"assume_through_oidc"`
 	Regions                 types.List                     `tfsdk:"regions"`
 	DiscoveryEnabled        types.Bool                     `tfsdk:"discovery_enabled"`
 	RoleChain               []cloudprovider.RoleChainModel `tfsdk:"role_chain"`

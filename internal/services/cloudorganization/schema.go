@@ -43,8 +43,14 @@ func ResourceSchema(_ context.Context) schema.Schema {
 						Required:    true,
 					},
 					"audience": schema.StringAttribute{
-						Description: "Audience value for the initial SPIFFE JWT-based assume role call.",
+						Description: "Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.",
 						Required:    true,
+					},
+					"assume_through_oidc": schema.BoolAttribute{
+						Description: "Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity (the default) or via ambient credentials such as EKS Pod Identity (`false`).",
+						Optional:    true,
+						Computed:    true,
+						Default:     booldefault.StaticBool(true),
 					},
 					"role_chain": cloudprovider.RoleChainAttribute("Ordered chain of IAM roles to assume when discovering resources in this cloud organization."),
 				},

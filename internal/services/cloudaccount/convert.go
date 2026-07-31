@@ -72,6 +72,7 @@ func lambdaDiscoveryConfigToProto(ctx context.Context, model *AWSDiscoveryConfig
 
 	return &cloudaccountpb.AWSLambdaDiscoveryConfig{
 		Audience:          model.Audience.ValueString(),
+		AssumeThroughOidc: model.AssumeThroughOidc.ValueBool(),
 		Regions:           regions,
 		DiscoveryEnabled:  model.DiscoveryEnabled.ValueBool(),
 		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
@@ -97,6 +98,7 @@ func agentCoreDiscoveryConfigToProto(ctx context.Context, model *AWSDiscoveryCon
 
 	return &cloudaccountpb.AWSAgentCoreDiscoveryConfig{
 		Audience:          model.Audience.ValueString(),
+		AssumeThroughOidc: model.AssumeThroughOidc.ValueBool(),
 		Regions:           regions,
 		DiscoveryEnabled:  model.DiscoveryEnabled.ValueBool(),
 		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
@@ -138,6 +140,7 @@ func lambdaDiscoveryConfigFromProto(proto *cloudaccountpb.AWSLambdaDiscoveryConf
 
 	return &AWSDiscoveryConfigModel{
 		Audience:                tftypes.StringValue(proto.GetAudience()),
+		AssumeThroughOidc:       tftypes.BoolValue(proto.GetAssumeThroughOidc()),
 		Regions:                 cloudprovider.StringListFromProto(proto.GetRegions()),
 		DiscoveryEnabled:        tftypes.BoolValue(proto.GetDiscoveryEnabled()),
 		RoleChain:               cloudprovider.RoleChainFromProto(proto.GetRoleChain()),
@@ -155,6 +158,7 @@ func agentCoreDiscoveryConfigFromProto(proto *cloudaccountpb.AWSAgentCoreDiscove
 
 	return &AWSDiscoveryConfigModel{
 		Audience:                tftypes.StringValue(proto.GetAudience()),
+		AssumeThroughOidc:       tftypes.BoolValue(proto.GetAssumeThroughOidc()),
 		Regions:                 cloudprovider.StringListFromProto(proto.GetRegions()),
 		DiscoveryEnabled:        tftypes.BoolValue(proto.GetDiscoveryEnabled()),
 		RoleChain:               cloudprovider.RoleChainFromProto(proto.GetRoleChain()),

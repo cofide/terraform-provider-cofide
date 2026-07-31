@@ -19,6 +19,7 @@ func TestModelToProto(t *testing.T) {
 
 	model := Model{
 		Audience:          tftypes.StringValue("aud"),
+		AssumeThroughOidc: tftypes.BoolValue(false),
 		Regions:           tftypes.ListNull(tftypes.StringType),
 		DiscoveryEnabled:  tftypes.BoolValue(true),
 		DiscoveryInterval: tftypes.StringValue("1m"),
@@ -31,6 +32,7 @@ func TestModelToProto(t *testing.T) {
 	require.False(t, diags.HasError())
 
 	assert.Equal(t, "aud", got.GetAudience())
+	assert.False(t, got.GetAssumeThroughOidc())
 	assert.True(t, got.GetDiscoveryEnabled())
 	assert.Equal(t, durationpb.New(time.Minute), got.GetDiscoveryInterval())
 	assert.Equal(t, []*cloudproviderpb.AWSAssumeRoleConfig{
@@ -41,6 +43,7 @@ func TestModelToProto(t *testing.T) {
 func TestProtoToModel(t *testing.T) {
 	proto := &cloudaccountpb.AWSAgentCoreDiscoveryConfig{
 		Audience:          "aud",
+		AssumeThroughOidc: true,
 		Regions:           []string{"us-east-1"},
 		DiscoveryEnabled:  true,
 		Status:            cloudproviderpb.DiscoveryStatus_DISCOVERY_STATUS_DISCOVERING,
@@ -55,6 +58,7 @@ func TestProtoToModel(t *testing.T) {
 	assert.Equal(t, tftypes.StringValue("ca-1"), got.ID)
 	assert.Equal(t, tftypes.StringValue("ca-1"), got.CloudAccountID)
 	assert.Equal(t, tftypes.StringValue("aud"), got.Audience)
+	assert.True(t, got.AssumeThroughOidc.ValueBool())
 	assert.Equal(t, tftypes.StringValue("DISCOVERING"), got.Status)
 	assert.Equal(t, tftypes.StringValue("1m0s"), got.DiscoveryInterval)
 	assert.True(t, got.DiscoveryEnabled.ValueBool())

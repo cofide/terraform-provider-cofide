@@ -85,7 +85,8 @@ Read-Only:
 
 Read-Only:
 
-- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
+- `assume_through_oidc` (Boolean) Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity or via ambient credentials such as EKS Pod Identity.
+- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
 - `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`).
 - `last_successful_discovery` (String) The timestamp (RFC3339) of the last successful discovery run.
@@ -109,7 +110,8 @@ Read-Only:
 
 Read-Only:
 
-- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
+- `assume_through_oidc` (Boolean) Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity or via ambient credentials such as EKS Pod Identity.
+- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
 - `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`).
 - `last_successful_discovery` (String) The timestamp (RFC3339) of the last successful discovery run.

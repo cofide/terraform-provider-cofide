@@ -17,8 +17,10 @@ type RoleChainModel struct {
 }
 
 // RoleChainAttribute returns the reusable schema for an AWS IAM role chain.
-// The first step is assumed via AssumeRoleWithWebIdentity using a SPIFFE JWT;
-// each subsequent step is assumed using the credentials from the prior step.
+// Whether the first step is assumed via AssumeRoleWithWebIdentity using a
+// SPIFFE JWT or via plain AssumeRole using ambient credentials is controlled
+// by the assume_through_oidc field on the owning config; each subsequent
+// step is always assumed using the credentials from the prior step.
 func RoleChainAttribute(description string) schema.ListNestedAttribute {
 	return schema.ListNestedAttribute{
 		Description: description,

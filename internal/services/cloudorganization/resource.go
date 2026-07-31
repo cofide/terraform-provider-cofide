@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	cloudorganizationsvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/cloud_organization_service/v1alpha1"
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -121,11 +122,7 @@ func (c *CloudOrganizationResource) Update(ctx context.Context, req resource.Upd
 	}
 	cloudOrganization.Id = state.ID.ValueString()
 
-	// No update_mask is passed: the API performs a full replacement of the
-	// mutable fields, which is what we want here since cloud_organization is
-	// always fully owned by this resource (unlike cloud_account, which has
-	// fields that can also be managed by standalone resources).
-	updateResp, err := c.client.CloudOrganizationV1Alpha1().UpdateCloudOrganization(ctx, cloudOrganization, nil)
+	updateResp, err := c.client.CloudOrganizationV1Alpha1().UpdateCloudOrganization(ctx, cloudOrganization, fullUpdateMask())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating cloud organization",
@@ -155,6 +152,23 @@ func (c *CloudOrganizationResource) Delete(ctx context.Context, req resource.Del
 		)
 
 		return
+	}
+}
+
+// fullUpdateMask returns an update mask covering every mutable field of a
+// cloud organization. The API rejects a nil update_mask (it does not treat
+// that as "update all fields"), so every field must be masked explicitly to
+// achieve a full replacement. This is safe because cloud_organization is
+// always fully owned by this resource (unlike cloud_account, which has
+// fields that can also be managed by standalone resources).
+func fullUpdateMask() *cloudorganizationsvcpb.UpdateCloudOrganizationRequest_UpdateMask {
+	return &cloudorganizationsvcpb.UpdateCloudOrganizationRequest_UpdateMask{
+		Name:                 true,
+		AwsAudience:          true,
+		DiscoveryEnabled:     true,
+		AwsRoleChain:         true,
+		DiscoveryInterval:    true,
+		AwsAssumeThroughOidc: true,
 	}
 }
 

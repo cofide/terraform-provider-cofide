@@ -24,6 +24,7 @@ func modelToProto(ctx context.Context, model Model) (*cloudaccountpb.AWSAgentCor
 
 	return &cloudaccountpb.AWSAgentCoreDiscoveryConfig{
 		Audience:          model.Audience.ValueString(),
+		AssumeThroughOidc: model.AssumeThroughOidc.ValueBool(),
 		Regions:           regions,
 		DiscoveryEnabled:  model.DiscoveryEnabled.ValueBool(),
 		RoleChain:         cloudprovider.RoleChainToProto(model.RoleChain),
@@ -37,6 +38,7 @@ func protoToModel(cloudAccountID string, proto *cloudaccountpb.AWSAgentCoreDisco
 		ID:                      tftypes.StringValue(cloudAccountID),
 		CloudAccountID:          tftypes.StringValue(cloudAccountID),
 		Audience:                tftypes.StringValue(proto.GetAudience()),
+		AssumeThroughOidc:       tftypes.BoolValue(proto.GetAssumeThroughOidc()),
 		Regions:                 cloudprovider.StringListFromProto(proto.GetRegions()),
 		DiscoveryEnabled:        tftypes.BoolValue(proto.GetDiscoveryEnabled()),
 		RoleChain:               cloudprovider.RoleChainFromProto(proto.GetRoleChain()),

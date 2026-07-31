@@ -28,6 +28,7 @@ type AWSAccountModel struct {
 // (AWSLambdaDiscoveryConfig and AWSAgentCoreDiscoveryConfig).
 type AWSDiscoveryConfigModel struct {
 	Audience                types.String                   `tfsdk:"audience"`
+	AssumeThroughOidc       types.Bool                     `tfsdk:"assume_through_oidc"`
 	Regions                 types.List                     `tfsdk:"regions"`
 	DiscoveryEnabled        types.Bool                     `tfsdk:"discovery_enabled"`
 	RoleChain               []cloudprovider.RoleChainModel `tfsdk:"role_chain"`

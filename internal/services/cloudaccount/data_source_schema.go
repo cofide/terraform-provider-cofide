@@ -14,7 +14,11 @@ var _ datasource.DataSource = &CloudAccountsDataSource{}
 func awsDiscoveryConfigNestedAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"audience": schema.StringAttribute{
-			Description: "Audience value for the initial SPIFFE JWT-based assume role call.",
+			Description: "Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.",
+			Computed:    true,
+		},
+		"assume_through_oidc": schema.BoolAttribute{
+			Description: "Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity or via ambient credentials such as EKS Pod Identity.",
 			Computed:    true,
 		},
 		"regions": schema.ListAttribute{

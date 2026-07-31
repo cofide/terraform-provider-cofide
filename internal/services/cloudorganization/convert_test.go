@@ -23,8 +23,9 @@ func TestProtoToModel(t *testing.T) {
 		Status: cloudproviderpb.DiscoveryStatus_DISCOVERY_STATUS_DISCOVERING,
 		Provider: &cloudorganizationpb.CloudOrganization_Aws{
 			Aws: &cloudorganizationpb.AWSOrganization{
-				AwsOrgId: "o-fakeorgid12",
-				Audience: "aud",
+				AwsOrgId:          "o-fakeorgid12",
+				Audience:          "aud",
+				AssumeThroughOidc: true,
 				RoleChain: []*cloudproviderpb.AWSAssumeRoleConfig{
 					{IamRoleArn: "arn:aws:iam::123456789012:role/first"},
 				},
@@ -52,6 +53,7 @@ func TestProtoToModel(t *testing.T) {
 	if assert.NotNil(t, got.AWS) {
 		assert.Equal(t, tftypes.StringValue("o-fakeorgid12"), got.AWS.AWSOrgID)
 		assert.Equal(t, tftypes.StringValue("aud"), got.AWS.Audience)
+		assert.True(t, got.AWS.AssumeThroughOidc.ValueBool())
 		assert.Equal(t, []cloudprovider.RoleChainModel{
 			{IAMRoleARN: tftypes.StringValue("arn:aws:iam::123456789012:role/first"), ExternalID: tftypes.StringNull()},
 		}, got.AWS.RoleChain)
@@ -63,8 +65,9 @@ func TestModelToProto(t *testing.T) {
 		OrgID: tftypes.StringValue("org-1"),
 		Name:  tftypes.StringValue("test-cloud-org"),
 		AWS: &AWSOrganizationModel{
-			AWSOrgID: tftypes.StringValue("o-fakeorgid12"),
-			Audience: tftypes.StringValue("aud"),
+			AWSOrgID:          tftypes.StringValue("o-fakeorgid12"),
+			Audience:          tftypes.StringValue("aud"),
+			AssumeThroughOidc: tftypes.BoolValue(true),
 			RoleChain: []cloudprovider.RoleChainModel{
 				{IAMRoleARN: tftypes.StringValue("arn:aws:iam::123456789012:role/first"), ExternalID: tftypes.StringNull()},
 			},
@@ -82,6 +85,7 @@ func TestModelToProto(t *testing.T) {
 	assert.Equal(t, durationpb.New(time.Minute), got.GetDiscoveryInterval())
 	assert.Equal(t, "o-fakeorgid12", got.GetAws().GetAwsOrgId())
 	assert.Equal(t, "aud", got.GetAws().GetAudience())
+	assert.True(t, got.GetAws().GetAssumeThroughOidc())
 	assert.Equal(t, []*cloudproviderpb.AWSAssumeRoleConfig{
 		{IamRoleArn: "arn:aws:iam::123456789012:role/first"},
 	}, got.GetAws().GetRoleChain())
