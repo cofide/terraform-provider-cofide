@@ -34,7 +34,11 @@ func cloudOrganizationNestedAttributes() map[string]schema.Attribute {
 					Computed:    true,
 				},
 				"audience": schema.StringAttribute{
-					Description: "Audience value for the initial SPIFFE JWT-based assume role call.",
+					Description: "Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.",
+					Computed:    true,
+				},
+				"assume_through_oidc": schema.BoolAttribute{
+					Description: "Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity or via ambient credentials such as EKS Pod Identity.",
 					Computed:    true,
 				},
 				"role_chain": schema.ListNestedAttribute{

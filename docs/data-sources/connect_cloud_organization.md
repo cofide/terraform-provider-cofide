@@ -70,7 +70,8 @@ output "cloud_organization_id" {
 
 Read-Only:
 
-- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
+- `assume_through_oidc` (Boolean) Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity or via ambient credentials such as EKS Pod Identity.
+- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.
 - `aws_org_id` (String) The AWS Organization ID (e.g. `o-xxxxxxxxxx`).
 - `role_chain` (Attributes List) Ordered chain of IAM roles to assume when discovering resources in this cloud organization. (see [below for nested schema](#nestedatt--aws--role_chain))
 

@@ -68,12 +68,13 @@ output "status" {
 
 ### Required
 
-- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call.
+- `audience` (String) Audience value for the initial SPIFFE JWT-based assume role call. Only used when `assume_through_oidc` is true.
 - `cloud_account_id` (String) The ID of the cloud account this configuration applies to. Cannot be changed after creation.
 - `role_chain` (Attributes List) Ordered chain of IAM roles to assume when discovering Lambda functions. (see [below for nested schema](#nestedatt--role_chain))
 
 ### Optional
 
+- `assume_through_oidc` (Boolean) Whether the first role in `role_chain` is assumed via SPIFFE JWT-based AssumeRoleWithWebIdentity (the default) or via ambient credentials such as EKS Pod Identity (`false`).
 - `discovery_enabled` (Boolean) Whether discovery is enabled for this config.
 - `discovery_interval` (String) How frequently discovery runs for this config (a Go duration string, e.g. `1m`, `1h`). Defaults to a server-assigned value when unset.
 - `regions` (List of String) AWS regions to discover resources in.

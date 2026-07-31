@@ -19,9 +19,10 @@ type CloudOrganizationModel struct {
 }
 
 type AWSOrganizationModel struct {
-	AWSOrgID  types.String                   `tfsdk:"aws_org_id"`
-	Audience  types.String                   `tfsdk:"audience"`
-	RoleChain []cloudprovider.RoleChainModel `tfsdk:"role_chain"`
+	AWSOrgID          types.String                   `tfsdk:"aws_org_id"`
+	Audience          types.String                   `tfsdk:"audience"`
+	AssumeThroughOidc types.Bool                     `tfsdk:"assume_through_oidc"`
+	RoleChain         []cloudprovider.RoleChainModel `tfsdk:"role_chain"`
 }
 
 type CloudOrganizationsDataSourceModel struct {
