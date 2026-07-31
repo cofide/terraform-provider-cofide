@@ -20,6 +20,11 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/credentials"
 	"github.com/cofide/terraform-provider-cofide/internal/services/apbinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
+	"github.com/cofide/terraform-provider-cofide/internal/services/awsagentcorediscoveryconfig"
+	"github.com/cofide/terraform-provider-cofide/internal/services/awslambdadiscoveryconfig"
+	"github.com/cofide/terraform-provider-cofide/internal/services/cloudaccount"
+	"github.com/cofide/terraform-provider-cofide/internal/services/cloudaccountsuppressionconfig"
+	"github.com/cofide/terraform-provider-cofide/internal/services/cloudorganization"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
@@ -27,6 +32,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
+	"github.com/cofide/terraform-provider-cofide/internal/services/workloadsuppressionrule"
 )
 
 var _ provider.Provider = &CofideProvider{}
@@ -158,12 +164,18 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 	return []func() resource.Resource{
 		attestationpolicy.NewResource,
 		apbinding.NewResource,
+		awsagentcorediscoveryconfig.NewResource,
+		awslambdadiscoveryconfig.NewResource,
+		cloudaccount.NewResource,
+		cloudaccountsuppressionconfig.NewResource,
+		cloudorganization.NewResource,
 		cluster.NewResource,
 		exchangepolicy.NewResource,
 		federation.NewResource,
 		rolebinding.NewResource,
 		trustzone.NewResource,
 		trustzoneserver.NewResource,
+		workloadsuppressionrule.NewResource,
 	}
 }
 
@@ -171,6 +183,10 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 	return []func() datasource.DataSource{
 		attestationpolicy.NewDataSource,
 		apbinding.NewDataSource,
+		cloudaccount.NewDataSource,
+		cloudaccount.NewListDataSource,
+		cloudorganization.NewDataSource,
+		cloudorganization.NewListDataSource,
 		cluster.NewDataSource,
 		exchangepolicy.NewDataSource,
 		exchangepolicy.NewListDataSource,
@@ -179,5 +195,7 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		organization.NewDataSource,
 		trustzoneserver.NewDataSource,
 		trustzoneserver.NewListDataSource,
+		workloadsuppressionrule.NewDataSource,
+		workloadsuppressionrule.NewListDataSource,
 	}
 }
