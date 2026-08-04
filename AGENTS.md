@@ -64,6 +64,7 @@ This is a Terraform provider built with `terraform-plugin-framework` that manage
 - gRPC `codes.NotFound` on Read removes the resource from state (drift detection), rather than erroring.
 - Provider config can be supplied via HCL attributes or environment variables (`COFIDE_API_TOKEN`, `COFIDE_CONNECT_URL`, `COFIDE_INSECURE_SKIP_VERIFY`).
 - The gRPC client uses a retry policy on `UNAUTHENTICATED` errors (up to 10 attempts) to handle transient JWKS fetch failures.
+- Resources whose `UpdateFoo` SDK call takes an explicit field mask (e.g. `exchangepolicy`'s `UpdateExchangePolicyRequest_UpdateMask`) must set every mask field to `true`, not just the ones being touched by a given change — the API only applies fields flagged in the mask, so a field omitted here never gets updated even though it's a normal schema attribute. When adding a new schema attribute to such a resource, add it to the mask too; there's a unit test per resource (e.g. `TestNewUpdateMaskCoversAllFields` in `exchangepolicy`) that reflects over the generated mask type and fails if any field is left unset — add an equivalent test for any other resource that uses a field mask.
 
 ## Integration tests
 

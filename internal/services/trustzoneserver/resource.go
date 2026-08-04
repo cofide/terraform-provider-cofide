@@ -196,12 +196,7 @@ func (r *TrustZoneServerResource) Update(ctx context.Context, req resource.Updat
 		server.ConnectK8SPsatConfig = cfg
 	}
 
-	updateMask := &trustzoneserversvcpb.UpdateTrustZoneServerRequest_UpdateMask{
-		HelmValues:           true,
-		ConnectK8SPsatConfig: true,
-	}
-
-	updateResp, err := r.client.TrustZoneServerV1Alpha1().UpdateTrustZoneServer(ctx, server, updateMask)
+	updateResp, err := r.client.TrustZoneServerV1Alpha1().UpdateTrustZoneServer(ctx, server, newUpdateMask())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating trust zone server",
@@ -216,6 +211,19 @@ func (r *TrustZoneServerResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
+}
+
+// newUpdateMask builds the update mask covering every field the resource can
+// change on update. Kept as its own function (rather than a literal inline in
+// Update) so a unit test can reflect over the generated
+// UpdateTrustZoneServerRequest_UpdateMask type and confirm every one of its
+// fields is set here — the protobuf-generated struct grows new fields
+// without warning, and an omitted field silently stops being updatable.
+func newUpdateMask() *trustzoneserversvcpb.UpdateTrustZoneServerRequest_UpdateMask {
+	return &trustzoneserversvcpb.UpdateTrustZoneServerRequest_UpdateMask{
+		HelmValues:           true,
+		ConnectK8SPsatConfig: true,
+	}
 }
 
 func (r *TrustZoneServerResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
