@@ -126,7 +126,7 @@ output "exchange_policy_id" {
 - `client_id` (Attributes List) Match conditions on the OAuth client_id presenting the exchange request. (see [below for nested schema](#nestedatt--client_id))
 - `external_hooks` (Attributes List) Post-matching hooks that transform outbound token claims before Credex mints them. (see [below for nested schema](#nestedatt--external_hooks))
 - `outbound_identity` (String) Outbound identity to assert in the exchanged token. When set, Credex will use this identity rather than the inbound subject identity.
-- `outbound_issuer` (Attributes) Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. Exactly one outbound_issuer variant must be set. (see [below for nested schema](#nestedatt--outbound_issuer))
+- `outbound_issuer` (Attributes) Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. At most one outbound_issuer variant can be set. (see [below for nested schema](#nestedatt--outbound_issuer))
 - `outbound_scopes` (List of String) Outbound scopes to grant. Only relevant when action is allow.
 - `subject_audience` (Attributes List) Match conditions on the audience claim of the inbound subject token. (see [below for nested schema](#nestedatt--subject_audience))
 - `subject_identity` (Attributes List) Match conditions on the subject identity of the inbound token. (see [below for nested schema](#nestedatt--subject_identity))
