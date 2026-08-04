@@ -135,19 +135,7 @@ func (r *ExchangePolicyResource) Update(ctx context.Context, req resource.Update
 	}
 	policy.Id = state.ID.ValueString()
 
-	updateMask := &exchangepolicysvcpb.UpdateExchangePolicyRequest_UpdateMask{
-		Name:             true,
-		Action:           true,
-		SubjectIdentity:  true,
-		SubjectIssuer:    true,
-		ActorIdentity:    true,
-		ActorIssuer:      true,
-		ClientId:         true,
-		TargetAudience:   true,
-		OutboundScopes:   true,
-		OutboundIdentity: true,
-		OutboundIssuer:   true,
-	}
+	updateMask := newUpdateMask()
 
 	updateResp, err := r.client.ExchangePolicyV1Alpha1().UpdateExchangePolicy(ctx, policy, updateMask)
 	if err != nil {
@@ -164,6 +152,30 @@ func (r *ExchangePolicyResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
+}
+
+// newUpdateMask builds the update mask covering every field the resource can
+// change on update. Kept as its own function (rather than a literal inline in
+// Update) so a unit test can reflect over the generated
+// UpdateExchangePolicyRequest_UpdateMask type and confirm every one of its
+// fields is set here — the update mask has silently drifted from the schema
+// before, and the protobuf-generated struct grows new fields without warning.
+func newUpdateMask() *exchangepolicysvcpb.UpdateExchangePolicyRequest_UpdateMask {
+	return &exchangepolicysvcpb.UpdateExchangePolicyRequest_UpdateMask{
+		Name:             true,
+		Action:           true,
+		SubjectIdentity:  true,
+		SubjectIssuer:    true,
+		SubjectAudience:  true,
+		ActorIdentity:    true,
+		ActorIssuer:      true,
+		ClientId:         true,
+		TargetAudience:   true,
+		OutboundScopes:   true,
+		OutboundIdentity: true,
+		OutboundIssuer:   true,
+		ExternalHooks:    true,
+	}
 }
 
 func (r *ExchangePolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
