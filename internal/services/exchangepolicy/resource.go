@@ -136,15 +136,17 @@ func (r *ExchangePolicyResource) Update(ctx context.Context, req resource.Update
 	policy.Id = state.ID.ValueString()
 
 	updateMask := &exchangepolicysvcpb.UpdateExchangePolicyRequest_UpdateMask{
-		Name:            true,
-		Action:          true,
-		SubjectIdentity: true,
-		SubjectIssuer:   true,
-		ActorIdentity:   true,
-		ActorIssuer:     true,
-		ClientId:        true,
-		TargetAudience:  true,
-		OutboundScopes:  true,
+		Name:             true,
+		Action:           true,
+		SubjectIdentity:  true,
+		SubjectIssuer:    true,
+		ActorIdentity:    true,
+		ActorIssuer:      true,
+		ClientId:         true,
+		TargetAudience:   true,
+		OutboundScopes:   true,
+		OutboundIdentity: true,
+		OutboundIssuer:   true,
 	}
 
 	updateResp, err := r.client.ExchangePolicyV1Alpha1().UpdateExchangePolicy(ctx, policy, updateMask)

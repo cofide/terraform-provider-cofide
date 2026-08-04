@@ -153,7 +153,7 @@ func ResourceSchema() schema.Schema {
 				},
 			},
 			"outbound_issuer": schema.SingleNestedAttribute{
-				Description: "Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. Exactly one outbound_issuer variant must be set.",
+				Description: "Outbound token issuer configuration. When set, Credex will obtain an outbound token from this issuer rather than minting one itself. At most one outbound_issuer variant can be set.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.Object{
