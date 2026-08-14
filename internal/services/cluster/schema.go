@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 
-	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -135,20 +134,10 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"oidc_issuer_url": schema.StringAttribute{
 				Description: "The OIDC issuer URL of the cluster.",
 				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					planmodifiers.OptionalComputedModifier{},
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"oidc_issuer_ca_cert": schema.StringAttribute{
 				Description: "The CA certificate (base64-encoded) to validate the cluster's OIDC issuer URL. Use `base64encode(file(...))` to supply a PEM certificate file.",
 				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					planmodifiers.OptionalComputedModifier{},
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 	}

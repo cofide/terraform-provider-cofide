@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -53,6 +54,229 @@ func TestNewTrustProvider(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestStringFromAPI(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want types.String
+	}{
+		{
+			name: "empty string is unset",
+			in:   "",
+			want: types.StringNull(),
+		},
+		{
+			name: "non-empty string is preserved",
+			in:   "https://issuer.example.com",
+			want: types.StringValue("https://issuer.example.com"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stringFromAPI(tt.in))
+		})
+	}
+}
+
+func TestBase64FromAPI(t *testing.T) {
+	certBytes := []byte("dummy-cert-bytes")
+
+	tests := []struct {
+		name string
+		in   []byte
+		want types.String
+	}{
+		{
+			name: "nil bytes are unset",
+			in:   nil,
+			want: types.StringNull(),
+		},
+		{
+			name: "empty non-nil bytes are unset",
+			in:   []byte{},
+			want: types.StringNull(),
+		},
+		{
+			name: "non-empty bytes are base64-encoded",
+			in:   certBytes,
+			want: types.StringValue(base64.StdEncoding.EncodeToString(certBytes)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, base64FromAPI(tt.in))
+		})
+	}
+}
+
+func TestStringFromAPIOrPlan(t *testing.T) {
+	tests := []struct {
+		name string
+		api  string
+		plan types.String
+		want types.String
+	}{
+		{
+			name: "non-empty API value wins regardless of plan",
+			api:  "https://issuer.example.com",
+			plan: types.StringValue(""),
+			want: types.StringValue("https://issuer.example.com"),
+		},
+		{
+			name: "empty API value falls back to a known empty plan value",
+			api:  "",
+			plan: types.StringValue(""),
+			want: types.StringValue(""),
+		},
+		{
+			name: "empty API value falls back to a known non-empty plan value",
+			api:  "",
+			plan: types.StringValue("https://issuer.example.com"),
+			want: types.StringValue("https://issuer.example.com"),
+		},
+		{
+			name: "empty API value and null plan is null",
+			api:  "",
+			plan: types.StringNull(),
+			want: types.StringNull(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stringFromAPIOrPlan(tt.api, tt.plan))
+		})
+	}
+}
+
+func TestBase64FromAPIOrPlan(t *testing.T) {
+	certBytes := []byte("dummy-cert-bytes")
+	encoded := base64.StdEncoding.EncodeToString(certBytes)
+
+	tests := []struct {
+		name string
+		api  []byte
+		plan types.String
+		want types.String
+	}{
+		{
+			name: "non-empty API value wins regardless of plan",
+			api:  certBytes,
+			plan: types.StringValue(""),
+			want: types.StringValue(encoded),
+		},
+		{
+			name: "empty API value falls back to a known empty plan value",
+			api:  nil,
+			plan: types.StringValue(""),
+			want: types.StringValue(""),
+		},
+		{
+			name: "empty API value falls back to a known non-empty plan value",
+			api:  nil,
+			plan: types.StringValue(encoded),
+			want: types.StringValue(encoded),
+		},
+		{
+			name: "empty API value and null plan is null",
+			api:  nil,
+			plan: types.StringNull(),
+			want: types.StringNull(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, base64FromAPIOrPlan(tt.api, tt.plan))
+		})
+	}
+}
+
+func TestStringFromAPIOrState(t *testing.T) {
+	tests := []struct {
+		name  string
+		api   string
+		state types.String
+		want  types.String
+	}{
+		{
+			name:  "non-empty API value wins regardless of state",
+			api:   "https://issuer.example.com",
+			state: types.StringValue(""),
+			want:  types.StringValue("https://issuer.example.com"),
+		},
+		{
+			name:  "empty API value preserves a null state",
+			api:   "",
+			state: types.StringNull(),
+			want:  types.StringNull(),
+		},
+		{
+			name:  "empty API value preserves an already-empty-string state",
+			api:   "",
+			state: types.StringValue(""),
+			want:  types.StringValue(""),
+		},
+		{
+			name:  "empty API value on a real prior state reports drift as null",
+			api:   "",
+			state: types.StringValue("https://issuer.example.com"),
+			want:  types.StringNull(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stringFromAPIOrState(tt.api, tt.state))
+		})
+	}
+}
+
+func TestBase64FromAPIOrState(t *testing.T) {
+	certBytes := []byte("dummy-cert-bytes")
+	encoded := base64.StdEncoding.EncodeToString(certBytes)
+
+	tests := []struct {
+		name  string
+		api   []byte
+		state types.String
+		want  types.String
+	}{
+		{
+			name:  "non-empty API value wins regardless of state",
+			api:   certBytes,
+			state: types.StringValue(""),
+			want:  types.StringValue(encoded),
+		},
+		{
+			name:  "empty API value preserves a null state",
+			api:   nil,
+			state: types.StringNull(),
+			want:  types.StringNull(),
+		},
+		{
+			name:  "empty API value preserves an already-empty-string state",
+			api:   nil,
+			state: types.StringValue(""),
+			want:  types.StringValue(""),
+		},
+		{
+			name:  "empty API value on a real prior state reports drift as null",
+			api:   nil,
+			state: types.StringValue(encoded),
+			want:  types.StringNull(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, base64FromAPIOrState(tt.api, tt.state))
 		})
 	}
 }
@@ -350,7 +574,6 @@ func TestK8sPsatConfigToProto_InvalidBase64CaCert(t *testing.T) {
 	_, err := k8sPsatConfigToProto(context.Background(), model)
 	require.ErrorContains(t, err, "failed to decode api_server_ca_cert from base64")
 }
-
 
 func TestK8sPsatConfigForState(t *testing.T) {
 	sa := ServiceAccountModel{

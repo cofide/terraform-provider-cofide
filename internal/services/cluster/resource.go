@@ -127,21 +127,8 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
 	extraHelmValues := plan.ExtraHelmValues
 
-	var oidcIssuerURL tftypes.String
-	if url := createResp.GetOidcIssuerUrl(); url != "" {
-		oidcIssuerURL = tftypes.StringValue(url)
-	} else {
-		oidcIssuerURL = tftypes.StringNull()
-	}
-
-	var oidcIssuerCaCert tftypes.String
-	if certBytes := createResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
-		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else if !plan.OidcIssuerCaCert.IsNull() && !plan.OidcIssuerCaCert.IsUnknown() {
-		oidcIssuerCaCert = plan.OidcIssuerCaCert
-	} else {
-		oidcIssuerCaCert = tftypes.StringNull()
-	}
+	oidcIssuerURL := stringFromAPIOrPlan(createResp.GetOidcIssuerUrl(), plan.OidcIssuerURL)
+	oidcIssuerCaCert := base64FromAPIOrPlan(createResp.GetOidcIssuerCaCert(), plan.OidcIssuerCaCert)
 
 	state := ClusterModel{
 		ID:                tftypes.StringValue(createResp.GetId()),
@@ -191,19 +178,8 @@ func (c *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var oidcIssuerURL tftypes.String
-	if url := cluster.GetOidcIssuerUrl(); url != "" {
-		oidcIssuerURL = tftypes.StringValue(url)
-	} else {
-		oidcIssuerURL = tftypes.StringNull()
-	}
-
-	var oidcIssuerCaCert tftypes.String
-	if certBytes := cluster.GetOidcIssuerCaCert(); len(certBytes) > 0 {
-		oidcIssuerCaCert = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else {
-		oidcIssuerCaCert = tftypes.StringNull()
-	}
+	oidcIssuerURL := stringFromAPIOrState(cluster.GetOidcIssuerUrl(), state.OidcIssuerURL)
+	oidcIssuerCaCert := base64FromAPIOrState(cluster.GetOidcIssuerCaCert(), state.OidcIssuerCaCert)
 
 	newState := ClusterModel{
 		ID:                tftypes.StringValue(cluster.GetId()),
@@ -289,23 +265,8 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
 	extraHelmValuesStr := plan.ExtraHelmValues
 
-	var oidcIssuerURLStr tftypes.String
-	if url := updateResp.GetOidcIssuerUrl(); url != "" {
-		oidcIssuerURLStr = tftypes.StringValue(url)
-	} else if !plan.OidcIssuerURL.IsNull() && !plan.OidcIssuerURL.IsUnknown() {
-		oidcIssuerURLStr = plan.OidcIssuerURL
-	} else {
-		oidcIssuerURLStr = tftypes.StringNull()
-	}
-
-	var oidcIssuerCaCertStr tftypes.String
-	if certBytes := updateResp.GetOidcIssuerCaCert(); len(certBytes) > 0 {
-		oidcIssuerCaCertStr = tftypes.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else if !plan.OidcIssuerCaCert.IsNull() && !plan.OidcIssuerCaCert.IsUnknown() {
-		oidcIssuerCaCertStr = plan.OidcIssuerCaCert
-	} else {
-		oidcIssuerCaCertStr = tftypes.StringNull()
-	}
+	oidcIssuerURLStr := stringFromAPIOrPlan(updateResp.GetOidcIssuerUrl(), plan.OidcIssuerURL)
+	oidcIssuerCaCertStr := base64FromAPIOrPlan(updateResp.GetOidcIssuerCaCert(), plan.OidcIssuerCaCert)
 
 	newState := ClusterModel{
 		ID:                tftypes.StringValue(updateResp.GetId()),
@@ -534,6 +495,79 @@ func k8sPsatConfigFromProto(cfg *trustproviderpb.K8SPsatConfig) *K8sPsatConfigMo
 	}
 
 	return model
+}
+
+// stringFromAPI converts an API string value to its Terraform state
+// representation. The API has no way to represent "unset" other than "", so
+// this is the single authoritative translation point: empty means null.
+func stringFromAPI(s string) tftypes.String {
+	if s == "" {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(s)
+}
+
+// base64FromAPI converts an API byte slice value to its base64-encoded
+// Terraform state representation, treating empty/absent bytes as unset.
+func base64FromAPI(b []byte) tftypes.String {
+	if len(b) == 0 {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(base64.StdEncoding.EncodeToString(b))
+}
+
+// stringFromAPIOrPlan is stringFromAPI, but falls back to the exact plan
+// value when the API reports empty. This is required, not just cosmetic:
+// for a known (non-null) plan value, Terraform requires the state written
+// after Create/Update to equal that plan value exactly, so an explicit ""
+// in config must round-trip back to "" in state, not null.
+func stringFromAPIOrPlan(apiValue string, planValue tftypes.String) tftypes.String {
+	if apiValue != "" {
+		return tftypes.StringValue(apiValue)
+	}
+	if !planValue.IsNull() {
+		return planValue
+	}
+	return tftypes.StringNull()
+}
+
+// base64FromAPIOrPlan is the []byte equivalent of stringFromAPIOrPlan.
+func base64FromAPIOrPlan(apiBytes []byte, planValue tftypes.String) tftypes.String {
+	if len(apiBytes) > 0 {
+		return tftypes.StringValue(base64.StdEncoding.EncodeToString(apiBytes))
+	}
+	if !planValue.IsNull() {
+		return planValue
+	}
+	return tftypes.StringNull()
+}
+
+// stringFromAPIOrState converts an API string value to Terraform state. The
+// API has no way to represent "unset" other than "", so an empty response is
+// ambiguous between "was already unset" and "was just cleared". If the prior
+// state was already null or "", that ambiguity is purely cosmetic and the
+// exact prior spelling is preserved to avoid a diff that doesn't reflect any
+// real change. If the prior state held a real value, the empty response is
+// trusted as genuine drift and reported as null.
+func stringFromAPIOrState(apiValue string, stateValue tftypes.String) tftypes.String {
+	if apiValue != "" {
+		return tftypes.StringValue(apiValue)
+	}
+	if stateValue.IsNull() || stateValue.ValueString() == "" {
+		return stateValue
+	}
+	return tftypes.StringNull()
+}
+
+// base64FromAPIOrState is the []byte equivalent of stringFromAPIOrState.
+func base64FromAPIOrState(apiBytes []byte, stateValue tftypes.String) tftypes.String {
+	if len(apiBytes) > 0 {
+		return tftypes.StringValue(base64.StdEncoding.EncodeToString(apiBytes))
+	}
+	if stateValue.IsNull() || stateValue.ValueString() == "" {
+		return stateValue
+	}
+	return tftypes.StringNull()
 }
 
 // parseExtraHelmValues parses the extra_helm_values field from a string to a structpb.Struct object.
