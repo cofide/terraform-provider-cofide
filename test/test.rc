@@ -1,5 +1,7 @@
 # This file can be sourced to provide environment variables for testing against
-# a local development deployment of Connect.
+# a local development deployment of Connect. COFIDE_API_TOKEN is intentionally
+# not set here: the provider already falls back to reading the token from
+# ~/.cofide/credentials (see internal/credentials.LoadFromFile) when it's
+# unset, which is what `cofidectl connect login` populates.
 export COFIDE_CONNECT_URL="cofide.security:8443"
-export COFIDE_API_TOKEN="$(grep 'cofide_access_token' ~/.cofide/credentials | cut -d'=' -f2)"
 export COFIDE_INSECURE_SKIP_VERIFY="true"
