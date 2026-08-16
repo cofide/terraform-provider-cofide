@@ -3,6 +3,7 @@ package attestationpolicy
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,6 +26,19 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 			"org_id": schema.StringAttribute{
 				Description: "The ID of the organization.",
 				Optional:    true,
+			},
+			"trust_zone_id": schema.StringAttribute{
+				Description: "The ID of the trust zone this attestation policy is bound to directly. Can also be used to filter the lookup.",
+				Optional:    true,
+			},
+			"federations": schema.ListAttribute{
+				Description: "The federated trust zones which will be visible to workloads matching this policy. Each entry specifies the `trust_zone_id` of a federated trust zone.",
+				Computed:    true,
+				ElementType: tftypes.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"trust_zone_id": tftypes.StringType,
+					},
+				},
 			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",

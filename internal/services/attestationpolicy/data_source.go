@@ -48,8 +48,9 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 	}
 
 	filter := &attestationpolicysvcpb.ListAttestationPoliciesRequest_Filter{
-		Name:  config.Name.ValueStringPointer(),
-		OrgId: config.OrgID.ValueStringPointer(),
+		Name:        config.Name.ValueStringPointer(),
+		OrgId:       config.OrgID.ValueStringPointer(),
+		TrustZoneId: config.TrustZoneID.ValueStringPointer(),
 	}
 	policies, err := d.client.AttestationPolicyV1Alpha1().ListAttestationPolicies(ctx, filter)
 	if err != nil {

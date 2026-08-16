@@ -13,6 +13,80 @@ Manages a Cofide Connect attestation policy. Attestation policies define how wor
 ## Example Usage
 
 ```terraform
+# ------ Example: direct_binding ------
+terraform {
+  required_providers {
+    cofide = {
+      source  = "cofide/cofide"
+      version = "~> 0.9.0"
+    }
+  }
+}
+
+provider "cofide" {}
+
+
+variable "name" {
+  description = "The name of the attestation policy."
+  type        = string
+  default     = "example-ap-direct-binding"
+}
+
+variable "org_id" {
+  description = "The ID of the organization."
+  type        = string
+  default     = "example-org-id"
+}
+
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
+  type        = string
+  default     = "example-tz-id"
+}
+
+variable "remote_trust_zone_id" {
+  description = "The ID of the remote (federated) trust zone."
+  type        = string
+  default     = "example-remote-tz-id"
+}
+
+
+resource "cofide_connect_attestation_policy" "example" {
+  name   = var.name
+  org_id = var.org_id
+
+  # Binds this policy directly to a trust zone (and optionally federates it
+  # with other trust zones) without needing a separate
+  # cofide_connect_ap_binding resource.
+  trust_zone_id = var.trust_zone_id
+  federations = [
+    {
+      trust_zone_id = var.remote_trust_zone_id
+    }
+  ]
+
+  kubernetes = {
+    namespace_selector = {
+      match_labels = {
+        "kubernetes.io/metadata.name" = "default"
+      }
+    }
+    pod_selector = {
+      match_labels = {
+        "app" = "my-app"
+      }
+    }
+    spiffe_id_path_template = "ns/default/sa/my-service-account"
+  }
+}
+
+
+output "attestation_policy_id" {
+  description = "The ID of the attestation policy."
+  value       = cofide_connect_attestation_policy.example.id
+}
+
+
 # ------ Example: kubernetes ------
 terraform {
   required_providers {
@@ -181,14 +255,24 @@ output "attestation_policy_id" {
 
 ### Optional
 
+- `federations` (List of Object) The federated trust zones which will be visible to workloads matching this policy. Each entry specifies the `trust_zone_id` of a federated trust zone. Only applicable when `trust_zone_id` is set. (see [below for nested schema](#nestedatt--federations))
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
 - `org_id` (String) The ID of the organization.
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
 - `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
+- `trust_zone_id` (String) The ID of the trust zone to bind this attestation policy to directly, without requiring a separate `cofide_connect_ap_binding` resource.
 
 ### Read-Only
 
 - `id` (String) The ID of the attestation policy.
+
+<a id="nestedatt--federations"></a>
+### Nested Schema for `federations`
+
+Optional:
+
+- `trust_zone_id` (String)
+
 
 <a id="nestedatt--kubernetes"></a>
 ### Nested Schema for `kubernetes`

@@ -16,9 +16,11 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 	var diags diag.Diagnostics
 
 	proto := &attestationpolicypb.AttestationPolicy{
-		Id:    model.ID.ValueStringPointer(),
-		Name:  model.Name.ValueString(),
-		OrgId: model.OrgID.ValueStringPointer(),
+		Id:          model.ID.ValueStringPointer(),
+		Name:        model.Name.ValueString(),
+		OrgId:       model.OrgID.ValueStringPointer(),
+		TrustZoneId: model.TrustZoneID.ValueString(),
+		Federations: convertFederations(model.Federations),
 	}
 
 	if model.Kubernetes != nil {
@@ -70,9 +72,11 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
 func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolicyModel {
 	model := AttestationPolicyModel{
-		ID:    optionalStringValue(proto.Id),
-		Name:  tftypes.StringValue(proto.GetName()),
-		OrgID: optionalStringValue(proto.OrgId),
+		ID:          optionalStringValue(proto.Id),
+		Name:        tftypes.StringValue(proto.GetName()),
+		OrgID:       optionalStringValue(proto.OrgId),
+		TrustZoneID: stringOrNull(proto.GetTrustZoneId()),
+		Federations: convertProtoFederations(proto.GetFederations()),
 	}
 
 	if k8s := proto.GetKubernetes(); k8s != nil {
@@ -227,4 +231,41 @@ func optionalStringValue(s *string) basetypes.StringValue {
 		return tftypes.StringNull()
 	}
 	return tftypes.StringValue(*s)
+}
+
+// stringOrNull converts a plain (non-presence-tracked) proto string field to a
+// Terraform types.String, treating the empty string as null so that
+// attestation policies without a directly-bound trust zone don't produce a
+// permanent diff against an omitted config value.
+func stringOrNull(s string) basetypes.StringValue {
+	if s == "" {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(s)
+}
+
+func convertFederations(federations []APFederationModel) []*attestationpolicypb.Federation {
+	if len(federations) == 0 {
+		return nil
+	}
+	result := make([]*attestationpolicypb.Federation, 0, len(federations))
+	for _, f := range federations {
+		result = append(result, &attestationpolicypb.Federation{
+			TrustZoneId: f.TrustZoneID.ValueStringPointer(),
+		})
+	}
+	return result
+}
+
+func convertProtoFederations(federations []*attestationpolicypb.Federation) []APFederationModel {
+	if len(federations) == 0 {
+		return nil
+	}
+	result := make([]APFederationModel, 0, len(federations))
+	for _, f := range federations {
+		result = append(result, APFederationModel{
+			TrustZoneID: optionalStringValue(f.TrustZoneId),
+		})
+	}
+	return result
 }

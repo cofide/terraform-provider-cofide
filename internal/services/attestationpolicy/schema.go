@@ -4,9 +4,12 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/cofide/terraform-provider-cofide/internal/planmodifiers"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -29,6 +32,23 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Description: "The ID of the organization.",
 				Optional:    true,
 				Computed:    true,
+			},
+			"trust_zone_id": schema.StringAttribute{
+				Description: "The ID of the trust zone to bind this attestation policy to directly, without requiring a separate `cofide_connect_ap_binding` resource.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					planmodifiers.OptionalComputedModifier{},
+				},
+			},
+			"federations": schema.ListAttribute{
+				Description: "The federated trust zones which will be visible to workloads matching this policy. Each entry specifies the `trust_zone_id` of a federated trust zone. Only applicable when `trust_zone_id` is set.",
+				Optional:    true,
+				ElementType: tftypes.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"trust_zone_id": tftypes.StringType,
+					},
+				},
 			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",

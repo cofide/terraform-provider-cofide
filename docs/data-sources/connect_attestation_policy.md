@@ -60,13 +60,23 @@ output "attestation_policy_id" {
 ### Optional
 
 - `org_id` (String) The ID of the organization.
+- `trust_zone_id` (String) The ID of the trust zone this attestation policy is bound to directly. Can also be used to filter the lookup.
 
 ### Read-Only
 
+- `federations` (List of Object) The federated trust zones which will be visible to workloads matching this policy. Each entry specifies the `trust_zone_id` of a federated trust zone. (see [below for nested schema](#nestedatt--federations))
 - `id` (String) The ID of the attestation policy.
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
 - `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
+
+<a id="nestedatt--federations"></a>
+### Nested Schema for `federations`
+
+Read-Only:
+
+- `trust_zone_id` (String)
+
 
 <a id="nestedatt--kubernetes"></a>
 ### Nested Schema for `kubernetes`
