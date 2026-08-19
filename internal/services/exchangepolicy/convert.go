@@ -43,8 +43,15 @@ var oauthAsAttrTypes = map[string]attr.Type{
 	"timeout":    tftypes.Int64Type,
 }
 
+// spiffeAttrTypes is intentionally empty: the spiffe outbound issuer is a marker
+// selected by presence (mirroring the proto OutboundSPIFFE marker message). The
+// SPIFFE ID derives from the policy's outbound_identity and the audience from the
+// exchange request.
+var spiffeAttrTypes = map[string]attr.Type{}
+
 var outboundIssuerAttrTypes = map[string]attr.Type{
 	"oauth_as": tftypes.ObjectType{AttrTypes: oauthAsAttrTypes},
+	"spiffe":   tftypes.ObjectType{AttrTypes: spiffeAttrTypes},
 }
 
 var externalHookAttrTypes = map[string]attr.Type{
@@ -116,6 +123,8 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 				return nil, err
 			}
 			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_OauthAs{OauthAs: oauthAsProto}
+		} else if spiffe, ok := issuerAttrs["spiffe"].(tftypes.Object); ok && !spiffe.IsNull() && !spiffe.IsUnknown() {
+			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_Spiffe{Spiffe: &exchangepolicypb.OutboundSPIFFE{}}
 		}
 	}
 
@@ -192,6 +201,12 @@ func outboundIssuerFromProto(proto *exchangepolicypb.ExchangePolicy) tftypes.Obj
 	case *exchangepolicypb.ExchangePolicy_OauthAs:
 		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
 			"oauth_as": oauthAsFromProto(v.OauthAs),
+			"spiffe":   tftypes.ObjectNull(spiffeAttrTypes),
+		})
+	case *exchangepolicypb.ExchangePolicy_Spiffe:
+		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
+			"oauth_as": tftypes.ObjectNull(oauthAsAttrTypes),
+			"spiffe":   tftypes.ObjectValueMust(spiffeAttrTypes, map[string]attr.Value{}),
 		})
 	default:
 		return tftypes.ObjectNull(outboundIssuerAttrTypes)

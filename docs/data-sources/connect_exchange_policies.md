@@ -139,6 +139,7 @@ Read-Only:
 Read-Only:
 
 - `oauth_as` (Attributes) External OAuth 2.0 authorisation server used as the outbound issuer. (see [below for nested schema](#nestedatt--exchange_policies--outbound_issuer--oauth_as))
+- `spiffe` (Attributes) OIDC to SPIFFE exchange policy configuration. Presence marks the policy as an OIDC to SPIFFE exchange. (see [below for nested schema](#nestedatt--exchange_policies--outbound_issuer--spiffe))
 
 <a id="nestedatt--exchange_policies--outbound_issuer--oauth_as"></a>
 ### Nested Schema for `exchange_policies.outbound_issuer.oauth_as`
@@ -150,6 +151,10 @@ Read-Only:
 - `issuer_url` (String) Issuer URL of the OAuth 2.0 authorisation server.
 - `timeout` (Number) Timeout for token requests to the authorisation server, in seconds.
 - `token_url` (String) Token endpoint URL of the OAuth 2.0 authorisation server.
+
+
+<a id="nestedatt--exchange_policies--outbound_issuer--spiffe"></a>
+### Nested Schema for `exchange_policies.outbound_issuer.spiffe`
 
 
 

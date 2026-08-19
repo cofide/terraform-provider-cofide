@@ -116,6 +116,11 @@ func exchangePolicyNestedAttributes() map[string]schema.Attribute {
 						},
 					},
 				},
+				"spiffe": schema.SingleNestedAttribute{
+					Description: "OIDC to SPIFFE exchange policy configuration. Presence marks the policy as an OIDC to SPIFFE exchange.",
+					Computed:    true,
+					Attributes:  map[string]schema.Attribute{},
+				},
 			},
 		},
 		"outbound_identity": schema.StringAttribute{
