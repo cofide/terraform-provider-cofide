@@ -3,12 +3,18 @@ package attestationpolicy
 import tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 
 type AttestationPolicyModel struct {
-	ID         tftypes.String     `tfsdk:"id"`
-	Name       tftypes.String     `tfsdk:"name"`
-	OrgID      tftypes.String     `tfsdk:"org_id"`
-	Kubernetes *APKubernetesModel `tfsdk:"kubernetes"`
-	Static     *APStaticModel     `tfsdk:"static"`
-	TPMNode    *APTPMNodeModel    `tfsdk:"tpm_node"`
+	ID          tftypes.String      `tfsdk:"id"`
+	Name        tftypes.String      `tfsdk:"name"`
+	OrgID       tftypes.String      `tfsdk:"org_id"`
+	TrustZoneID tftypes.String      `tfsdk:"trust_zone_id"`
+	Federations []APFederationModel `tfsdk:"federations"`
+	Kubernetes  *APKubernetesModel  `tfsdk:"kubernetes"`
+	Static      *APStaticModel      `tfsdk:"static"`
+	TPMNode     *APTPMNodeModel     `tfsdk:"tpm_node"`
+}
+
+type APFederationModel struct {
+	TrustZoneID tftypes.String `tfsdk:"trust_zone_id"`
 }
 
 type APKubernetesModel struct {
