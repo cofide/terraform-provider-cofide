@@ -509,11 +509,9 @@ func stringFromAPI(s string) tftypes.String {
 
 // base64FromAPI converts an API byte slice value to its base64-encoded
 // Terraform state representation, treating empty/absent bytes as unset.
+// Encoding empty/nil bytes yields "", so this delegates to stringFromAPI.
 func base64FromAPI(b []byte) tftypes.String {
-	if len(b) == 0 {
-		return tftypes.StringNull()
-	}
-	return tftypes.StringValue(base64.StdEncoding.EncodeToString(b))
+	return stringFromAPI(base64.StdEncoding.EncodeToString(b))
 }
 
 // stringFromAPIOrPlan is stringFromAPI, but falls back to the exact plan
@@ -533,13 +531,7 @@ func stringFromAPIOrPlan(apiValue string, planValue tftypes.String) tftypes.Stri
 
 // base64FromAPIOrPlan is the []byte equivalent of stringFromAPIOrPlan.
 func base64FromAPIOrPlan(apiBytes []byte, planValue tftypes.String) tftypes.String {
-	if len(apiBytes) > 0 {
-		return tftypes.StringValue(base64.StdEncoding.EncodeToString(apiBytes))
-	}
-	if !planValue.IsNull() {
-		return planValue
-	}
-	return tftypes.StringNull()
+	return stringFromAPIOrPlan(base64.StdEncoding.EncodeToString(apiBytes), planValue)
 }
 
 // stringFromAPIOrState converts an API string value to Terraform state. The
@@ -561,13 +553,7 @@ func stringFromAPIOrState(apiValue string, stateValue tftypes.String) tftypes.St
 
 // base64FromAPIOrState is the []byte equivalent of stringFromAPIOrState.
 func base64FromAPIOrState(apiBytes []byte, stateValue tftypes.String) tftypes.String {
-	if len(apiBytes) > 0 {
-		return tftypes.StringValue(base64.StdEncoding.EncodeToString(apiBytes))
-	}
-	if stateValue.IsNull() || stateValue.ValueString() == "" {
-		return stateValue
-	}
-	return tftypes.StringNull()
+	return stringFromAPIOrState(base64.StdEncoding.EncodeToString(apiBytes), stateValue)
 }
 
 // parseExtraHelmValues parses the extra_helm_values field from a string to a structpb.Struct object.
