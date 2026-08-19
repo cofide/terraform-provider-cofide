@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	clustersvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/cluster_service/v1alpha1"
@@ -101,19 +100,8 @@ func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		extraHelmValues = types.StringNull()
 	}
 
-	var oidcIssuerURL types.String
-	if url := cluster.GetOidcIssuerUrl(); url != "" {
-		oidcIssuerURL = types.StringValue(url)
-	} else {
-		oidcIssuerURL = types.StringNull()
-	}
-
-	var oidcIssuerCaCert types.String
-	if certBytes := cluster.GetOidcIssuerCaCert(); len(certBytes) > 0 {
-		oidcIssuerCaCert = types.StringValue(base64.StdEncoding.EncodeToString(certBytes))
-	} else {
-		oidcIssuerCaCert = types.StringNull()
-	}
+	oidcIssuerURL := stringFromAPI(cluster.GetOidcIssuerUrl())
+	oidcIssuerCaCert := base64FromAPI(cluster.GetOidcIssuerCaCert())
 
 	state := ClusterModel{
 		ID:                types.StringValue(cluster.GetId()),
