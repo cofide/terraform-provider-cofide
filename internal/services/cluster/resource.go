@@ -127,8 +127,8 @@ func (c *ClusterResource) Create(ctx context.Context, req resource.CreateRequest
 	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
 	extraHelmValues := plan.ExtraHelmValues
 
-	oidcIssuerURL := stringFromAPIOrPlan(createResp.GetOidcIssuerUrl(), plan.OidcIssuerURL)
-	oidcIssuerCaCert := base64FromAPIOrPlan(createResp.GetOidcIssuerCaCert(), plan.OidcIssuerCaCert)
+	oidcIssuerURL := plan.OidcIssuerURL
+	oidcIssuerCaCert := plan.OidcIssuerCaCert
 
 	state := ClusterModel{
 		ID:                tftypes.StringValue(createResp.GetId()),
@@ -265,8 +265,8 @@ func (c *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// (YAML or JSON) and avoid a plan/state inconsistency on apply.
 	extraHelmValuesStr := plan.ExtraHelmValues
 
-	oidcIssuerURLStr := stringFromAPIOrPlan(updateResp.GetOidcIssuerUrl(), plan.OidcIssuerURL)
-	oidcIssuerCaCertStr := base64FromAPIOrPlan(updateResp.GetOidcIssuerCaCert(), plan.OidcIssuerCaCert)
+	oidcIssuerURLStr := plan.OidcIssuerURL
+	oidcIssuerCaCertStr := plan.OidcIssuerCaCert
 
 	newState := ClusterModel{
 		ID:                tftypes.StringValue(updateResp.GetId()),
@@ -512,26 +512,6 @@ func stringFromAPI(s string) tftypes.String {
 // Encoding empty/nil bytes yields "", so this delegates to stringFromAPI.
 func base64FromAPI(b []byte) tftypes.String {
 	return stringFromAPI(base64.StdEncoding.EncodeToString(b))
-}
-
-// stringFromAPIOrPlan is stringFromAPI, but falls back to the exact plan
-// value when the API reports empty. This is required, not just cosmetic:
-// for a known (non-null) plan value, Terraform requires the state written
-// after Create/Update to equal that plan value exactly, so an explicit ""
-// in config must round-trip back to "" in state, not null.
-func stringFromAPIOrPlan(apiValue string, planValue tftypes.String) tftypes.String {
-	if apiValue != "" {
-		return tftypes.StringValue(apiValue)
-	}
-	if !planValue.IsNull() {
-		return planValue
-	}
-	return tftypes.StringNull()
-}
-
-// base64FromAPIOrPlan is the []byte equivalent of stringFromAPIOrPlan.
-func base64FromAPIOrPlan(apiBytes []byte, planValue tftypes.String) tftypes.String {
-	return stringFromAPIOrPlan(base64.StdEncoding.EncodeToString(apiBytes), planValue)
 }
 
 // stringFromAPIOrState converts an API string value to Terraform state. The
