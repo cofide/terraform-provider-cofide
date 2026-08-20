@@ -81,6 +81,29 @@ resource "cofide_connect_exchange_policy" "outbound_issuer_policy" {
   }
 }
 
+resource "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
+  name          = "test-ep-spiffe-issuer"
+  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  action        = "ALLOW"
+
+  # Connect requires subject_issuer to use exact matching when
+  # outbound_identity is set. The SPIFFE outbound issuer derives the issued
+  # SVID's SPIFFE ID from outbound_identity.
+  subject_issuer = [
+    { exact = "https://issuer.ep-tz.cofide.dev" }
+  ]
+
+  subject_identity = [
+    { exact = "user@example.com" }
+  ]
+
+  outbound_identity = "spiffe://ep-tz.cofide.dev/ns/spiffe/sa/exchanged"
+
+  outbound_issuer = {
+    spiffe = {}
+  }
+}
+
 resource "cofide_connect_exchange_policy" "minimal_policy" {
   name          = "test-ep-minimal"
   trust_zone_id = cofide_connect_trust_zone.trust_zone.id
@@ -98,6 +121,10 @@ data "cofide_connect_exchange_policy" "outbound_issuer_policy" {
   id = cofide_connect_exchange_policy.outbound_issuer_policy.id
 }
 
+data "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
+  id = cofide_connect_exchange_policy.spiffe_issuer_policy.id
+}
+
 data "cofide_connect_exchange_policies" "by_trust_zone" {
   trust_zone_id = cofide_connect_trust_zone.trust_zone.id
 
@@ -106,6 +133,7 @@ data "cofide_connect_exchange_policies" "by_trust_zone" {
     cofide_connect_exchange_policy.deny_policy,
     cofide_connect_exchange_policy.outbound_identity_policy,
     cofide_connect_exchange_policy.outbound_issuer_policy,
+    cofide_connect_exchange_policy.spiffe_issuer_policy,
     cofide_connect_exchange_policy.minimal_policy,
   ]
 }
@@ -153,6 +181,24 @@ output "outbound_issuer_from_list" {
     for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies :
     p.outbound_issuer
     if p.id == cofide_connect_exchange_policy.outbound_issuer_policy.id
+  ])
+}
+
+# outbound_issuer.spiffe round-trips through the resource, the single-policy
+# data source and the list data source.
+output "spiffe_issuer_resource" {
+  value = cofide_connect_exchange_policy.spiffe_issuer_policy.outbound_issuer
+}
+
+output "spiffe_issuer_data_source" {
+  value = data.cofide_connect_exchange_policy.spiffe_issuer_policy.outbound_issuer
+}
+
+output "spiffe_issuer_from_list" {
+  value = one([
+    for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies :
+    p.outbound_issuer
+    if p.id == cofide_connect_exchange_policy.spiffe_issuer_policy.id
   ])
 }
 

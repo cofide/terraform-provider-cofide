@@ -208,6 +208,11 @@ func ResourceSchema() schema.Schema {
 							},
 						},
 					},
+					"spiffe": schema.SingleNestedAttribute{
+						Description: "Setting this field to an empty object marks the policy as OIDC to SPIFFE exchange. The issued SVID's SPIFFE ID is derived from `outbound_identity` and the JWT-SVID audience from the exchange request.",
+						Optional:    true,
+						Attributes:  map[string]schema.Attribute{},
+					},
 				},
 			},
 			"outbound_identity": schema.StringAttribute{

@@ -202,6 +202,7 @@ Required:
 Optional:
 
 - `oauth_as` (Attributes) Use an external OAuth 2.0 authorisation server as the outbound issuer. At least one of `issuer_url` or `token_url` is required. (see [below for nested schema](#nestedatt--outbound_issuer--oauth_as))
+- `spiffe` (Attributes) Setting this field to an empty object marks the policy as OIDC to SPIFFE exchange. The issued SVID's SPIFFE ID is derived from `outbound_identity` and the JWT-SVID audience from the exchange request. (see [below for nested schema](#nestedatt--outbound_issuer--spiffe))
 
 <a id="nestedatt--outbound_issuer--oauth_as"></a>
 ### Nested Schema for `outbound_issuer.oauth_as`
@@ -216,6 +217,10 @@ Optional:
 - `issuer_url` (String) Issuer URL of the OAuth 2.0 authorisation server.
 - `timeout` (Number) Timeout for token requests to the authorisation server, in seconds.
 - `token_url` (String) Token endpoint URL of the OAuth 2.0 authorisation server.
+
+
+<a id="nestedatt--outbound_issuer--spiffe"></a>
+### Nested Schema for `outbound_issuer.spiffe`
 
 
 
