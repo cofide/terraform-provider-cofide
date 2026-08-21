@@ -181,14 +181,24 @@ output "attestation_policy_id" {
 
 ### Optional
 
+- `federations` (Attributes List) The federated trust zones which will be visible to workloads matching this policy. Only applies when `trust_zone_id` is set. (see [below for nested schema](#nestedatt--federations))
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
-- `org_id` (String) The ID of the organization.
+- `org_id` (String) The ID of the organization. Conflicts with `trust_zone_id`: when the policy is owned by a trust zone, its organization is derived from that trust zone.
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
 - `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
+- `trust_zone_id` (String) The ID of the trust zone that owns this attestation policy. When set, the policy grants identities directly within this trust zone without requiring a separate `cofide_connect_ap_binding` resource, and the policy's organization is derived from the trust zone. Conflicts with `org_id`.
 
 ### Read-Only
 
 - `id` (String) The ID of the attestation policy.
+
+<a id="nestedatt--federations"></a>
+### Nested Schema for `federations`
+
+Required:
+
+- `trust_zone_id` (String) The ID of the federated trust zone.
+
 
 <a id="nestedatt--kubernetes"></a>
 ### Nested Schema for `kubernetes`

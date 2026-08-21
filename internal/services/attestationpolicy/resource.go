@@ -128,7 +128,7 @@ func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 	policy.Id = &policyID
-	if (policy.OrgId == nil || *policy.OrgId == "") && !state.OrgID.IsNull() && !state.OrgID.IsUnknown() {
+	if plan.TrustZoneID.IsNull() && (policy.OrgId == nil || *policy.OrgId == "") && !state.OrgID.IsNull() && !state.OrgID.IsUnknown() {
 		orgID := state.OrgID.ValueString()
 		if orgID != "" {
 			policy.OrgId = &orgID

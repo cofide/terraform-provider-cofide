@@ -26,6 +26,22 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				Description: "The ID of the organization.",
 				Optional:    true,
 			},
+			"trust_zone_id": schema.StringAttribute{
+				Description: "The ID of the trust zone that owns this attestation policy.",
+				Computed:    true,
+			},
+			"federations": schema.ListNestedAttribute{
+				Description: "The federated trust zones which will be visible to workloads matching this policy.",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"trust_zone_id": schema.StringAttribute{
+							Description: "The ID of the federated trust zone.",
+							Computed:    true,
+						},
+					},
+				},
+			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",
 				Computed:    true,

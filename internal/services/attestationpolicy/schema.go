@@ -4,7 +4,9 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -26,9 +28,34 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organization.",
+				Description: "The ID of the organization. Conflicts with `trust_zone_id`: when the policy is owned by a trust zone, its organization is derived from that trust zone.",
 				Optional:    true,
 				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("trust_zone_id")),
+				},
+			},
+			"trust_zone_id": schema.StringAttribute{
+				Description: "The ID of the trust zone that owns this attestation policy. When set, the policy grants identities directly within this trust zone without requiring a separate `cofide_connect_ap_binding` resource, and the policy's organization is derived from the trust zone. Conflicts with `org_id`.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("org_id")),
+				},
+			},
+			"federations": schema.ListNestedAttribute{
+				Description: "The federated trust zones which will be visible to workloads matching this policy. Only applies when `trust_zone_id` is set.",
+				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.AlsoRequires(path.MatchRoot("trust_zone_id")),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"trust_zone_id": schema.StringAttribute{
+							Description: "The ID of the federated trust zone.",
+							Required:    true,
+						},
+					},
+				},
 			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",

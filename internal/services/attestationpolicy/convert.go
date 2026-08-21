@@ -16,9 +16,20 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 	var diags diag.Diagnostics
 
 	proto := &attestationpolicypb.AttestationPolicy{
-		Id:    model.ID.ValueStringPointer(),
-		Name:  model.Name.ValueString(),
-		OrgId: model.OrgID.ValueStringPointer(),
+		Id:          model.ID.ValueStringPointer(),
+		Name:        model.Name.ValueString(),
+		OrgId:       model.OrgID.ValueStringPointer(),
+		TrustZoneId: model.TrustZoneID.ValueString(),
+	}
+
+	if model.Federations != nil {
+		federations := make([]*attestationpolicypb.Federation, 0, len(model.Federations))
+		for _, federation := range model.Federations {
+			federations = append(federations, &attestationpolicypb.Federation{
+				TrustZoneId: federation.TrustZoneID.ValueStringPointer(),
+			})
+		}
+		proto.Federations = federations
 	}
 
 	if model.Kubernetes != nil {
@@ -70,9 +81,20 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
 func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolicyModel {
 	model := AttestationPolicyModel{
-		ID:    optionalStringValue(proto.Id),
-		Name:  tftypes.StringValue(proto.GetName()),
-		OrgID: optionalStringValue(proto.OrgId),
+		ID:          optionalStringValue(proto.Id),
+		Name:        tftypes.StringValue(proto.GetName()),
+		OrgID:       optionalStringValue(proto.OrgId),
+		TrustZoneID: nonEmptyStringValue(proto.GetTrustZoneId()),
+	}
+
+	if federations := proto.GetFederations(); federations != nil {
+		respFederations := make([]APFederationModel, 0, len(federations))
+		for _, federation := range federations {
+			respFederations = append(respFederations, APFederationModel{
+				TrustZoneID: optionalStringValue(federation.TrustZoneId),
+			})
+		}
+		model.Federations = respFederations
 	}
 
 	if k8s := proto.GetKubernetes(); k8s != nil {
@@ -227,4 +249,14 @@ func optionalStringValue(s *string) basetypes.StringValue {
 		return tftypes.StringNull()
 	}
 	return tftypes.StringValue(*s)
+}
+
+// nonEmptyStringValue converts a plain (non-pointer) proto string field that has no
+// presence tracking into a Terraform string, treating the empty zero value as null.
+// This keeps state consistent with an unconfigured Optional attribute.
+func nonEmptyStringValue(s string) basetypes.StringValue {
+	if s == "" {
+		return tftypes.StringNull()
+	}
+	return tftypes.StringValue(s)
 }
