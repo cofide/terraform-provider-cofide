@@ -8,5 +8,5 @@ terraform {
 }
 
 provider "cofide" {
-  connect_url = "cofide.security:8443"
+  connect_api_address = "connect.cofide.security:8443"
 }
