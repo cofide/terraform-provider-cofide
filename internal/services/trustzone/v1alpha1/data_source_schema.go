@@ -1,4 +1,4 @@
-package trustzone
+package v1alpha1
 
 import (
 	"context"
@@ -51,11 +51,6 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 
 func (t *TrustZoneDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = DataSourceSchema(ctx)
-	resp.Schema.DeprecationMessage = t.deprecationMessage
-	// The above is shown during terraform plan/apply, the below is shown in the generated docs.
-	if resp.Schema.DeprecationMessage != "" {
-		resp.Schema.MarkdownDescription = "~> **Deprecated:** " + resp.Schema.DeprecationMessage + "\n\n" + resp.Schema.MarkdownDescription
-	}
 }
 
 func (t *TrustZoneDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {

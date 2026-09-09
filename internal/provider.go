@@ -26,6 +26,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/organization"
 	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
+	trustzonev1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
 )
 
@@ -162,8 +163,8 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		exchangepolicy.NewResource,
 		federation.NewResource,
 		rolebinding.NewResource,
-		trustzone.NewV1Alpha1Resource,
-		trustzone.NewUnversionedResource,
+		trustzone.NewResource,
+		trustzonev1alpha1.NewResource,
 		trustzoneserver.NewResource,
 	}
 }
@@ -176,8 +177,8 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		exchangepolicy.NewDataSource,
 		exchangepolicy.NewListDataSource,
 		federation.NewDataSource,
-		trustzone.NewV1Alpha1DataSource,
-		trustzone.NewUnversionedDataSource,
+		trustzone.NewDataSource,
+		trustzonev1alpha1.NewDataSource,
 		organization.NewDataSource,
 		trustzoneserver.NewDataSource,
 		trustzoneserver.NewListDataSource,
