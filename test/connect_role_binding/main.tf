@@ -2,7 +2,7 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "test-role-binding-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "test-rb-tz.cofide.dev"
@@ -15,7 +15,7 @@ resource "cofide_connect_role_binding" "role_binding" {
   }
   resource = {
     type = "TrustZone"
-    id   = cofide_connect_trust_zone.trust_zone.id
+    id   = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   }
 }
 

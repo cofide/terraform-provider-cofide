@@ -11,17 +11,28 @@ import (
 )
 
 type TrustZoneDataSource struct {
-	client sdkclient.ClientSet
+	client             sdkclient.ClientSet
+	typeNameSuffix     string
+	deprecationMessage string
 }
 
 var _ datasource.DataSourceWithConfigure = (*TrustZoneDataSource)(nil)
 
-func NewDataSource() datasource.DataSource {
-	return &TrustZoneDataSource{}
+func NewV1Alpha1DataSource() datasource.DataSource {
+	return &TrustZoneDataSource{
+		typeNameSuffix: canonicalTypeNameSuffix,
+	}
+}
+
+func NewUnversionedDataSource() datasource.DataSource {
+	return &TrustZoneDataSource{
+		typeNameSuffix:     "_connect_trust_zone",
+		deprecationMessage: "Use cofide" + canonicalTypeNameSuffix + " instead. This name is frozen on the v1alpha1 API.",
+	}
 }
 
 func (d *TrustZoneDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_connect_trust_zone"
+	resp.TypeName = req.ProviderTypeName + d.typeNameSuffix
 }
 
 func (t *TrustZoneDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {

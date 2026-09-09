@@ -2,7 +2,7 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "tzserver-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "tzserver-tz.cofide.dev"
@@ -10,7 +10,7 @@ resource "cofide_connect_trust_zone" "trust_zone" {
 
 resource "cofide_connect_cluster" "cluster" {
   name               = "tzserver-cluster"
-  trust_zone_id      = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id      = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   profile            = "kubernetes"
   kubernetes_context = "tzserver-cluster-context"
   external_server    = true
@@ -24,7 +24,7 @@ resource "cofide_connect_cluster" "cluster" {
 }
 
 resource "cofide_connect_trust_zone_server" "server" {
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   cluster_id    = cofide_connect_cluster.cluster.id
 
   helm_values = yamlencode({
@@ -46,7 +46,7 @@ data "cofide_connect_trust_zone_server" "server" {
 }
 
 data "cofide_connect_trust_zone_servers" "by_trust_zone" {
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   depends_on = [
     cofide_connect_trust_zone_server.server

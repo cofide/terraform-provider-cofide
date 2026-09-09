@@ -21,15 +21,26 @@ var (
 )
 
 type TrustZoneResource struct {
-	client sdkclient.ClientSet
+	client             sdkclient.ClientSet
+	typeNameSuffix     string
+	deprecationMessage string
 }
 
-func NewResource() resource.Resource {
-	return &TrustZoneResource{}
+func NewV1Alpha1Resource() resource.Resource {
+	return &TrustZoneResource{
+		typeNameSuffix: canonicalTypeNameSuffix,
+	}
+}
+
+func NewUnversionedResource() resource.Resource {
+	return &TrustZoneResource{
+		typeNameSuffix:     "_connect_trust_zone",
+		deprecationMessage: "Use cofide" + canonicalTypeNameSuffix + " instead. This name is frozen on the v1alpha1 API.",
+	}
 }
 
 func (t *TrustZoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_connect_trust_zone"
+	resp.TypeName = req.ProviderTypeName + t.typeNameSuffix
 }
 
 func (t *TrustZoneResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {

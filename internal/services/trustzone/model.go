@@ -2,6 +2,8 @@ package trustzone
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
+const canonicalTypeNameSuffix = "_connect_trust_zone_v1alpha1"
+
 type TrustZoneModel struct {
 	ID                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`

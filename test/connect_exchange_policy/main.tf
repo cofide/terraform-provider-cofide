@@ -2,7 +2,7 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "ep-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "ep-tz.cofide.dev"
@@ -10,7 +10,7 @@ resource "cofide_connect_trust_zone" "trust_zone" {
 
 resource "cofide_connect_exchange_policy" "allow_policy" {
   name          = "test-ep-allow"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
 
   subject_identity = [
@@ -31,7 +31,7 @@ resource "cofide_connect_exchange_policy" "allow_policy" {
 
 resource "cofide_connect_exchange_policy" "deny_policy" {
   name          = "test-ep-deny"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "DENY"
 
   subject_identity = [
@@ -41,7 +41,7 @@ resource "cofide_connect_exchange_policy" "deny_policy" {
 
 resource "cofide_connect_exchange_policy" "outbound_identity_policy" {
   name          = "test-ep-outbound-identity"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
 
   # Connect requires subject_issuer to use exact matching when
@@ -59,7 +59,7 @@ resource "cofide_connect_exchange_policy" "outbound_identity_policy" {
 
 resource "cofide_connect_exchange_policy" "outbound_issuer_policy" {
   name          = "test-ep-outbound-issuer"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
 
   subject_identity = [
@@ -83,7 +83,7 @@ resource "cofide_connect_exchange_policy" "outbound_issuer_policy" {
 
 resource "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
   name          = "test-ep-spiffe-issuer"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
 
   # Connect requires subject_issuer to use exact matching when
@@ -106,7 +106,7 @@ resource "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
 
 resource "cofide_connect_exchange_policy" "minimal_policy" {
   name          = "test-ep-minimal"
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 }
 
 data "cofide_connect_exchange_policy" "allow_policy" {
@@ -126,7 +126,7 @@ data "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
 }
 
 data "cofide_connect_exchange_policies" "by_trust_zone" {
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   depends_on = [
     cofide_connect_exchange_policy.allow_policy,

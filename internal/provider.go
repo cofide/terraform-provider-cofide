@@ -162,7 +162,8 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		exchangepolicy.NewResource,
 		federation.NewResource,
 		rolebinding.NewResource,
-		trustzone.NewResource,
+		trustzone.NewV1Alpha1Resource,
+		trustzone.NewUnversionedResource,
 		trustzoneserver.NewResource,
 	}
 }
@@ -175,7 +176,8 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		exchangepolicy.NewDataSource,
 		exchangepolicy.NewListDataSource,
 		federation.NewDataSource,
-		trustzone.NewDataSource,
+		trustzone.NewV1Alpha1DataSource,
+		trustzone.NewUnversionedDataSource,
 		organization.NewDataSource,
 		trustzoneserver.NewDataSource,
 		trustzoneserver.NewListDataSource,
