@@ -2,93 +2,28 @@ package attestationpolicy
 
 import (
 	"context"
-	"fmt"
 
-	attestationpolicysvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/attestation_policy_service/v1alpha1"
-	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 )
 
 type AttestationPolicyDataSource struct {
-	client sdkclient.ClientSet
+	v1alpha1.AttestationPolicyDataSource
 }
 
 var _ datasource.DataSourceWithConfigure = (*AttestationPolicyDataSource)(nil)
 
 func NewDataSource() datasource.DataSource {
-	return &AttestationPolicyDataSource{}
+	return &AttestationPolicyDataSource{AttestationPolicyDataSource: v1alpha1.AttestationPolicyDataSource{}}
 }
 
 func (d *AttestationPolicyDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_connect_attestation_policy"
 }
 
-func (d *AttestationPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(sdkclient.ClientSet)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected data source configure type",
-			fmt.Sprintf("Expected sdkclient.ClientSet, got: %T", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
-func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config AttestationPolicyModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	filter := &attestationpolicysvcpb.ListAttestationPoliciesRequest_Filter{
-		Name:  config.Name.ValueStringPointer(),
-		OrgId: config.OrgID.ValueStringPointer(),
-	}
-	policies, err := d.client.AttestationPolicyV1Alpha1().ListAttestationPolicies(ctx, filter)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading attestation policy",
-			fmt.Sprintf("Could not list attestation policies: %s", err),
-		)
-		return
-	}
-
-	if len(policies) == 0 {
-		resp.Diagnostics.AddError(
-			"Error reading attestation policy",
-			"No matching attestation policy found",
-		)
-		return
-	}
-
-	if len(policies) > 1 {
-		resp.Diagnostics.AddError(
-			"Error reading attestation policy",
-			"Multiple attestation policies found",
-		)
-		return
-	}
-
-	policy := policies[0]
-
-	if policy == nil {
-		resp.Diagnostics.AddError(
-			"Error reading attestation policy",
-			"No matching attestation policy found",
-		)
-		return
-	}
-
-	// Use the shared conversion rather than an inline copy, so the data source
-	// cannot drift from the resource as policy fields are added.
-	state := protoToModel(policy)
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+func (t *AttestationPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	t.AttestationPolicyDataSource.Schema(ctx, req, resp)
+	resp.Schema.DeprecationMessage = "Use cofide_connect_attestation_policy_v1alpha1 instead. This name is frozen on the v1alpha1 API."
+	// The above is shown during terraform plan/apply, the below is shown in the generated docs.
+	resp.Schema.MarkdownDescription = "~> **Deprecated:** " + resp.Schema.DeprecationMessage + "\n\n" + resp.Schema.MarkdownDescription
 }

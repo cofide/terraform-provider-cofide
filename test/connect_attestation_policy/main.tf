@@ -2,7 +2,7 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_attestation_policy" "attestation_policy_static" {
+resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
   name   = "test-ap-1"
   org_id = data.cofide_connect_organization.org.id
 
@@ -26,7 +26,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
   }
 }
 
-resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
+resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
   org_id = data.cofide_connect_organization.org.id
 
@@ -49,7 +49,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
   }
 }
 
-resource "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
+resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_tpm_node" {
   name   = "test-ap-3"
   org_id = data.cofide_connect_organization.org.id
 
@@ -68,60 +68,60 @@ variable "selector_values" {
   default = ["test-selector"]
 }
 
-data "cofide_connect_attestation_policy" "attestation_policy_static" {
+data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
   name   = "test-ap-1"
   org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
-    cofide_connect_attestation_policy.attestation_policy_static
+    cofide_connect_attestation_policy_v1alpha1.attestation_policy_static
   ]
 }
 
-data "cofide_connect_attestation_policy" "attestation_policy_kubernetes" {
+data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
   org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
-    cofide_connect_attestation_policy.attestation_policy_kubernetes
+    cofide_connect_attestation_policy_v1alpha1.attestation_policy_kubernetes
   ]
 }
 
-data "cofide_connect_attestation_policy" "attestation_policy_tpm_node" {
+data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_tpm_node" {
   name   = "test-ap-3"
   org_id = data.cofide_connect_organization.org.id
 
   depends_on = [
-    cofide_connect_attestation_policy.attestation_policy_tpm_node
+    cofide_connect_attestation_policy_v1alpha1.attestation_policy_tpm_node
   ]
 }
 
 output "attestation_policy_static_id" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_static.id
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_static.id
 }
 
 output "attestation_policy_kubernetes_id" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_kubernetes.id
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_kubernetes.id
 }
 
 # store_svid, as read back from the resource state and from the data source.
 output "attestation_policy_static_store_svid_resource" {
-  value = cofide_connect_attestation_policy.attestation_policy_static.static.store_svid
+  value = cofide_connect_attestation_policy_v1alpha1.attestation_policy_static.static.store_svid
 }
 
 output "attestation_policy_static_store_svid_data_source" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_static.static.store_svid
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_static.static.store_svid
 }
 
 # The data source previously ignored tpm_node policies altogether.
 output "attestation_policy_tpm_node_ek_hash" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_tpm_node.tpm_node.attestation.ek_hash
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_tpm_node.tpm_node.attestation.ek_hash
 }
 
 output "attestation_policy_tpm_node_selector_values" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_tpm_node.tpm_node.selector_values
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_tpm_node.tpm_node.selector_values
 }
 
 # The kubernetes policy, read back through the data source.
 output "attestation_policy_kubernetes_spiffe_id_path_template" {
-  value = data.cofide_connect_attestation_policy.attestation_policy_kubernetes.kubernetes.spiffe_id_path_template
+  value = data.cofide_connect_attestation_policy_v1alpha1.attestation_policy_kubernetes.kubernetes.spiffe_id_path_template
 }

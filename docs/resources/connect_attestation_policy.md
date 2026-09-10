@@ -3,10 +3,13 @@
 page_title: "cofide_connect_attestation_policy Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_attestation_policy_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Manages a Cofide Connect attestation policy. Attestation policies define how workloads are identified and what SPIFFE IDs they receive. Exactly one of kubernetes, static, or tpm_node must be configured.
 ---
 
 # cofide_connect_attestation_policy (Resource)
+
+~> **Deprecated:** Use cofide_connect_attestation_policy_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Manages a Cofide Connect attestation policy. Attestation policies define how workloads are identified and what SPIFFE IDs they receive. Exactly one of `kubernetes`, `static`, or `tpm_node` must be configured.
 
@@ -39,7 +42,7 @@ variable "org_id" {
 }
 
 
-resource "cofide_connect_attestation_policy" "example" {
+resource "cofide_connect_attestation_policy_v1alpha1" "example" {
   name   = var.name
   org_id = var.org_id
 
@@ -68,7 +71,7 @@ resource "cofide_connect_attestation_policy" "example" {
 
 output "attestation_policy_id" {
   description = "The ID of the attestation policy."
-  value       = cofide_connect_attestation_policy.example.id
+  value       = cofide_connect_attestation_policy_v1alpha1.example.id
 }
 
 
@@ -98,7 +101,7 @@ variable "org_id" {
 }
 
 
-resource "cofide_connect_attestation_policy" "example" {
+resource "cofide_connect_attestation_policy_v1alpha1" "example" {
   name   = var.name
   org_id = var.org_id
 
@@ -124,7 +127,7 @@ resource "cofide_connect_attestation_policy" "example" {
 
 output "attestation_policy_id" {
   description = "The ID of the attestation policy."
-  value       = cofide_connect_attestation_policy.example.id
+  value       = cofide_connect_attestation_policy_v1alpha1.example.id
 }
 
 
@@ -154,7 +157,7 @@ variable "org_id" {
 }
 
 
-resource "cofide_connect_attestation_policy" "example" {
+resource "cofide_connect_attestation_policy_v1alpha1" "example" {
   name   = var.name
   org_id = var.org_id
 
@@ -168,7 +171,7 @@ resource "cofide_connect_attestation_policy" "example" {
 
 output "attestation_policy_id" {
   description = "The ID of the attestation policy."
-  value       = cofide_connect_attestation_policy.example.id
+  value       = cofide_connect_attestation_policy_v1alpha1.example.id
 }
 ```
 
