@@ -1,10 +1,10 @@
-data "cofide_connect_organization" "org" {
+data "cofide_connect_organization_v1alpha1" "org" {
   name = "default"
 }
 
 resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "test-role-binding-tz"
-  org_id       = data.cofide_connect_organization.org.id
+  org_id       = data.cofide_connect_organization_v1alpha1.org.id
   trust_domain = "test-rb-tz.cofide.dev"
 }
 
