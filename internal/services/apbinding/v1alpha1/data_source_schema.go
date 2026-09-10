@@ -1,4 +1,4 @@
-package apbinding
+package v1alpha1
 
 import (
 	"context"
