@@ -1,4 +1,4 @@
-package exchangepolicy
+package v1alpha1
 
 import (
 	"reflect"

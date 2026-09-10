@@ -3,10 +3,13 @@
 page_title: "cofide_connect_exchange_policy Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_exchange_policy_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Manages a Cofide Connect exchange policy. Exchange policies govern Credex token exchanges within a trust zone by specifying match conditions on inbound tokens and determining whether exchanges are permitted or denied.
 ---
 
 # cofide_connect_exchange_policy (Resource)
+
+~> **Deprecated:** Use cofide_connect_exchange_policy_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Manages a Cofide Connect exchange policy. Exchange policies govern Credex token exchanges within a trust zone by specifying match conditions on inbound tokens and determining whether exchanges are permitted or denied.
 
@@ -39,7 +42,7 @@ variable "trust_zone_id" {
 }
 
 
-resource "cofide_connect_exchange_policy" "example" {
+resource "cofide_connect_exchange_policy_v1alpha1" "example" {
   name          = var.name
   trust_zone_id = var.trust_zone_id
   action        = "ALLOW"
@@ -63,7 +66,7 @@ resource "cofide_connect_exchange_policy" "example" {
 
 output "exchange_policy_id" {
   description = "The ID of the exchange policy."
-  value       = cofide_connect_exchange_policy.example.id
+  value       = cofide_connect_exchange_policy_v1alpha1.example.id
 }
 
 
@@ -93,7 +96,7 @@ variable "trust_zone_id" {
 }
 
 
-resource "cofide_connect_exchange_policy" "example" {
+resource "cofide_connect_exchange_policy_v1alpha1" "example" {
   name          = var.name
   trust_zone_id = var.trust_zone_id
   action        = "DENY"
@@ -106,7 +109,7 @@ resource "cofide_connect_exchange_policy" "example" {
 
 output "exchange_policy_id" {
   description = "The ID of the exchange policy."
-  value       = cofide_connect_exchange_policy.example.id
+  value       = cofide_connect_exchange_policy_v1alpha1.example.id
 }
 ```
 
