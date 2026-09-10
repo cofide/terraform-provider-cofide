@@ -3,10 +3,13 @@
 page_title: "cofide_connect_federation Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_federation_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Provides information about a Cofide Connect federation.
 ---
 
 # cofide_connect_federation (Data Source)
+
+~> **Deprecated:** Use cofide_connect_federation_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Provides information about a Cofide Connect federation.
 
@@ -44,7 +47,7 @@ variable "remote_trust_zone_id" {
 }
 
 
-data "cofide_connect_federation" "example" {
+data "cofide_connect_federation_v1alpha1" "example" {
   org_id               = var.org_id
   trust_zone_id        = var.trust_zone_id
   remote_trust_zone_id = var.remote_trust_zone_id
@@ -53,7 +56,7 @@ data "cofide_connect_federation" "example" {
 
 output "federation_id" {
   description = "The ID of the federation."
-  value       = data.cofide_connect_federation.example.id
+  value       = data.cofide_connect_federation_v1alpha1.example.id
 }
 ```
 

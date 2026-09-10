@@ -3,10 +3,13 @@
 page_title: "cofide_connect_federation Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_federation_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Manages a Cofide Connect federation. Establishes a trust relationship between two trust zones so their workloads can mutually authenticate.
 ---
 
 # cofide_connect_federation (Resource)
+
+~> **Deprecated:** Use cofide_connect_federation_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Manages a Cofide Connect federation. Establishes a trust relationship between two trust zones so their workloads can mutually authenticate.
 
@@ -39,7 +42,7 @@ variable "remote_trust_zone_id" {
 }
 
 
-resource "cofide_connect_federation" "example" {
+resource "cofide_connect_federation_v1alpha1" "example" {
   trust_zone_id        = var.trust_zone_id
   remote_trust_zone_id = var.remote_trust_zone_id
 }
@@ -47,7 +50,7 @@ resource "cofide_connect_federation" "example" {
 
 output "federation_id" {
   description = "The ID of the federation."
-  value       = cofide_connect_federation.example.id
+  value       = cofide_connect_federation_v1alpha1.example.id
 }
 ```
 
