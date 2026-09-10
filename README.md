@@ -16,7 +16,7 @@ terraform {
   required_providers {
     cofide = {
       source  = "cofide/cofide"
-      version = "~> 0.9.0"
+      version = "~> v0.13.0"
     }
   }
 }
@@ -70,7 +70,7 @@ To use this provider locally:
      required_providers {
        cofide = {
          source  = "cofide/cofide"
-         version = "~> 0.9.0"
+         version = "~> v0.13.0"
        }
      }
    }
