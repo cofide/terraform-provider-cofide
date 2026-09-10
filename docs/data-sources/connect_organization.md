@@ -3,10 +3,13 @@
 page_title: "cofide_connect_organization Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_organization_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Provides information about an organization resource.
 ---
 
 # cofide_connect_organization (Data Source)
+
+~> **Deprecated:** Use cofide_connect_organization_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Provides information about an organization resource.
 
@@ -32,14 +35,14 @@ variable "name" {
 }
 
 
-data "cofide_connect_organization" "example" {
+data "cofide_connect_organization_v1alpha1" "example" {
   name = var.name
 }
 
 
 output "organization_id" {
   description = "The ID of the organization."
-  value       = data.cofide_connect_organization.example.id
+  value       = data.cofide_connect_organization_v1alpha1.example.id
 }
 ```
 
