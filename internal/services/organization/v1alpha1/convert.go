@@ -1,4 +1,4 @@
-package organization
+package v1alpha1
 
 import (
 	organizationpb "github.com/cofide/cofide-api-sdk/gen/go/proto/organization/v1alpha1"

@@ -1,4 +1,4 @@
-package organization
+package v1alpha1
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
