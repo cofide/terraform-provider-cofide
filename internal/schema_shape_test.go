@@ -10,7 +10,7 @@ import (
 
 	apbinding "github.com/cofide/terraform-provider-cofide/internal/services/apbinding/v1alpha1"
 	attestationpolicy "github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
+	cluster "github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
 	trustzone "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
