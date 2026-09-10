@@ -25,6 +25,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	clusterv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
+	exchangepolicyv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
 	"github.com/cofide/terraform-provider-cofide/internal/services/organization"
 	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
@@ -166,6 +167,7 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		apbinding.NewResource,
 		cluster.NewResource,
 		clusterv1alpha1.NewResource,
+		exchangepolicyv1alpha1.NewResource,
 		exchangepolicy.NewResource,
 		federation.NewResource,
 		rolebinding.NewResource,
@@ -183,7 +185,9 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		apbinding.NewDataSource,
 		cluster.NewDataSource,
 		clusterv1alpha1.NewDataSource,
+		exchangepolicyv1alpha1.NewDataSource,
 		exchangepolicy.NewDataSource,
+		exchangepolicyv1alpha1.NewListDataSource,
 		exchangepolicy.NewListDataSource,
 		federation.NewDataSource,
 		trustzone.NewDataSource,

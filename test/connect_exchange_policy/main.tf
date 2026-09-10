@@ -8,7 +8,7 @@ resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   trust_domain = "ep-tz.cofide.dev"
 }
 
-resource "cofide_connect_exchange_policy" "allow_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "allow_policy" {
   name          = "test-ep-allow"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
@@ -29,7 +29,7 @@ resource "cofide_connect_exchange_policy" "allow_policy" {
   outbound_scopes = ["read", "write"]
 }
 
-resource "cofide_connect_exchange_policy" "deny_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "deny_policy" {
   name          = "test-ep-deny"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "DENY"
@@ -39,7 +39,7 @@ resource "cofide_connect_exchange_policy" "deny_policy" {
   ]
 }
 
-resource "cofide_connect_exchange_policy" "outbound_identity_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "outbound_identity_policy" {
   name          = "test-ep-outbound-identity"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
@@ -57,7 +57,7 @@ resource "cofide_connect_exchange_policy" "outbound_identity_policy" {
   outbound_identity = "spiffe://ep-tz.cofide.dev/ns/outbound/sa/exchanged"
 }
 
-resource "cofide_connect_exchange_policy" "outbound_issuer_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "outbound_issuer_policy" {
   name          = "test-ep-outbound-issuer"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
@@ -81,7 +81,7 @@ resource "cofide_connect_exchange_policy" "outbound_issuer_policy" {
   }
 }
 
-resource "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "spiffe_issuer_policy" {
   name          = "test-ep-spiffe-issuer"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   action        = "ALLOW"
@@ -104,109 +104,109 @@ resource "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
   }
 }
 
-resource "cofide_connect_exchange_policy" "minimal_policy" {
+resource "cofide_connect_exchange_policy_v1alpha1" "minimal_policy" {
   name          = "test-ep-minimal"
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 }
 
-data "cofide_connect_exchange_policy" "allow_policy" {
-  id = cofide_connect_exchange_policy.allow_policy.id
+data "cofide_connect_exchange_policy_v1alpha1" "allow_policy" {
+  id = cofide_connect_exchange_policy_v1alpha1.allow_policy.id
 }
 
-data "cofide_connect_exchange_policy" "outbound_identity_policy" {
-  id = cofide_connect_exchange_policy.outbound_identity_policy.id
+data "cofide_connect_exchange_policy_v1alpha1" "outbound_identity_policy" {
+  id = cofide_connect_exchange_policy_v1alpha1.outbound_identity_policy.id
 }
 
-data "cofide_connect_exchange_policy" "outbound_issuer_policy" {
-  id = cofide_connect_exchange_policy.outbound_issuer_policy.id
+data "cofide_connect_exchange_policy_v1alpha1" "outbound_issuer_policy" {
+  id = cofide_connect_exchange_policy_v1alpha1.outbound_issuer_policy.id
 }
 
-data "cofide_connect_exchange_policy" "spiffe_issuer_policy" {
-  id = cofide_connect_exchange_policy.spiffe_issuer_policy.id
+data "cofide_connect_exchange_policy_v1alpha1" "spiffe_issuer_policy" {
+  id = cofide_connect_exchange_policy_v1alpha1.spiffe_issuer_policy.id
 }
 
-data "cofide_connect_exchange_policies" "by_trust_zone" {
+data "cofide_connect_exchange_policies_v1alpha1" "by_trust_zone" {
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   depends_on = [
-    cofide_connect_exchange_policy.allow_policy,
-    cofide_connect_exchange_policy.deny_policy,
-    cofide_connect_exchange_policy.outbound_identity_policy,
-    cofide_connect_exchange_policy.outbound_issuer_policy,
-    cofide_connect_exchange_policy.spiffe_issuer_policy,
-    cofide_connect_exchange_policy.minimal_policy,
+    cofide_connect_exchange_policy_v1alpha1.allow_policy,
+    cofide_connect_exchange_policy_v1alpha1.deny_policy,
+    cofide_connect_exchange_policy_v1alpha1.outbound_identity_policy,
+    cofide_connect_exchange_policy_v1alpha1.outbound_issuer_policy,
+    cofide_connect_exchange_policy_v1alpha1.spiffe_issuer_policy,
+    cofide_connect_exchange_policy_v1alpha1.minimal_policy,
   ]
 }
 
 output "allow_policy_id" {
-  value = data.cofide_connect_exchange_policy.allow_policy.id
+  value = data.cofide_connect_exchange_policy_v1alpha1.allow_policy.id
 }
 
 output "exchange_policy_ids" {
-  value = [for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies : p.id]
+  value = [for p in data.cofide_connect_exchange_policies_v1alpha1.by_trust_zone.exchange_policies : p.id]
 }
 
 # outbound_identity, as read back from the resource state.
 output "outbound_identity_resource" {
-  value = cofide_connect_exchange_policy.outbound_identity_policy.outbound_identity
+  value = cofide_connect_exchange_policy_v1alpha1.outbound_identity_policy.outbound_identity
 }
 
 # outbound_identity, as returned by the single-policy data source.
 output "outbound_identity_data_source" {
-  value = data.cofide_connect_exchange_policy.outbound_identity_policy.outbound_identity
+  value = data.cofide_connect_exchange_policy_v1alpha1.outbound_identity_policy.outbound_identity
 }
 
 # outbound_identity, as returned by the list data source.
 output "outbound_identity_from_list" {
   value = one([
-    for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies :
+    for p in data.cofide_connect_exchange_policies_v1alpha1.by_trust_zone.exchange_policies :
     p.outbound_identity
-    if p.id == cofide_connect_exchange_policy.outbound_identity_policy.id
+    if p.id == cofide_connect_exchange_policy_v1alpha1.outbound_identity_policy.id
   ])
 }
 
 # outbound_issuer, as read back from the resource state.
 output "outbound_issuer_resource" {
-  value = cofide_connect_exchange_policy.outbound_issuer_policy.outbound_issuer
+  value = cofide_connect_exchange_policy_v1alpha1.outbound_issuer_policy.outbound_issuer
 }
 
 # outbound_issuer, as returned by the single-policy data source.
 output "outbound_issuer_data_source" {
-  value = data.cofide_connect_exchange_policy.outbound_issuer_policy.outbound_issuer
+  value = data.cofide_connect_exchange_policy_v1alpha1.outbound_issuer_policy.outbound_issuer
 }
 
 # outbound_issuer, as returned by the list data source.
 output "outbound_issuer_from_list" {
   value = one([
-    for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies :
+    for p in data.cofide_connect_exchange_policies_v1alpha1.by_trust_zone.exchange_policies :
     p.outbound_issuer
-    if p.id == cofide_connect_exchange_policy.outbound_issuer_policy.id
+    if p.id == cofide_connect_exchange_policy_v1alpha1.outbound_issuer_policy.id
   ])
 }
 
 # outbound_issuer.spiffe round-trips through the resource, the single-policy
 # data source and the list data source.
 output "spiffe_issuer_resource" {
-  value = cofide_connect_exchange_policy.spiffe_issuer_policy.outbound_issuer
+  value = cofide_connect_exchange_policy_v1alpha1.spiffe_issuer_policy.outbound_issuer
 }
 
 output "spiffe_issuer_data_source" {
-  value = data.cofide_connect_exchange_policy.spiffe_issuer_policy.outbound_issuer
+  value = data.cofide_connect_exchange_policy_v1alpha1.spiffe_issuer_policy.outbound_issuer
 }
 
 output "spiffe_issuer_from_list" {
   value = one([
-    for p in data.cofide_connect_exchange_policies.by_trust_zone.exchange_policies :
+    for p in data.cofide_connect_exchange_policies_v1alpha1.by_trust_zone.exchange_policies :
     p.outbound_issuer
-    if p.id == cofide_connect_exchange_policy.spiffe_issuer_policy.id
+    if p.id == cofide_connect_exchange_policy_v1alpha1.spiffe_issuer_policy.id
   ])
 }
 
 # Policies without an outbound issuer should report a null issuer.
 output "allow_policy_outbound_issuer" {
-  value = data.cofide_connect_exchange_policy.allow_policy.outbound_issuer
+  value = data.cofide_connect_exchange_policy_v1alpha1.allow_policy.outbound_issuer
 }
 
 output "allow_policy_outbound_identity" {
-  value = data.cofide_connect_exchange_policy.allow_policy.outbound_identity
+  value = data.cofide_connect_exchange_policy_v1alpha1.allow_policy.outbound_identity
 }
