@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cofide/terraform-provider-cofide/internal/services/apbinding"
+	apbinding "github.com/cofide/terraform-provider-cofide/internal/services/apbinding/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
