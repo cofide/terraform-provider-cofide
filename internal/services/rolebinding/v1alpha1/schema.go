@@ -1,4 +1,4 @@
-package rolebinding
+package v1alpha1
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
