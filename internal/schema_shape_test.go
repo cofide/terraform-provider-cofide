@@ -13,7 +13,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
-	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
+	trustzone "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
 )
 

@@ -2,13 +2,13 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "apb-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "apb-tz.cofide.dev"
 }
 
-resource "cofide_connect_trust_zone" "federated_trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "federated_trust_zone" {
   name         = "apb-federated-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "apb-federated-tz.cofide.dev"
@@ -34,28 +34,28 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
   }
 
   depends_on = [
-    cofide_connect_trust_zone.trust_zone
+    cofide_connect_trust_zone_v1alpha1.trust_zone
   ]
 }
 
 resource "cofide_connect_ap_binding" "ap_binding" {
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   policy_id     = cofide_connect_attestation_policy.attestation_policy_static.id
   federations = [
     {
-      trust_zone_id = cofide_connect_trust_zone.federated_trust_zone.id
+      trust_zone_id = cofide_connect_trust_zone_v1alpha1.federated_trust_zone.id
     }
   ]
 
   depends_on = [
-    cofide_connect_trust_zone.trust_zone,
+    cofide_connect_trust_zone_v1alpha1.trust_zone,
     cofide_connect_attestation_policy.attestation_policy_static
   ]
 }
 
 data "cofide_connect_ap_binding" "ap_binding" {
   org_id        = data.cofide_connect_organization.org.id
-  trust_zone_id = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   policy_id     = cofide_connect_attestation_policy.attestation_policy_static.id
 
   depends_on = [
@@ -64,7 +64,7 @@ data "cofide_connect_ap_binding" "ap_binding" {
 }
 
 output "trust_zone_id" {
-  value = cofide_connect_trust_zone.trust_zone.id
+  value = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 }
 
 output "attestation_policy_id" {

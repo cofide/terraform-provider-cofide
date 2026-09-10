@@ -2,7 +2,7 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "cluster-tz"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "cluster-tz.cofide.dev"
@@ -10,7 +10,7 @@ resource "cofide_connect_trust_zone" "trust_zone" {
 
 resource "cofide_connect_cluster" "cluster" {
   name               = "test-cluster"
-  trust_zone_id      = cofide_connect_trust_zone.trust_zone.id
+  trust_zone_id      = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   profile            = "kubernetes"
   kubernetes_context = "test-cluster-context"
 
@@ -50,7 +50,7 @@ resource "cofide_connect_cluster" "cluster" {
   oidc_issuer_ca_cert = base64encode(file("oidc-issuer-ca.crt"))
 
   depends_on = [
-    cofide_connect_trust_zone.trust_zone
+    cofide_connect_trust_zone_v1alpha1.trust_zone
   ]
 }
 

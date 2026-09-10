@@ -2,19 +2,19 @@ data "cofide_connect_organization" "org" {
   name = "default"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone_a" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone_a" {
   name         = "test-tz-a"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "test-tz-a.cofide.dev"
 }
 
-resource "cofide_connect_trust_zone" "trust_zone_b" {
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone_b" {
   name         = "test-tz-b"
   org_id       = data.cofide_connect_organization.org.id
   trust_domain = "test-tz-b.cofide.dev"
 }
 
 resource "cofide_connect_federation" "federation" {
-  trust_zone_id        = cofide_connect_trust_zone.trust_zone_a.id
-  remote_trust_zone_id = cofide_connect_trust_zone.trust_zone_b.id
+  trust_zone_id        = cofide_connect_trust_zone_v1alpha1.trust_zone_a.id
+  remote_trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone_b.id
 }
