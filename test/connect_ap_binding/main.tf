@@ -38,7 +38,7 @@ resource "cofide_connect_attestation_policy" "attestation_policy_static" {
   ]
 }
 
-resource "cofide_connect_ap_binding" "ap_binding" {
+resource "cofide_connect_ap_binding_v1alpha1" "ap_binding" {
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   policy_id     = cofide_connect_attestation_policy.attestation_policy_static.id
   federations = [
@@ -53,13 +53,13 @@ resource "cofide_connect_ap_binding" "ap_binding" {
   ]
 }
 
-data "cofide_connect_ap_binding" "ap_binding" {
+data "cofide_connect_ap_binding_v1alpha1" "ap_binding" {
   org_id        = data.cofide_connect_organization.org.id
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   policy_id     = cofide_connect_attestation_policy.attestation_policy_static.id
 
   depends_on = [
-    cofide_connect_ap_binding.ap_binding
+    cofide_connect_ap_binding_v1alpha1.ap_binding
   ]
 }
 
@@ -72,5 +72,5 @@ output "attestation_policy_id" {
 }
 
 output "ap_binding_id" {
-  value = data.cofide_connect_ap_binding.ap_binding.id
+  value = data.cofide_connect_ap_binding_v1alpha1.ap_binding.id
 }

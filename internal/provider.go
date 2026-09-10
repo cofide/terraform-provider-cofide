@@ -19,6 +19,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/consts"
 	"github.com/cofide/terraform-provider-cofide/internal/credentials"
 	"github.com/cofide/terraform-provider-cofide/internal/services/apbinding"
+	apbindingv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/apbinding/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
 	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
@@ -158,6 +159,7 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		attestationpolicy.NewResource,
+		apbindingv1alpha1.NewResource,
 		apbinding.NewResource,
 		cluster.NewResource,
 		exchangepolicy.NewResource,
@@ -172,6 +174,7 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		attestationpolicy.NewDataSource,
+		apbindingv1alpha1.NewDataSource,
 		apbinding.NewDataSource,
 		cluster.NewDataSource,
 		exchangepolicy.NewDataSource,
