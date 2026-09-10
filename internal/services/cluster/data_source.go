@@ -2,120 +2,28 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 
-	clustersvcpb "github.com/cofide/cofide-api-sdk/gen/go/proto/connect/cluster_service/v1alpha1"
-	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
+	"github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type ClusterDataSource struct {
-	client sdkclient.ClientSet
+	v1alpha1.ClusterDataSource
 }
 
 var _ datasource.DataSourceWithConfigure = (*ClusterDataSource)(nil)
 
 func NewDataSource() datasource.DataSource {
-	return &ClusterDataSource{}
+	return &ClusterDataSource{ClusterDataSource: v1alpha1.ClusterDataSource{}}
 }
 
-func (c *ClusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *ClusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_connect_cluster"
 }
 
-func (c *ClusterDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(sdkclient.ClientSet)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected data source configure type",
-			fmt.Sprintf("Expected sdkclient.ClientSet, got: %T", req.ProviderData),
-		)
-		return
-	}
-
-	c.client = client
-}
-
-func (c *ClusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config ClusterModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	filter := &clustersvcpb.ListClustersRequest_Filter{
-		Name:        config.Name.ValueStringPointer(),
-		OrgId:       config.OrgID.ValueStringPointer(),
-		TrustZoneId: config.TrustZoneID.ValueStringPointer(),
-	}
-
-	clusters, err := c.client.ClusterV1Alpha1().ListClusters(ctx, filter)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading cluster",
-			fmt.Sprintf("Could not list clusters: %s", err),
-		)
-
-		return
-	}
-
-	if len(clusters) == 0 {
-		resp.Diagnostics.AddError(
-			"Error reading cluster",
-			"No matching cluster found",
-		)
-
-		return
-	}
-
-	if len(clusters) > 1 {
-		resp.Diagnostics.AddError(
-			"Error reading cluster",
-			"Multiple clusters found",
-		)
-
-		return
-	}
-
-	cluster := clusters[0]
-
-	var extraHelmValues types.String
-	if helmValues := cluster.GetExtraHelmValues(); helmValues != nil && len(helmValues.Fields) > 0 {
-		jsonBytes, err := helmValues.MarshalJSON()
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error processing cluster data",
-				fmt.Sprintf("Could not marshal extra_helm_values to JSON: %s", err),
-			)
-			return
-		}
-		extraHelmValues = types.StringValue(string(jsonBytes))
-	} else {
-		extraHelmValues = types.StringNull()
-	}
-
-	oidcIssuerURL := stringFromAPI(cluster.GetOidcIssuerUrl())
-	oidcIssuerCaCert := base64FromAPI(cluster.GetOidcIssuerCaCert())
-
-	state := ClusterModel{
-		ID:                types.StringValue(cluster.GetId()),
-		Name:              types.StringValue(cluster.GetName()),
-		OrgID:             types.StringValue(cluster.GetOrgId()),
-		TrustZoneID:       types.StringValue(cluster.GetTrustZoneId()),
-		KubernetesContext: types.StringValue(cluster.GetKubernetesContext()),
-		TrustProvider:     trustProviderFromProto(cluster.GetTrustProvider()),
-		ExtraHelmValues:   extraHelmValues,
-		Profile:           types.StringValue(cluster.GetProfile()),
-		ExternalServer:    types.BoolValue(cluster.GetExternalServer()),
-		OidcIssuerURL:     oidcIssuerURL,
-		OidcIssuerCaCert:  oidcIssuerCaCert,
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+func (t *ClusterDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	t.ClusterDataSource.Schema(ctx, req, resp)
+	resp.Schema.DeprecationMessage = "Use cofide_connect_cluster_v1alpha1 instead. This name is frozen on the v1alpha1 API."
+	// The above is shown during terraform plan/apply, the below is shown in the generated docs.
+	resp.Schema.MarkdownDescription = "~> **Deprecated:** " + resp.Schema.DeprecationMessage + "\n\n" + resp.Schema.MarkdownDescription
 }
