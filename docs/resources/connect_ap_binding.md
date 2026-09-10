@@ -3,10 +3,13 @@
 page_title: "cofide_connect_ap_binding Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_ap_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Manages a Cofide Connect attestation policy binding. Binds an attestation policy to a trust zone, controlling which workloads receive SPIFFE IDs in that zone.
 ---
 
 # cofide_connect_ap_binding (Resource)
+
+~> **Deprecated:** Use cofide_connect_ap_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Manages a Cofide Connect attestation policy binding. Binds an attestation policy to a trust zone, controlling which workloads receive SPIFFE IDs in that zone.
 
@@ -39,7 +42,7 @@ variable "policy_id" {
 }
 
 
-resource "cofide_connect_ap_binding" "example" {
+resource "cofide_connect_ap_binding_v1alpha1" "example" {
   trust_zone_id = var.trust_zone_id
   policy_id     = var.policy_id
 }
@@ -47,7 +50,7 @@ resource "cofide_connect_ap_binding" "example" {
 
 output "ap_binding_id" {
   description = "The ID of the AP binding."
-  value       = cofide_connect_ap_binding.example.id
+  value       = cofide_connect_ap_binding_v1alpha1.example.id
 }
 
 
@@ -83,7 +86,7 @@ variable "remote_trust_zone_id" {
 }
 
 
-resource "cofide_connect_ap_binding" "example" {
+resource "cofide_connect_ap_binding_v1alpha1" "example" {
   trust_zone_id = var.trust_zone_id
   policy_id     = var.policy_id
 
@@ -97,7 +100,7 @@ resource "cofide_connect_ap_binding" "example" {
 
 output "ap_binding_id" {
   description = "The ID of the AP binding."
-  value       = cofide_connect_ap_binding.example.id
+  value       = cofide_connect_ap_binding_v1alpha1.example.id
 }
 ```
 

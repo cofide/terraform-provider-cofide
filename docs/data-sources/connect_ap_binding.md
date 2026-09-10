@@ -3,10 +3,13 @@
 page_title: "cofide_connect_ap_binding Data Source - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_ap_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Provides information about a Cofide Connect attestation policy binding.
 ---
 
 # cofide_connect_ap_binding (Data Source)
+
+~> **Deprecated:** Use cofide_connect_ap_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Provides information about a Cofide Connect attestation policy binding.
 
@@ -44,7 +47,7 @@ variable "policy_id" {
 }
 
 
-data "cofide_connect_ap_binding" "example" {
+data "cofide_connect_ap_binding_v1alpha1" "example" {
   org_id        = var.org_id
   trust_zone_id = var.trust_zone_id
   policy_id     = var.policy_id
@@ -53,7 +56,7 @@ data "cofide_connect_ap_binding" "example" {
 
 output "ap_binding_federations" {
   description = "The federations of the AP binding."
-  value       = data.cofide_connect_ap_binding.example.federations
+  value       = data.cofide_connect_ap_binding_v1alpha1.example.federations
 }
 ```
 
