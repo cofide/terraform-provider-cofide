@@ -1,4 +1,4 @@
-package cluster
+package v1alpha1
 
 import (
 	"github.com/cofide/terraform-provider-cofide/internal/util"

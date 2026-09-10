@@ -8,7 +8,7 @@ resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   trust_domain = "tzserver-tz.cofide.dev"
 }
 
-resource "cofide_connect_cluster" "cluster" {
+resource "cofide_connect_cluster_v1alpha1" "cluster" {
   name               = "tzserver-cluster"
   trust_zone_id      = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   profile            = "kubernetes"
@@ -25,7 +25,7 @@ resource "cofide_connect_cluster" "cluster" {
 
 resource "cofide_connect_trust_zone_server" "server" {
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
-  cluster_id    = cofide_connect_cluster.cluster.id
+  cluster_id    = cofide_connect_cluster_v1alpha1.cluster.id
 
   helm_values = yamlencode({
     spire-server = {
