@@ -1,10 +1,10 @@
-data "cofide_connect_organization" "org" {
+data "cofide_connect_organization_v1alpha1" "org" {
   name = "default"
 }
 
 resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "cluster-tz"
-  org_id       = data.cofide_connect_organization.org.id
+  org_id       = data.cofide_connect_organization_v1alpha1.org.id
   trust_domain = "cluster-tz.cofide.dev"
 }
 
@@ -56,7 +56,7 @@ resource "cofide_connect_cluster_v1alpha1" "cluster" {
 
 data "cofide_connect_cluster_v1alpha1" "cluster" {
   name   = cofide_connect_cluster_v1alpha1.cluster.name
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   depends_on = [
     cofide_connect_cluster_v1alpha1.cluster

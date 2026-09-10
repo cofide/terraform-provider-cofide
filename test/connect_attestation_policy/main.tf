@@ -1,10 +1,10 @@
-data "cofide_connect_organization" "org" {
+data "cofide_connect_organization_v1alpha1" "org" {
   name = "default"
 }
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
   name   = "test-ap-1"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   static = {
     spiffe_id_path = "test/workload"
@@ -28,7 +28,7 @@ resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   kubernetes = {
     namespace_selector = {
@@ -51,7 +51,7 @@ resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubern
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_tpm_node" {
   name   = "test-ap-3"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   tpm_node = {
     attestation = {
@@ -70,7 +70,7 @@ variable "selector_values" {
 
 data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
   name   = "test-ap-1"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   depends_on = [
     cofide_connect_attestation_policy_v1alpha1.attestation_policy_static
@@ -79,7 +79,7 @@ data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
 
 data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes" {
   name   = "test-ap-2"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   depends_on = [
     cofide_connect_attestation_policy_v1alpha1.attestation_policy_kubernetes
@@ -88,7 +88,7 @@ data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes
 
 data "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_tpm_node" {
   name   = "test-ap-3"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   depends_on = [
     cofide_connect_attestation_policy_v1alpha1.attestation_policy_tpm_node
