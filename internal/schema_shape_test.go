@@ -14,7 +14,7 @@ import (
 	exchangepolicy "github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy/v1alpha1"
 	federation "github.com/cofide/terraform-provider-cofide/internal/services/federation/v1alpha1"
 	trustzone "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
+	trustzoneserver "github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver/v1alpha1"
 )
 
 // TestSchemaShapesMatch asserts that each resource schema and the data source

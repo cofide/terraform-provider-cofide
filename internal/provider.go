@@ -35,6 +35,7 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 	trustzonev1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
+	trustzoneserverv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver/v1alpha1"
 )
 
 var _ provider.Provider = &CofideProvider{}
@@ -179,6 +180,7 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 		trustzone.NewResource,
 		trustzonev1alpha1.NewResource,
 		trustzoneserver.NewResource,
+		trustzoneserverv1alpha1.NewResource,
 	}
 }
 
@@ -201,6 +203,8 @@ func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.Da
 		organizationv1alpha1.NewDataSource,
 		organization.NewDataSource,
 		trustzoneserver.NewDataSource,
+		trustzoneserverv1alpha1.NewDataSource,
 		trustzoneserver.NewListDataSource,
+		trustzoneserverv1alpha1.NewListDataSource,
 	}
 }
