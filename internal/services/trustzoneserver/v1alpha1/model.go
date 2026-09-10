@@ -1,4 +1,4 @@
-package trustzoneserver
+package v1alpha1
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
