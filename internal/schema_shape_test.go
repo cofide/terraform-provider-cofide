@@ -12,7 +12,7 @@ import (
 	attestationpolicy "github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy/v1alpha1"
 	cluster "github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
 	exchangepolicy "github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
+	federation "github.com/cofide/terraform-provider-cofide/internal/services/federation/v1alpha1"
 	trustzone "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
 	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
 )
