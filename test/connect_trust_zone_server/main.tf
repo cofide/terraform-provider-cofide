@@ -23,7 +23,7 @@ resource "cofide_connect_cluster_v1alpha1" "cluster" {
   }
 }
 
-resource "cofide_connect_trust_zone_server" "server" {
+resource "cofide_connect_trust_zone_server_v1alpha1" "server" {
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   cluster_id    = cofide_connect_cluster_v1alpha1.cluster.id
 
@@ -41,46 +41,46 @@ resource "cofide_connect_trust_zone_server" "server" {
   }
 }
 
-data "cofide_connect_trust_zone_server" "server" {
-  id = cofide_connect_trust_zone_server.server.id
+data "cofide_connect_trust_zone_server_v1alpha1" "server" {
+  id = cofide_connect_trust_zone_server_v1alpha1.server.id
 }
 
-data "cofide_connect_trust_zone_servers" "by_trust_zone" {
+data "cofide_connect_trust_zone_servers_v1alpha1" "by_trust_zone" {
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   depends_on = [
-    cofide_connect_trust_zone_server.server
+    cofide_connect_trust_zone_server_v1alpha1.server
   ]
 }
 
 output "server_id" {
-  value = cofide_connect_trust_zone_server.server.id
+  value = cofide_connect_trust_zone_server_v1alpha1.server.id
 }
 
 output "server_trust_zone_id" {
-  value = data.cofide_connect_trust_zone_server.server.trust_zone_id
+  value = data.cofide_connect_trust_zone_server_v1alpha1.server.trust_zone_id
 }
 
 output "server_cluster_id" {
-  value = data.cofide_connect_trust_zone_server.server.cluster_id
+  value = data.cofide_connect_trust_zone_server_v1alpha1.server.cluster_id
 }
 
 output "server_org_id" {
-  value = data.cofide_connect_trust_zone_server.server.org_id
+  value = data.cofide_connect_trust_zone_server_v1alpha1.server.org_id
 }
 
 output "server_k8s_psat_audiences" {
-  value = cofide_connect_trust_zone_server.server.connect_k8s_psat_config.audiences
+  value = cofide_connect_trust_zone_server_v1alpha1.server.connect_k8s_psat_config.audiences
 }
 
 output "server_k8s_psat_spiffe_id_path" {
-  value = cofide_connect_trust_zone_server.server.connect_k8s_psat_config.spire_server_spiffe_id_path
+  value = cofide_connect_trust_zone_server_v1alpha1.server.connect_k8s_psat_config.spire_server_spiffe_id_path
 }
 
 output "servers_by_trust_zone_count" {
-  value = length(data.cofide_connect_trust_zone_servers.by_trust_zone.trust_zone_servers)
+  value = length(data.cofide_connect_trust_zone_servers_v1alpha1.by_trust_zone.trust_zone_servers)
 }
 
 output "servers_by_trust_zone_first_id" {
-  value = data.cofide_connect_trust_zone_servers.by_trust_zone.trust_zone_servers[0].id
+  value = data.cofide_connect_trust_zone_servers_v1alpha1.by_trust_zone.trust_zone_servers[0].id
 }
