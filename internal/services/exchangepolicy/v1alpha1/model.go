@@ -1,20 +1,20 @@
-package exchangepolicy
+package v1alpha1
 
 import tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 
 type ExchangePolicyModel struct {
-	ID              tftypes.String `tfsdk:"id"`
-	OrgID           tftypes.String `tfsdk:"org_id"`
-	Name            tftypes.String `tfsdk:"name"`
-	TrustZoneID     tftypes.String `tfsdk:"trust_zone_id"`
-	Action          tftypes.String `tfsdk:"action"`
-	SubjectIdentity tftypes.List   `tfsdk:"subject_identity"`
-	SubjectIssuer   tftypes.List   `tfsdk:"subject_issuer"`
-	ActorIdentity   tftypes.List   `tfsdk:"actor_identity"`
-	ActorIssuer     tftypes.List   `tfsdk:"actor_issuer"`
-	SubjectAudience tftypes.List   `tfsdk:"subject_audience"`
-	ClientID        tftypes.List   `tfsdk:"client_id"`
-	TargetAudience  tftypes.List   `tfsdk:"target_audience"`
+	ID               tftypes.String `tfsdk:"id"`
+	OrgID            tftypes.String `tfsdk:"org_id"`
+	Name             tftypes.String `tfsdk:"name"`
+	TrustZoneID      tftypes.String `tfsdk:"trust_zone_id"`
+	Action           tftypes.String `tfsdk:"action"`
+	SubjectIdentity  tftypes.List   `tfsdk:"subject_identity"`
+	SubjectIssuer    tftypes.List   `tfsdk:"subject_issuer"`
+	ActorIdentity    tftypes.List   `tfsdk:"actor_identity"`
+	ActorIssuer      tftypes.List   `tfsdk:"actor_issuer"`
+	SubjectAudience  tftypes.List   `tfsdk:"subject_audience"`
+	ClientID         tftypes.List   `tfsdk:"client_id"`
+	TargetAudience   tftypes.List   `tfsdk:"target_audience"`
 	OutboundScopes   tftypes.List   `tfsdk:"outbound_scopes"`
 	OutboundIssuer   tftypes.Object `tfsdk:"outbound_issuer"`
 	OutboundIdentity tftypes.String `tfsdk:"outbound_identity"`

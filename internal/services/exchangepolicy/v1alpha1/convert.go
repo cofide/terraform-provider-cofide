@@ -1,4 +1,4 @@
-package exchangepolicy
+package v1alpha1
 
 import (
 	"context"
@@ -83,9 +83,9 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 	}
 
 	fields := []struct {
-		name  string
-		list  tftypes.List
-		dest  **exchangepolicypb.StringSet
+		name string
+		list tftypes.List
+		dest **exchangepolicypb.StringSet
 	}{
 		{"subject_identity", model.SubjectIdentity, &proto.SubjectIdentity},
 		{"subject_issuer", model.SubjectIssuer, &proto.SubjectIssuer},
