@@ -47,11 +47,11 @@ type CofideProvider struct {
 
 // CofideProviderModel describes the provider data model.
 type CofideProviderModel struct {
-	APIToken             types.String `tfsdk:"api_token"`
-	ConnectURL           types.String `tfsdk:"connect_url"`
-	ConnectAPIAddress    types.String `tfsdk:"connect_api_address"`
-	ConnectAPIServerName types.String `tfsdk:"connect_api_server_name"`
-	InsecureSkipVerify   types.Bool   `tfsdk:"insecure_skip_verify"`
+	APIToken                 types.String `tfsdk:"api_token"`
+	ConnectURL               types.String `tfsdk:"connect_url"`
+	ConnectTLSGRPCTarget     types.String `tfsdk:"connect_tls_grpc_target"`
+	ConnectTLSGRPCServerName types.String `tfsdk:"connect_tls_grpc_server_name"`
+	InsecureSkipVerify       types.Bool   `tfsdk:"insecure_skip_verify"`
 }
 
 func (p *CofideProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -71,13 +71,13 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			"connect_url": schema.StringAttribute{
 				Description:        fmt.Sprintf("Cofide Connect service URL. Alternatively, can be configured using the `%s` environment variable.", consts.ConnectURLEnvVarKey),
 				Optional:           true,
-				DeprecationMessage: "Deprecated. Use connect_api_address instead.",
+				DeprecationMessage: "Deprecated. Use connect_tls_grpc_target instead.",
 			},
-			"connect_api_address": schema.StringAttribute{
-				Description: "Cofide Connect API address (host:port).",
+			"connect_tls_grpc_target": schema.StringAttribute{
+				Description: "Cofide Connect TLS gRPC target (usually host:port).",
 				Optional:    true,
 			},
-			"connect_api_server_name": schema.StringAttribute{
+			"connect_tls_grpc_server_name": schema.StringAttribute{
 				Description: "Optional override for the SNI when calling the Cofide Connect API.",
 				Optional:    true,
 			},
@@ -122,12 +122,12 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		connectURL = os.Getenv(consts.ConnectURLEnvVarKey)
 	}
 
-	connectAPIAddress := config.ConnectAPIAddress.ValueString()
-	if connectAPIAddress == "" && connectURL != "" {
-		connectAPIAddress = "connect." + connectURL
+	connectTLSGRPCTarget := config.ConnectTLSGRPCTarget.ValueString()
+	if connectTLSGRPCTarget == "" && connectURL != "" {
+		connectTLSGRPCTarget = "connect." + connectURL
 	}
 
-	connectAPIServerName := config.ConnectAPIServerName.ValueString()
+	connectTLSGRPCServerName := config.ConnectTLSGRPCServerName.ValueString()
 
 	insecureSkipVerify := config.InsecureSkipVerify.ValueBool()
 	if config.InsecureSkipVerify.IsNull() || config.InsecureSkipVerify.IsUnknown() {
@@ -146,10 +146,10 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	if connectAPIAddress == "" {
+	if connectTLSGRPCTarget == "" {
 		resp.Diagnostics.AddError(
-			"Missing Connect API address Configuration",
-			"Connect API address must be specified in provider configuration",
+			"Missing Connect API TLS gRPC target configuration",
+			"Connect TLS gRPC target must be specified in provider configuration",
 		)
 		return
 	}
@@ -158,7 +158,7 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		Name: "cofide",
 	})
 
-	client, err := client.NewTLSClient(connectAPIAddress, connectAPIServerName, apiToken, insecureSkipVerify, log, p.version)
+	client, err := client.NewTLSClient(connectTLSGRPCTarget, connectTLSGRPCServerName, apiToken, insecureSkipVerify, log, p.version)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create TLS client", err.Error())
 		return

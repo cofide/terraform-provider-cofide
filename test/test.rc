@@ -4,5 +4,5 @@
 # ~/.cofide/credentials (see internal/credentials.LoadFromFile) when it's
 # unset, which is what `cofidectl connect login` populates. The Connect API
 # address is configured directly in each test's versions.tf via
-# connect_api_address, since that attribute is not settable via env var.
+# connect_tls_grpc_target, since that attribute is not settable via env var.
 export COFIDE_INSECURE_SKIP_VERIFY="true"
