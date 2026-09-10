@@ -1,4 +1,4 @@
-package rolebinding
+package v1alpha1
 
 import (
 	rolebindingpb "github.com/cofide/cofide-api-sdk/gen/go/proto/role_binding/v1alpha1"
