@@ -23,8 +23,8 @@ terraform {
 
 # Initialize the provider
 provider "cofide" {
-  api_token   = "your_api_token"
-  connect_url = "foo.cofide.dev:8443"
+  api_token               = "your_api_token"
+  connect_tls_grpc_target = "connect.foo.cofide.dev:8443"
 }
 
 # Configure a resource
@@ -76,14 +76,14 @@ To use this provider locally:
    }
 
    provider "cofide" {
-     api_token            = "your_api_token"
-     connect_url          = "foo.cofide.dev:8443"
-     insecure_skip_verify = true                     # Only use this for local development
+     api_token               = "your_api_token"
+     connect_tls_grpc_target = "connect.foo.cofide.dev:8443"
+     insecure_skip_verify    = true                     # Only use this for local development
    }
    ```
 
-   - The `connect_url` will be provided to you by Cofide, or use your local instance URL for development.
-   - Instead of using the `connect_url` and `api_token` attributes, you can set the `COFIDE_CONNECT_URL` and `COFIDE_API_TOKEN` environment variables.
+   - The `connect_tls_grpc_target` will be provided to you by Cofide, or use your local instance URL for development.
+   - Instead of using the `api_token` attributes, you can set the `COFIDE_API_TOKEN` environment variable.
    - To retrieve an API token, authenticate with Connect using `cofidectl connect login`. The token can be found in `~/.cofide/credentials`.
 
    - If you are running a local instance of Connect, update your `/etc/hosts` file to include:

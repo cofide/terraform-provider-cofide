@@ -5,10 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net"
 
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
-	"github.com/cofide/terraform-provider-cofide/internal/consts"
 	"github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -32,13 +30,8 @@ func (j *jwtCredentials) RequireTransportSecurity() bool {
 }
 
 // NewTLSClient creates a new gPRC client with TLS credentials.
-func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, logger hclog.Logger, version string) (sdkclient.ClientSet, error) {
-	serverName, err := getServerName(baseAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	tlsConfig, err := newTLSConfig(serverName, insecureSkipVerify)
+func NewTLSClient(connectAPIAddress, connectAPIServerName, jwtToken string, insecureSkipVerify bool, logger hclog.Logger, version string) (sdkclient.ClientSet, error) {
+	tlsConfig, err := newTLSConfig(connectAPIServerName, insecureSkipVerify)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TLS config: %v", err)
 	}
@@ -59,32 +52,21 @@ func NewTLSClient(baseAddr string, jwtToken string, insecureSkipVerify bool, log
 		}]}`
 
 	opts := []grpc.DialOption{
-		grpc.WithAuthority(serverName),
+		grpc.WithAuthority(connectAPIServerName),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(&jwtCredentials{token: jwtToken}),
 		grpc.WithDefaultServiceConfig(retryPolicy),
 		grpc.WithUserAgent(fmt.Sprintf("terraform-provider-cofide/%s", version)),
 	}
 
-	connectUri := fmt.Sprintf("dns:///%s.%s", consts.ServerAuthoritySubdomain, baseAddr)
-
-	grpcConn, err := grpc.NewClient(connectUri, opts...)
+	grpcConn, err := grpc.NewClient(connectAPIAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to Connect gRPC server: %w", err)
 	}
 
-	logger.Info("Connecting to Connect gRPC server", "server", connectUri)
+	logger.Info("Connecting to Connect gRPC server", "server", connectAPIAddress)
 
 	return sdkclient.New(grpcConn), nil
-}
-
-// getServerName extracts the server host from the base address.
-func getServerName(baseAddr string) (string, error) {
-	serverHost, _, err := net.SplitHostPort(baseAddr)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s.%s", consts.ServerAuthoritySubdomain, serverHost), nil
 }
 
 // newTLSConfig creates a new TLS config based on the provided server name and insecure skip verify option.

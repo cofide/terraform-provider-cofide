@@ -8,5 +8,5 @@ terraform {
 }
 
 provider "cofide" {
-  connect_url = "cofide.security:8443"
+  connect_tls_grpc_target = "connect.cofide.security:8443"
 }
