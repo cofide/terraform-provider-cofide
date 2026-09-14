@@ -3,10 +3,13 @@
 page_title: "cofide_connect_role_binding Resource - terraform-provider-cofide"
 subcategory: ""
 description: |-
+  ~> Deprecated: Use cofide_connect_role_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
   Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of user or group must be provided.
 ---
 
 # cofide_connect_role_binding (Resource)
+
+~> **Deprecated:** Use cofide_connect_role_binding_v1alpha1 instead. This name is frozen on the v1alpha1 API.
 
 Manages a Cofide Connect role binding. Grants a user or group a role on a specific resource. Exactly one of `user` or `group` must be provided.
 
@@ -51,7 +54,7 @@ variable "resource_id" {
 }
 
 
-resource "cofide_connect_role_binding" "example" {
+resource "cofide_connect_role_binding_v1alpha1" "example" {
   role_id = var.role_id
   group = {
     claim_value = var.group_claim_value
@@ -65,7 +68,7 @@ resource "cofide_connect_role_binding" "example" {
 
 output "role_binding_id" {
   description = "The ID of the role binding."
-  value       = cofide_connect_role_binding.example.id
+  value       = cofide_connect_role_binding_v1alpha1.example.id
 }
 
 
@@ -107,7 +110,7 @@ variable "resource_id" {
 }
 
 
-resource "cofide_connect_role_binding" "example" {
+resource "cofide_connect_role_binding_v1alpha1" "example" {
   role_id = var.role_id
   user = {
     subject = var.user_subject
@@ -121,7 +124,7 @@ resource "cofide_connect_role_binding" "example" {
 
 output "role_binding_id" {
   description = "The ID of the role binding."
-  value       = cofide_connect_role_binding.example.id
+  value       = cofide_connect_role_binding_v1alpha1.example.id
 }
 ```
 

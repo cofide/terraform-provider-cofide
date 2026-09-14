@@ -1,4 +1,4 @@
-resource "cofide_connect_role_binding" "example" {
+resource "cofide_connect_role_binding_v1alpha1" "example" {
   role_id = var.role_id
   group = {
     claim_value = var.group_claim_value
