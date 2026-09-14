@@ -1,4 +1,4 @@
-package attestationpolicy
+package v1alpha1
 
 import tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 

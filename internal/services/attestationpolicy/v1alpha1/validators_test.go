@@ -1,4 +1,4 @@
-package attestationpolicy
+package v1alpha1
 
 import (
 	"context"
@@ -75,7 +75,7 @@ func validateResourceConfig(t *testing.T, rSchema rschema.Schema, raw tftypes.Va
 	require.NoError(t, err)
 
 	resp, err := srv.ValidateResourceConfig(t.Context(), &tfprotov6.ValidateResourceConfigRequest{
-		TypeName: "cofide_connect_attestation_policy",
+		TypeName: "cofide_connect_attestation_policy_v1alpha1",
 		Config:   &dv,
 	})
 	require.NoError(t, err)
