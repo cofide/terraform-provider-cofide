@@ -1,22 +1,22 @@
-data "cofide_connect_organization" "org" {
+data "cofide_connect_organization_v1alpha1" "org" {
   name = "default"
 }
 
 resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = "apb-tz"
-  org_id       = data.cofide_connect_organization.org.id
+  org_id       = data.cofide_connect_organization_v1alpha1.org.id
   trust_domain = "apb-tz.cofide.dev"
 }
 
 resource "cofide_connect_trust_zone_v1alpha1" "federated_trust_zone" {
   name         = "apb-federated-tz"
-  org_id       = data.cofide_connect_organization.org.id
+  org_id       = data.cofide_connect_organization_v1alpha1.org.id
   trust_domain = "apb-federated-tz.cofide.dev"
 }
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
   name   = "apb-ap"
-  org_id = data.cofide_connect_organization.org.id
+  org_id = data.cofide_connect_organization_v1alpha1.org.id
 
   static = {
     spiffe_id_path = "test/workload"
@@ -54,7 +54,7 @@ resource "cofide_connect_ap_binding_v1alpha1" "ap_binding" {
 }
 
 data "cofide_connect_ap_binding_v1alpha1" "ap_binding" {
-  org_id        = data.cofide_connect_organization.org.id
+  org_id        = data.cofide_connect_organization_v1alpha1.org.id
   trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
   policy_id     = cofide_connect_attestation_policy_v1alpha1.attestation_policy_static.id
 
