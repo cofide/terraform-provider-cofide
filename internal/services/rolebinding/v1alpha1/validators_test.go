@@ -1,4 +1,4 @@
-package rolebinding
+package v1alpha1
 
 import (
 	"context"

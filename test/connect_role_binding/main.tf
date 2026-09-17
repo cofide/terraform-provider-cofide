@@ -8,7 +8,7 @@ resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   trust_domain = "test-rb-tz.cofide.dev"
 }
 
-resource "cofide_connect_role_binding" "role_binding" {
+resource "cofide_connect_role_binding_v1alpha1" "role_binding" {
   role_id = "admin"
   user = {
     subject = "test-user-subject"
@@ -20,5 +20,5 @@ resource "cofide_connect_role_binding" "role_binding" {
 }
 
 output "role_binding_id" {
-  value = cofide_connect_role_binding.role_binding.id
+  value = cofide_connect_role_binding_v1alpha1.role_binding.id
 }
