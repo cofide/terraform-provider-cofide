@@ -13,7 +13,7 @@ Manages a Cofide Connect federation. Establishes a trust relationship between tw
 ## Example Usage
 
 ```terraform
-# ------ Example: ./examples_tmp/resources/cofide_connect_federation_v1alpha1 ------
+# ------ Example: default ------
 terraform {
   required_providers {
     cofide = {

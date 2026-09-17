@@ -13,7 +13,7 @@ Manages a Cofide Connect trust zone. A trust zone contains a SPIFFE trust domain
 ## Example Usage
 
 ```terraform
-# ------ Example: ./examples_tmp/resources/cofide_connect_trust_zone_v1alpha1 ------
+# ------ Example: default ------
 terraform {
   required_providers {
     cofide = {
