@@ -18,23 +18,14 @@ import (
 	"github.com/cofide/terraform-provider-cofide/internal/client"
 	"github.com/cofide/terraform-provider-cofide/internal/consts"
 	"github.com/cofide/terraform-provider-cofide/internal/credentials"
-	"github.com/cofide/terraform-provider-cofide/internal/services/apbinding"
 	apbindingv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/apbinding/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy"
 	attestationpolicyv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/cluster"
 	clusterv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy"
 	exchangepolicyv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/federation"
 	federationv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/federation/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/organization"
 	organizationv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/organization/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/rolebinding"
 	rolebindingv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/rolebinding/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/trustzone"
 	trustzonev1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/trustzone/v1alpha1"
-	"github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver"
 	trustzoneserverv1alpha1 "github.com/cofide/terraform-provider-cofide/internal/services/trustzoneserver/v1alpha1"
 )
 
@@ -184,20 +175,12 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		attestationpolicyv1alpha1.NewResource,
-		attestationpolicy.NewResource,
 		apbindingv1alpha1.NewResource,
-		apbinding.NewResource,
-		cluster.NewResource,
 		clusterv1alpha1.NewResource,
 		exchangepolicyv1alpha1.NewResource,
-		exchangepolicy.NewResource,
 		federationv1alpha1.NewResource,
-		federation.NewResource,
 		rolebindingv1alpha1.NewResource,
-		rolebinding.NewResource,
-		trustzone.NewResource,
 		trustzonev1alpha1.NewResource,
-		trustzoneserver.NewResource,
 		trustzoneserverv1alpha1.NewResource,
 	}
 }
@@ -205,24 +188,14 @@ func (p *CofideProvider) Resources(ctx context.Context) []func() resource.Resour
 func (p *CofideProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		attestationpolicyv1alpha1.NewDataSource,
-		attestationpolicy.NewDataSource,
 		apbindingv1alpha1.NewDataSource,
-		apbinding.NewDataSource,
-		cluster.NewDataSource,
 		clusterv1alpha1.NewDataSource,
 		exchangepolicyv1alpha1.NewDataSource,
-		exchangepolicy.NewDataSource,
 		exchangepolicyv1alpha1.NewListDataSource,
-		exchangepolicy.NewListDataSource,
 		federationv1alpha1.NewDataSource,
-		federation.NewDataSource,
-		trustzone.NewDataSource,
 		trustzonev1alpha1.NewDataSource,
 		organizationv1alpha1.NewDataSource,
-		organization.NewDataSource,
-		trustzoneserver.NewDataSource,
 		trustzoneserverv1alpha1.NewDataSource,
-		trustzoneserver.NewListDataSource,
 		trustzoneserverv1alpha1.NewListDataSource,
 	}
 }
