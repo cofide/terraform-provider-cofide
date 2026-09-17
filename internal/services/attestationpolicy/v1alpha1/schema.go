@@ -1,18 +1,23 @@
-package attestationpolicy
+package v1alpha1
 
 import (
 	"context"
+	"reflect"
 
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ datasource.DataSource = &AttestationPolicyDataSource{}
+var _ resource.ResourceWithConfigValidators = (*AttestationPolicyResource)(nil)
 
-func DataSourceSchema(ctx context.Context) schema.Schema {
+func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Provides information about a Cofide Connect attestation policy.",
+		MarkdownDescription: "Manages a Cofide Connect attestation policy. Attestation policies define how workloads are identified and what SPIFFE IDs they receive. Exactly one of `kubernetes`, `static`, or `tpm_node` must be configured.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the attestation policy.",
@@ -23,54 +28,67 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organization.",
+				Description: "The ID of the organization. Conflicts with `trust_zone_id`: when the policy is owned by a trust zone, its organization is derived from that trust zone.",
 				Optional:    true,
+				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("trust_zone_id")),
+				},
 			},
 			"trust_zone_id": schema.StringAttribute{
-				Description: "The ID of the trust zone that owns this attestation policy.",
-				Computed:    true,
+				Description: "The ID of the trust zone that owns this attestation policy. When set, the policy grants identities directly within this trust zone without requiring a separate `cofide_connect_ap_binding` resource, and the policy's organization is derived from the trust zone. Conflicts with `org_id`.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("org_id")),
+				},
 			},
 			"federations": schema.ListNestedAttribute{
-				Description: "The federated trust zones which will be visible to workloads matching this policy.",
-				Computed:    true,
+				Description: "The federated trust zones which will be visible to workloads matching this policy. Only applies when `trust_zone_id` is set.",
+				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.AlsoRequires(path.MatchRoot("trust_zone_id")),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"trust_zone_id": schema.StringAttribute{
 							Description: "The ID of the federated trust zone.",
-							Computed:    true,
+							Required:    true,
 						},
 					},
 				},
 			},
 			"kubernetes": schema.SingleNestedAttribute{
 				Description: "The configuration of the Kubernetes attestation policy.",
-				Computed:    true,
+				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"namespace_selector": schema.SingleNestedAttribute{
 						Description: "The configuration of the namespace selector for the Kubernetes attestation policy.",
-						Computed:    true,
+						Optional:    true,
 						Attributes: map[string]schema.Attribute{
 							"match_labels": schema.MapAttribute{
 								Description: "The list of labels to match for the namespace selector.",
-								Computed:    true,
+								Optional:    true,
 								ElementType: tftypes.StringType,
 							},
 							"match_expressions": schema.ListNestedAttribute{
 								Description: "The list of match expressions for the namespace selector.",
-								Computed:    true,
+								Optional:    true,
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"key": schema.StringAttribute{
 											Description: "The key of the match expression.",
-											Computed:    true,
+											Required:    true,
 										},
 										"operator": schema.StringAttribute{
-											Description: "The operator of the match expression.",
-											Computed:    true,
+											Description: "The operator for the label match expression. Valid values: `In`, `NotIn`, `Exists`, `DoesNotExist`. `In` and `NotIn` require `values`; `Exists` and `DoesNotExist` must have no `values`.",
+											Required:    true,
+											Validators: []validator.String{
+												stringvalidator.OneOf("In", "NotIn", "Exists", "DoesNotExist"),
+											},
 										},
 										"values": schema.ListAttribute{
 											Description: "The values of the match expression.",
-											Computed:    true,
+											Optional:    true,
 											ElementType: tftypes.StringType,
 										},
 									},
@@ -80,29 +98,32 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"pod_selector": schema.SingleNestedAttribute{
 						Description: "The configuration of the pod selector for the Kubernetes attestation policy.",
-						Computed:    true,
+						Optional:    true,
 						Attributes: map[string]schema.Attribute{
 							"match_labels": schema.MapAttribute{
 								Description: "The list of labels to match for the pod selector.",
-								Computed:    true,
+								Optional:    true,
 								ElementType: tftypes.StringType,
 							},
 							"match_expressions": schema.ListNestedAttribute{
 								Description: "The list of match expressions for the pod selector.",
-								Computed:    true,
+								Optional:    true,
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"key": schema.StringAttribute{
 											Description: "The key of the match expression.",
-											Computed:    true,
+											Required:    true,
 										},
 										"operator": schema.StringAttribute{
-											Description: "The operator of the match expression.",
-											Computed:    true,
+											Description: "The operator for the label match expression. Valid values: `In`, `NotIn`, `Exists`, `DoesNotExist`. `In` and `NotIn` require `values`; `Exists` and `DoesNotExist` must have no `values`.",
+											Required:    true,
+											Validators: []validator.String{
+												stringvalidator.OneOf("In", "NotIn", "Exists", "DoesNotExist"),
+											},
 										},
 										"values": schema.ListAttribute{
 											Description: "The values of the match expression.",
-											Computed:    true,
+											Optional:    true,
 											ElementType: tftypes.StringType,
 										},
 									},
@@ -112,71 +133,72 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"dns_name_templates": schema.ListAttribute{
 						Description: "The list of DNS name templates for the Kubernetes attestation policy.",
-						Computed:    true,
+						Optional:    true,
 						ElementType: tftypes.StringType,
 					},
 					"spiffe_id_path_template": schema.StringAttribute{
 						Description: "The SPIFFE ID path template for the Kubernetes attestation policy.",
-						Computed:    true,
+						Optional:    true,
 					},
 				},
 			},
 			"static": schema.SingleNestedAttribute{
 				Description: "The configuration of the static attestation policy.",
-				Computed:    true,
+				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"spiffe_id_path": schema.StringAttribute{
 						Description: "The SPIFFE ID path assigned to workloads matching this policy (e.g. `ns/default/sa/my-service-account`).",
-						Computed:    true,
+						Required:    true,
 					},
 					"parent_id_path": schema.StringAttribute{
 						Description: "The SPIFFE ID path of the parent node for workloads matching this policy.",
-						Computed:    true,
+						Required:    true,
 					},
 					"selectors": schema.ListNestedAttribute{
 						Description: "The list of selectors for the static attestation policy.",
-						Computed:    true,
+						Required:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"type": schema.StringAttribute{
 									Description: "The selector type (e.g. `k8s` for Kubernetes workload selectors).",
-									Computed:    true,
+									Required:    true,
 								},
 								"value": schema.StringAttribute{
 									Description: "The selector value. Format depends on type (e.g. `ns:default` or `sa:my-service-account` for `k8s`).",
-									Computed:    true,
+									Required:    true,
 								},
 							},
 						},
 					},
 					"dns_names": schema.ListAttribute{
 						Description: "The list of DNS names for the static attestation policy.",
-						Computed:    true,
+						Optional:    true,
 						ElementType: tftypes.StringType,
 					},
 					"store_svid": schema.BoolAttribute{
 						Description: "When true, indicates to SPIRE agents that the x509 SVID should be stored in the svidstore (if an svidstore agent plugin is enabled). Defaults to false.",
+						Optional:    true,
 						Computed:    true,
 					},
 				},
 			},
 			"tpm_node": schema.SingleNestedAttribute{
 				Description: "The configuration of the TPM node attestation policy.",
-				Computed:    true,
+				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"attestation": schema.SingleNestedAttribute{
 						Description: "The TPM attestation configuration.",
-						Computed:    true,
+						Required:    true,
 						Attributes: map[string]schema.Attribute{
 							"ek_hash": schema.StringAttribute{
 								Description: "The SHA-256 hash of the TPM Endorsement Key (EK) certificate, in lowercase hexadecimal format.",
-								Computed:    true,
+								Required:    true,
 							},
 						},
 					},
 					"selector_values": schema.ListAttribute{
 						Description: "The list of selector values for the TPM node attestation policy.",
-						Computed:    true,
+						Optional:    true,
 						ElementType: tftypes.StringType,
 					},
 				},
@@ -185,10 +207,65 @@ func DataSourceSchema(ctx context.Context) schema.Schema {
 	}
 }
 
-func (a *AttestationPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = DataSourceSchema(ctx)
+func (a *AttestationPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = ResourceSchema(ctx)
 }
 
-func (a *AttestationPolicyDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
-	return []datasource.ConfigValidator{}
+type exactlyOneOfValidator struct{}
+
+var _ resource.ConfigValidator = exactlyOneOfValidator{}
+
+func (v exactlyOneOfValidator) Description(ctx context.Context) string {
+	return "exactly one of 'kubernetes', 'static', or 'tpm_node' must be configured"
+}
+
+func (v exactlyOneOfValidator) MarkdownDescription(ctx context.Context) string {
+	return "exactly one of `kubernetes`, `static`, or `tpm_node` must be configured"
+}
+
+func (v exactlyOneOfValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data AttestationPolicyModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	valid, reason := isExactlyOneNonNil(data.Kubernetes, data.Static, data.TPMNode)
+	if !valid {
+		resp.Diagnostics.AddError(
+			"Invalid configuration",
+			"Exactly one of kubernetes, static or tpm_node blocks must be configured, but "+reason+" were provided.",
+		)
+		return
+	}
+}
+
+func (a *AttestationPolicyResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		exactlyOneOfValidator{},
+	}
+}
+
+// isExactlyOneNonNil returns true if the value of exactly one of the arguments is non-nil.
+// Otherwise, it returns false and a string reason of "none" or "multiple".
+func isExactlyOneNonNil(input ...any) (bool, string) {
+	count := 0
+	for _, v := range input {
+		// An interface value is not nil if it has a type, even if the underlying value is nil.
+		// We must use reflection to check if the underlying value is nil.
+		if v == nil {
+			continue
+		}
+		if !reflect.ValueOf(v).IsNil() {
+			count++
+		}
+	}
+	if count == 0 {
+		return false, "none"
+	}
+	if count > 1 {
+		return false, "multiple"
+	}
+	return true, ""
 }
