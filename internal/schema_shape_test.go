@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	apbinding "github.com/cofide/terraform-provider-cofide/internal/services/apbinding/v1alpha1"
 	attestationpolicy "github.com/cofide/terraform-provider-cofide/internal/services/attestationpolicy/v1alpha1"
 	cluster "github.com/cofide/terraform-provider-cofide/internal/services/cluster/v1alpha1"
 	exchangepolicy "github.com/cofide/terraform-provider-cofide/internal/services/exchangepolicy/v1alpha1"
@@ -33,11 +32,6 @@ func TestSchemaShapesMatch(t *testing.T) {
 		resource   attr.Type
 		dataSource attr.Type
 	}{
-		{
-			name:       "apbinding",
-			resource:   apbinding.ResourceSchema(ctx).Type(),
-			dataSource: apbinding.DataSourceSchema(ctx).Type(),
-		},
 		{
 			name:       "attestationpolicy",
 			resource:   attestationpolicy.ResourceSchema(ctx).Type(),
