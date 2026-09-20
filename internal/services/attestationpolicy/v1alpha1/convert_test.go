@@ -25,17 +25,18 @@ func TestProtoToModel(t *testing.T) {
 		want  AttestationPolicyModel
 	}{
 		{
-			name: "minimal: no trust zone, federations, or policy variant",
+			name: "minimal: no federations or policy variant",
 			proto: &attestationpolicypb.AttestationPolicy{
-				Id:    new("ap-1"),
-				Name:  "test-policy",
-				OrgId: new("org-1"),
+				Id:          new("ap-1"),
+				Name:        "test-policy",
+				OrgId:       new("org-1"),
+				TrustZoneId: "tz-1",
 			},
 			want: AttestationPolicyModel{
 				ID:          types.StringValue("ap-1"),
 				Name:        types.StringValue("test-policy"),
 				OrgID:       types.StringValue("org-1"),
-				TrustZoneID: types.StringNull(),
+				TrustZoneID: types.StringValue("tz-1"),
 			},
 		},
 		{
@@ -189,16 +190,16 @@ func TestModelToProto(t *testing.T) {
 		want  *attestationpolicypb.AttestationPolicy
 	}{
 		{
-			name: "minimal: no trust zone, federations, or policy variant",
+			name: "minimal: no federations or policy variant",
 			model: AttestationPolicyModel{
-				ID:    types.StringValue("ap-1"),
-				Name:  types.StringValue("test-policy"),
-				OrgID: types.StringValue("org-1"),
+				ID:          types.StringValue("ap-1"),
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
 			},
 			want: &attestationpolicypb.AttestationPolicy{
-				Id:    new("ap-1"),
-				Name:  "test-policy",
-				OrgId: new("org-1"),
+				Id:          new("ap-1"),
+				Name:        "test-policy",
+				TrustZoneId: "tz-1",
 			},
 		},
 		{
@@ -358,11 +359,11 @@ func TestRoundTrip(t *testing.T) {
 			},
 		},
 		{
-			name: "static policy with org_id, no trust zone",
+			name: "static policy owned by a trust zone",
 			model: AttestationPolicyModel{
-				ID:    types.StringValue("ap-2"),
-				Name:  types.StringValue("static-policy"),
-				OrgID: types.StringValue("org-1"),
+				ID:          types.StringValue("ap-2"),
+				Name:        types.StringValue("static-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
 				Static: &APStaticModel{
 					SpiffeIDPath: types.StringValue("ns/default/sa/my-service-account"),
 					ParentIdPath: types.StringValue("spire/agent/join_token/abc123"),

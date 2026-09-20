@@ -4,8 +4,8 @@ variable "name" {
   default     = "example-ap-static"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
   type        = string
-  default     = "example-org-id"
+  default     = "example-tz-id"
 }

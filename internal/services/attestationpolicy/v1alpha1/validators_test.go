@@ -138,16 +138,28 @@ func errMultipleVariants() wantDiagnostic {
 	}
 }
 
-// errConflict is the diagnostic ConflictsWith attaches to attribute when
-// other is also set. Terraform runs each attribute's validators
-// independently, so a conflicting pair produces one of these per side —
-// e.g. errConflict("org_id", "trust_zone_id") is org_id's own complaint,
-// distinct from errConflict("trust_zone_id", "org_id").
-func errConflict(attribute, other string) wantDiagnostic {
+// errMissingRequired is the diagnostic Terraform core attaches to a Required
+// attribute left null in configuration.
+func errMissingRequired(attribute string) wantDiagnostic {
 	return wantDiagnostic{
 		attribute: attrPath(attribute),
-		summary:   "Invalid Attribute Combination",
-		detail:    fmt.Sprintf("Attribute %q cannot be specified when %q is specified", other, attribute),
+		summary:   "Missing Configuration for Required Attribute",
+		detail: fmt.Sprintf(
+			"Must set a configuration value for the %s attribute as the provider has marked it as required.\n\n"+
+				"Refer to the provider documentation or contact the provider developers for additional information about configurable attributes that are required.",
+			attribute,
+		),
+	}
+}
+
+// errReadOnly is the diagnostic Terraform core attaches to a Computed-only
+// attribute set in configuration.
+func errReadOnly(attribute string) wantDiagnostic {
+	return wantDiagnostic{
+		attribute: attrPath(attribute),
+		summary:   "Invalid Configuration for Read-Only Attribute",
+		detail: "Cannot set value for this attribute as the provider has marked it as read-only. Remove the configuration line setting the value.\n\n" +
+			"Refer to the provider documentation or contact the provider developers for additional information about configurable and read-only attributes that are supported.",
 	}
 }
 
@@ -196,18 +208,19 @@ func TestValidateResourceConfig(t *testing.T) {
 		wantErrs []wantDiagnostic
 	}{
 		{
-			name: "valid: kubernetes policy, no org or trust zone set",
+			name: "valid: kubernetes policy owned by a trust zone",
 			model: AttestationPolicyModel{
-				Name:       types.StringValue("test-policy"),
-				Kubernetes: minimalKubernetes(),
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Kubernetes:  minimalKubernetes(),
 			},
 		},
 		{
-			name: "valid: static policy with org_id",
+			name: "valid: static policy owned by a trust zone",
 			model: AttestationPolicyModel{
-				Name:   types.StringValue("test-policy"),
-				OrgID:  types.StringValue("org-1"),
-				Static: minimalStatic(),
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Static:      minimalStatic(),
 			},
 		},
 		{
@@ -219,55 +232,60 @@ func TestValidateResourceConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid: no policy variant set",
-			model: AttestationPolicyModel{
-				Name: types.StringValue("test-policy"),
-			},
-			wantErrs: []wantDiagnostic{errNoVariant()},
-		},
-		{
-			name: "invalid: two policy variants set",
+			name: "invalid: trust_zone_id not set",
 			model: AttestationPolicyModel{
 				Name:       types.StringValue("test-policy"),
 				Kubernetes: minimalKubernetes(),
-				Static:     minimalStatic(),
 			},
-			wantErrs: []wantDiagnostic{errMultipleVariants()},
+			wantErrs: []wantDiagnostic{errMissingRequired("trust_zone_id")},
 		},
 		{
-			name: "invalid: all three policy variants set",
-			model: AttestationPolicyModel{
-				Name:       types.StringValue("test-policy"),
-				Kubernetes: minimalKubernetes(),
-				Static:     minimalStatic(),
-				TPMNode:    minimalTPMNode(),
-			},
-			wantErrs: []wantDiagnostic{errMultipleVariants()},
-		},
-		{
-			name: "invalid: org_id and trust_zone_id both set",
+			name: "invalid: org_id set in configuration",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				OrgID:       types.StringValue("org-1"),
 				TrustZoneID: types.StringValue("tz-1"),
 				Kubernetes:  minimalKubernetes(),
 			},
-			wantErrs: []wantDiagnostic{
-				errConflict("org_id", "trust_zone_id"),
-				errConflict("trust_zone_id", "org_id"),
-			},
+			wantErrs: []wantDiagnostic{errReadOnly("org_id")},
 		},
 		{
-			name: "invalid: no policy variant, and org_id/trust_zone_id both set",
+			name: "invalid: no policy variant set",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
-				OrgID:       types.StringValue("org-1"),
 				TrustZoneID: types.StringValue("tz-1"),
+			},
+			wantErrs: []wantDiagnostic{errNoVariant()},
+		},
+		{
+			name: "invalid: two policy variants set",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Kubernetes:  minimalKubernetes(),
+				Static:      minimalStatic(),
+			},
+			wantErrs: []wantDiagnostic{errMultipleVariants()},
+		},
+		{
+			name: "invalid: all three policy variants set",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Kubernetes:  minimalKubernetes(),
+				Static:      minimalStatic(),
+				TPMNode:     minimalTPMNode(),
+			},
+			wantErrs: []wantDiagnostic{errMultipleVariants()},
+		},
+		{
+			name: "invalid: no policy variant, and trust_zone_id not set",
+			model: AttestationPolicyModel{
+				Name: types.StringValue("test-policy"),
 			},
 			wantErrs: []wantDiagnostic{
 				errNoVariant(),
-				errConflict("org_id", "trust_zone_id"),
-				errConflict("trust_zone_id", "org_id"),
+				errMissingRequired("trust_zone_id"),
 			},
 		},
 	}
