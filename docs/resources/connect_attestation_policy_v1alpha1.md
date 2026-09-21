@@ -32,16 +32,16 @@ variable "name" {
   default     = "example-ap-kubernetes"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
   type        = string
-  default     = "example-org-id"
+  default     = "example-tz-id"
 }
 
 
 resource "cofide_connect_attestation_policy_v1alpha1" "example" {
-  name   = var.name
-  org_id = var.org_id
+  name          = var.name
+  trust_zone_id = var.trust_zone_id
 
   kubernetes = {
     namespace_selector = {
@@ -91,16 +91,16 @@ variable "name" {
   default     = "example-ap-static"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
   type        = string
-  default     = "example-org-id"
+  default     = "example-tz-id"
 }
 
 
 resource "cofide_connect_attestation_policy_v1alpha1" "example" {
-  name   = var.name
-  org_id = var.org_id
+  name          = var.name
+  trust_zone_id = var.trust_zone_id
 
   static = {
     spiffe_id_path = "ns/default/sa/my-service-account"
@@ -147,16 +147,16 @@ variable "name" {
   default     = "example-ap-tpm"
 }
 
-variable "org_id" {
-  description = "The ID of the organization."
+variable "trust_zone_id" {
+  description = "The ID of the trust zone."
   type        = string
-  default     = "example-org-id"
+  default     = "example-tz-id"
 }
 
 
 resource "cofide_connect_attestation_policy_v1alpha1" "example" {
-  name   = var.name
-  org_id = var.org_id
+  name          = var.name
+  trust_zone_id = var.trust_zone_id
 
   tpm_node = {
     attestation = {
@@ -178,19 +178,19 @@ output "attestation_policy_id" {
 ### Required
 
 - `name` (String) The name of the attestation policy.
+- `trust_zone_id` (String) The ID of the trust zone that owns this attestation policy. The policy grants identities directly within this trust zone, and the policy's organization is derived from the trust zone.
 
 ### Optional
 
-- `federations` (Attributes List) The federated trust zones which will be visible to workloads matching this policy. Only applies when `trust_zone_id` is set. (see [below for nested schema](#nestedatt--federations))
+- `federations` (Attributes List) The federated trust zones which will be visible to workloads matching this policy. (see [below for nested schema](#nestedatt--federations))
 - `kubernetes` (Attributes) The configuration of the Kubernetes attestation policy. (see [below for nested schema](#nestedatt--kubernetes))
-- `org_id` (String) The ID of the organization. Conflicts with `trust_zone_id`: when the policy is owned by a trust zone, its organization is derived from that trust zone.
 - `static` (Attributes) The configuration of the static attestation policy. (see [below for nested schema](#nestedatt--static))
 - `tpm_node` (Attributes) The configuration of the TPM node attestation policy. (see [below for nested schema](#nestedatt--tpm_node))
-- `trust_zone_id` (String) The ID of the trust zone that owns this attestation policy. When set, the policy grants identities directly within this trust zone without requiring a separate `cofide_connect_ap_binding` resource, and the policy's organization is derived from the trust zone. Conflicts with `org_id`.
 
 ### Read-Only
 
 - `id` (String) The ID of the attestation policy.
+- `org_id` (String) The ID of the organization. Read-only: derived from the trust zone that owns this attestation policy.
 
 <a id="nestedatt--federations"></a>
 ### Nested Schema for `federations`

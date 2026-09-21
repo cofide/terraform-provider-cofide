@@ -1,6 +1,6 @@
 resource "cofide_connect_attestation_policy_v1alpha1" "example" {
-  name   = var.name
-  org_id = var.org_id
+  name          = var.name
+  trust_zone_id = var.trust_zone_id
 
   static = {
     spiffe_id_path = "ns/default/sa/my-service-account"

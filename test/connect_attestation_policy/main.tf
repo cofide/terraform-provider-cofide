@@ -2,9 +2,15 @@ data "cofide_connect_organization_v1alpha1" "org" {
   name = "default"
 }
 
+resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
+  name         = "attestation-policy-tz"
+  org_id       = data.cofide_connect_organization_v1alpha1.org.id
+  trust_domain = "attestation-policy-tz.cofide.dev"
+}
+
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static" {
-  name   = "test-ap-1"
-  org_id = data.cofide_connect_organization_v1alpha1.org.id
+  name          = "test-ap-1"
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   static = {
     spiffe_id_path = "test/workload"
@@ -27,8 +33,8 @@ resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_static
 }
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubernetes" {
-  name   = "test-ap-2"
-  org_id = data.cofide_connect_organization_v1alpha1.org.id
+  name          = "test-ap-2"
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   kubernetes = {
     namespace_selector = {
@@ -50,8 +56,8 @@ resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_kubern
 }
 
 resource "cofide_connect_attestation_policy_v1alpha1" "attestation_policy_tpm_node" {
-  name   = "test-ap-3"
-  org_id = data.cofide_connect_organization_v1alpha1.org.id
+  name          = "test-ap-3"
+  trust_zone_id = cofide_connect_trust_zone_v1alpha1.trust_zone.id
 
   tpm_node = {
     attestation = {

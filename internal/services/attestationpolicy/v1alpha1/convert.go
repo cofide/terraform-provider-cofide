@@ -18,7 +18,6 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 	proto := &attestationpolicypb.AttestationPolicy{
 		Id:          model.ID.ValueStringPointer(),
 		Name:        model.Name.ValueString(),
-		OrgId:       model.OrgID.ValueStringPointer(),
 		TrustZoneId: model.TrustZoneID.ValueString(),
 	}
 
