@@ -88,7 +88,7 @@ To use this provider locally:
 
    - If you are running a local instance of Connect, update your `/etc/hosts` file to include:
      ```
-     <connect-api-load-balancer-service-ip> connect.cofide.security
+     <connect-api-load-balancer-service-ip> connect-tls.cofide.security
      ```
 
 4. **Initialize your Terraform project:**
