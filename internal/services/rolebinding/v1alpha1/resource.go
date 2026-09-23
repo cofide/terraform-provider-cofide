@@ -7,6 +7,7 @@ import (
 	sdkclient "github.com/cofide/cofide-api-sdk/pkg/connect/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -69,14 +70,15 @@ func (r *RoleBindingResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *RoleBindingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state RoleBindingModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	// Read only the ID rather than the whole state: after ImportState, every
+	// other attribute is null, and the model is rebuilt from the API anyway.
+	var stateID tftypes.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &stateID)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	id := state.ID.ValueString()
+	id := stateID.ValueString()
 	if id == "" {
 		resp.Diagnostics.AddError(
 			"Error reading role binding",

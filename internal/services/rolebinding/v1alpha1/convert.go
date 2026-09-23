@@ -40,10 +40,13 @@ func protoToModel(proto *rolebindingpb.RoleBinding) RoleBindingModel {
 	model := RoleBindingModel{
 		ID:     tftypes.StringValue(proto.GetId()),
 		RoleID: tftypes.StringValue(proto.GetRoleId()),
-		Resource: ResourceModel{
-			Type: tftypes.StringValue(proto.GetResource().GetType()),
-			ID:   tftypes.StringValue(proto.GetResource().GetId()),
-		},
+	}
+
+	if resourceProto := proto.GetResource(); resourceProto != nil {
+		model.Resource = &ResourceModel{
+			Type: tftypes.StringValue(resourceProto.GetType()),
+			ID:   tftypes.StringValue(resourceProto.GetId()),
+		}
 	}
 
 	if userProto := proto.GetUser(); userProto != nil {
