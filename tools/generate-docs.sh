@@ -60,6 +60,13 @@ for r_dir in "$TMP_EXAMPLES_DIR"/resources/*; do
         fi
     done
   done
+
+  # Copy import examples, which tfplugindocs renders into an Import section
+  for import_file in import-by-string-id.tf import.sh; do
+      if [ -f "$r_dir/$import_file" ]; then
+          cp "$r_dir/$import_file" "$target_dir/$import_file"
+      fi
+  done
 done
 
 # 4. Process data sources
