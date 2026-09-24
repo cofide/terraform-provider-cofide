@@ -63,3 +63,22 @@ output "federation_id" {
 
 - `id` (String) The ID of the federation.
 - `org_id` (String) The ID of the organization. Derived from the trust zone by Cofide Connect.
+
+## Import
+
+Import is supported using the following syntax:
+
+In Terraform v1.5.0 and later, the [`import` block](https://developer.hashicorp.com/terraform/language/import) can be used with the `id` attribute, for example:
+
+```terraform
+import {
+  to = cofide_connect_federation_v1alpha1.example
+  id = "example-federation-id"
+}
+```
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import cofide_connect_federation_v1alpha1.example example-federation-id
+```

@@ -1,0 +1,1 @@
+terraform import cofide_connect_cluster_v1alpha1.example example-cluster-id

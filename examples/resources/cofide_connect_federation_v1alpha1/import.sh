@@ -1,0 +1,1 @@
+terraform import cofide_connect_federation_v1alpha1.example example-federation-id

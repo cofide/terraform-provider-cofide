@@ -1,0 +1,1 @@
+terraform import cofide_connect_role_binding_v1alpha1.example example-role-binding-id

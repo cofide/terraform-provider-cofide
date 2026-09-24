@@ -165,3 +165,22 @@ Required:
 Required:
 
 - `subject` (String) The subject identifier of the user (typically an email address or user ID).
+
+## Import
+
+Import is supported using the following syntax:
+
+In Terraform v1.5.0 and later, the [`import` block](https://developer.hashicorp.com/terraform/language/import) can be used with the `id` attribute, for example:
+
+```terraform
+import {
+  to = cofide_connect_role_binding_v1alpha1.example
+  id = "example-role-binding-id"
+}
+```
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import cofide_connect_role_binding_v1alpha1.example example-role-binding-id
+```
