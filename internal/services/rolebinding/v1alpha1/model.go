@@ -7,7 +7,7 @@ type RoleBindingModel struct {
 	RoleID   tftypes.String `tfsdk:"role_id"`
 	User     *UserModel     `tfsdk:"user"`
 	Group    *GroupModel    `tfsdk:"group"`
-	Resource ResourceModel  `tfsdk:"resource"`
+	Resource *ResourceModel `tfsdk:"resource"`
 }
 
 type UserModel struct {
