@@ -70,6 +70,8 @@ This is a Terraform provider built with `terraform-plugin-framework` that manage
 
 Tests live in `test/<resource>/main.tf` and are applied/destroyed by `test/run.sh`. They require a running local Connect deployment and an active `cofidectl connect login` session. The `test/test.rc` file sources environment variables for the test run.
 
+To test updates, make the attributes to change in `main.tf` variables and add one directory per update step under `updates/`. Each step has an `update.tfvars`, an optional `expect_replace` listing the resource addresses it should replace (none if absent), and an optional `assertions.sh`. `run.sh` runs the steps in lexical order, each from the previous step's state; for each it checks the planned replacements match exactly, applies, checks a follow-up plan is empty, and runs the assertions. Variables a step's `update.tfvars` leaves unset revert to their defaults, so carry forward earlier overrides you want to keep.
+
 ## Releasing
 
 Uses `goreleaser`. Before tagging a release, run `just update-tf-version <version>` to update version constraints in all `.tf` example/test files and `README.md`. After changes to resource schemas or descriptions, run `just generate` to regenerate the docs in `docs/`.
