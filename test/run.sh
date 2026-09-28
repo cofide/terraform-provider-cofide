@@ -16,6 +16,53 @@ if [[ -f "$DEV_TFRC" ]]; then
   export TF_CLI_CONFIG_FILE="$DEV_TFRC"
 fi
 
+# Colour the banners and results only when writing to a terminal.
+if [[ -t 1 ]]; then
+  BOLD=$'\e[1m' CYAN=$'\e[36m' GREEN=$'\e[32m' RED=$'\e[31m' RESET=$'\e[0m'
+else
+  BOLD="" CYAN="" GREEN="" RED="" RESET=""
+fi
+
+# Name of the test currently running, used to label its output.
+CURRENT_TEST=""
+
+# Records, within a test directory, the var file (relative to that directory)
+# of the update step most recently applied. Destroy still evaluates the
+# configuration (e.g. data sources are re-read), so it must use the same
+# variable values as the state it's destroying, not the defaults in main.tf.
+# The marker persists across runs so that the cleanup at the start of a run
+# also works after a run that failed part way through its update steps.
+LAST_VAR_FILE_MARKER=".last_var_file"
+
+# Destroys everything in a test directory's state, using the variable values it
+# was last applied with.
+function destroy_test() {
+  local dir=${1?Specify test Terraform directory}
+  local marker="$dir/$LAST_VAR_FILE_MARKER"
+  local args=()
+  if [[ -f "$marker" ]]; then
+    args+=("-var-file=$(cat "$marker")")
+  fi
+  terraform -chdir="$dir" destroy -compact-warnings -auto-approve "${args[@]}" || return 1
+  rm -f "$marker"
+}
+
+# Prints a banner marking the start of a phase of the current test, e.g.
+# "==> connect_trust_zone | update 01-rename | plan".
+function section() {
+  local label="$CURRENT_TEST"
+  local part
+  for part in "$@"; do
+    label+=" | $part"
+  done
+  echo
+  echo "${BOLD}${CYAN}==> ${label}${RESET}"
+}
+
+function fail() {
+  echo "${BOLD}${RED}FAIL: ${CURRENT_TEST}: $*${RESET}" >&2
+}
+
 # Exercises updates to an applied configuration. A test opts in by providing an
 # updates/ directory containing one subdirectory per update step. Steps run in
 # lexical order (so prefix them, e.g. 01-rename), each starting from the state
@@ -38,17 +85,17 @@ function run_update() {
   step=$(basename "$step_dir")
   local var_file="updates/$step/update.tfvars"
   local plan_file="update.tfplan"
-  echo "Running Terraform update step \"$step\" in \"$dir\""
 
-  if ! terraform -chdir="$dir" plan -var-file="$var_file" -out="$plan_file"; then
-    echo "ERROR: Failed to plan update" >&2
+  section "update $step" "plan"
+  if ! terraform -chdir="$dir" plan -compact-warnings -var-file="$var_file" -out="$plan_file"; then
+    fail "update $step: failed to plan"
     return 1
   fi
   local replaced
   replaced=$(terraform -chdir="$dir" show -json "$plan_file" |
     jq -r '.resource_changes[]? | select(.mode == "managed" and (.change.actions | index("delete"))) | .address' |
     sort) || {
-    echo "ERROR: Failed to inspect update plan" >&2
+    fail "update $step: failed to inspect plan"
     return 1
   }
   local expected=""
@@ -56,23 +103,27 @@ function run_update() {
     expected=$(grep -v '^[[:space:]]*$' "$step_dir/expect_replace" | sort)
   fi
   if [[ "$replaced" != "$expected" ]]; then
-    echo "ERROR: Update step \"$step\" replaces the wrong resources" >&2
+    fail "update $step: plan replaces the wrong resources"
     echo "Expected to replace: ${expected:-<none>}" >&2
     echo "Planned to replace:  ${replaced:-<none>}" >&2
     return 1
   fi
-  if ! terraform -chdir="$dir" apply -auto-approve "$plan_file"; then
-    echo "ERROR: Failed to apply update" >&2
+  section "update $step" "apply"
+  echo "$var_file" >"$dir/$LAST_VAR_FILE_MARKER"
+  if ! terraform -chdir="$dir" apply -compact-warnings -auto-approve "$plan_file"; then
+    fail "update $step: failed to apply"
     return 1
   fi
   rm -f "$dir/$plan_file"
-  if ! terraform -chdir="$dir" plan -var-file="$var_file" -detailed-exitcode; then
-    echo "ERROR: Update did not converge (plan after update is not empty)" >&2
+  section "update $step" "check convergence"
+  if ! terraform -chdir="$dir" plan -compact-warnings -var-file="$var_file" -detailed-exitcode; then
+    fail "update $step: did not converge (plan after update is not empty)"
     return 1
   fi
   if [[ -f "$step_dir/assertions.sh" ]]; then
+    section "update $step" "assertions"
     if ! bash "$step_dir/assertions.sh" "$dir"; then
-      echo "ERROR: Update assertions failed" >&2
+      fail "update $step: assertions failed"
       return 1
     fi
   fi
@@ -80,20 +131,27 @@ function run_update() {
 
 function run_test() {
   local dir=${1?Specify test Terraform directory}
-  echo "Running Terraform test in \"$dir\""
+  CURRENT_TEST=$(basename "$dir")
+  echo
+  echo "${BOLD}${CYAN}######## ${CURRENT_TEST} ########${RESET}"
 
+  section "init"
   if ! terraform -chdir="$dir" init -upgrade; then
-    echo "ERROR: Failed to init" >&2
+    fail "failed to init"
     return 1
   fi
-  terraform -chdir="$dir" destroy -auto-approve || true
-  if ! terraform -chdir="$dir" apply -auto-approve; then
-    echo "ERROR: Failed to apply" >&2
+  section "clean up previous run"
+  destroy_test "$dir" || true
+  section "apply"
+  rm -f "$dir/$LAST_VAR_FILE_MARKER"
+  if ! terraform -chdir="$dir" apply -compact-warnings -auto-approve; then
+    fail "failed to apply"
     return 1
   fi
   if [[ -f "$dir/assertions.sh" ]]; then
+    section "assertions"
     if ! bash "$dir/assertions.sh" "$dir"; then
-      echo "ERROR: Assertions failed" >&2
+      fail "assertions failed"
       return 1
     fi
   fi
@@ -105,11 +163,13 @@ function run_test() {
       fi
     done
   fi
-  if ! terraform -chdir="$dir" destroy -auto-approve; then
-    echo "ERROR: Failed to destroy" >&2
+  section "destroy"
+  if ! destroy_test "$dir"; then
+    fail "failed to destroy"
     return 1
   fi
-  echo "SUCCESS"
+  echo
+  echo "${BOLD}${GREEN}PASS: ${CURRENT_TEST}${RESET}"
 }
 
 if [[ $# -ne 0 ]]; then
