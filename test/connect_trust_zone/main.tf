@@ -1,7 +1,12 @@
-# Overridden by update.tfvars to exercise an in-place update (see run.sh).
+# Overridden by the steps in updates/ to exercise updates (see run.sh).
 variable "trust_zone_name" {
   type    = string
   default = "test-tz"
+}
+
+variable "trust_domain" {
+  type    = string
+  default = "test-tz.cofide.dev"
 }
 
 data "cofide_connect_organization_v1alpha1" "org" {
@@ -11,13 +16,13 @@ data "cofide_connect_organization_v1alpha1" "org" {
 resource "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = var.trust_zone_name
   org_id       = data.cofide_connect_organization_v1alpha1.org.id
-  trust_domain = "test-tz.cofide.dev"
+  trust_domain = var.trust_domain
 }
 
 data "cofide_connect_trust_zone_v1alpha1" "trust_zone" {
   name         = cofide_connect_trust_zone_v1alpha1.trust_zone.name
   org_id       = data.cofide_connect_organization_v1alpha1.org.id
-  trust_domain = "test-tz.cofide.dev"
+  trust_domain = cofide_connect_trust_zone_v1alpha1.trust_zone.trust_domain
 }
 
 output "trust_zone_id" {
@@ -30,6 +35,14 @@ output "trust_zone_name" {
 
 output "trust_zone_name_data_source" {
   value = data.cofide_connect_trust_zone_v1alpha1.trust_zone.name
+}
+
+output "trust_zone_trust_domain" {
+  value = cofide_connect_trust_zone_v1alpha1.trust_zone.trust_domain
+}
+
+output "trust_zone_trust_domain_data_source" {
+  value = data.cofide_connect_trust_zone_v1alpha1.trust_zone.trust_domain
 }
 
 output "trust_zone_bundle_endpoint_url" {

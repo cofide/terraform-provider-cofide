@@ -29,25 +29,30 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "The ID of the organization.",
+				Description: "The ID of the organization. Changing this forces a new trust zone to be created.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					planmodifiers.OptionalComputedModifier{},
 					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"trust_domain": schema.StringAttribute{
-				Description: "The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`).",
+				Description: "The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`). Changing this forces a new trust zone to be created.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"is_management_zone": schema.BoolAttribute{
-				Description: "Whether this is a management trust zone. Cannot be changed after creation.",
+				Description: "Whether this is a management trust zone. Changing this forces a new trust zone to be created.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.Bool{
 					planmodifiers.OptionalComputedModifier{},
 					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 			"bundle_endpoint_url": schema.StringAttribute{
