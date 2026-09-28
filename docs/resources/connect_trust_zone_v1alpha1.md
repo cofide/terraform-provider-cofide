@@ -77,3 +77,22 @@ output "trust_zone_id" {
 - `bundle_endpoint_url` (String) The URL of the SPIFFE bundle endpoint for this trust zone. Set by Cofide Connect.
 - `id` (String) The ID of the trust zone.
 - `jwt_issuer` (String) The JWT issuer URL for this trust zone. Set by Cofide Connect.
+
+## Import
+
+Import is supported using the following syntax:
+
+In Terraform v1.5.0 and later, the [`import` block](https://developer.hashicorp.com/terraform/language/import) can be used with the `id` attribute, for example:
+
+```terraform
+import {
+  to = cofide_connect_trust_zone_v1alpha1.example
+  id = "example-tz-id"
+}
+```
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import cofide_connect_trust_zone_v1alpha1.example example-tz-id
+```

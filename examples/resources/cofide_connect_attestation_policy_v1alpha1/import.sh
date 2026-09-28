@@ -1,0 +1,1 @@
+terraform import cofide_connect_attestation_policy_v1alpha1.example example-attestation-policy-id

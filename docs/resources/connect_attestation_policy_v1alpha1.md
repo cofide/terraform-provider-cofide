@@ -296,3 +296,22 @@ Optional:
 Required:
 
 - `ek_hash` (String) The SHA-256 hash of the TPM Endorsement Key (EK) certificate, in lowercase hexadecimal format.
+
+## Import
+
+Import is supported using the following syntax:
+
+In Terraform v1.5.0 and later, the [`import` block](https://developer.hashicorp.com/terraform/language/import) can be used with the `id` attribute, for example:
+
+```terraform
+import {
+  to = cofide_connect_attestation_policy_v1alpha1.example
+  id = "example-attestation-policy-id"
+}
+```
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import cofide_connect_attestation_policy_v1alpha1.example example-attestation-policy-id
+```

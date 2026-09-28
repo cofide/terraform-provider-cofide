@@ -1,0 +1,1 @@
+terraform import cofide_connect_exchange_policy_v1alpha1.example example-exchange-policy-id

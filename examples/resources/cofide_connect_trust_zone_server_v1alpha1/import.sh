@@ -1,0 +1,1 @@
+terraform import cofide_connect_trust_zone_server_v1alpha1.example example-trust-zone-server-id

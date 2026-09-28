@@ -141,3 +141,22 @@ Read-Only:
 
 - `last_transition_time` (String) The time of the last status transition (RFC3339).
 - `status` (String) The status of the trust zone server (e.g. `TRUST_ZONE_SERVER_STATUS_PROVISIONED`).
+
+## Import
+
+Import is supported using the following syntax:
+
+In Terraform v1.5.0 and later, the [`import` block](https://developer.hashicorp.com/terraform/language/import) can be used with the `id` attribute, for example:
+
+```terraform
+import {
+  to = cofide_connect_trust_zone_server_v1alpha1.example
+  id = "example-trust-zone-server-id"
+}
+```
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import cofide_connect_trust_zone_server_v1alpha1.example example-trust-zone-server-id
+```
