@@ -14,6 +14,7 @@ example.tf
 terraform.tfvars
 dev.tfrc
 *.tfplan
+.last_var_file
 bin/
 modules-dev/
 /pkg/
