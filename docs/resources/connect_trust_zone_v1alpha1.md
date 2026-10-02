@@ -64,12 +64,12 @@ output "trust_zone_id" {
 ### Required
 
 - `name` (String) The name of the trust zone.
-- `trust_domain` (String) The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`).
+- `trust_domain` (String) The SPIFFE trust domain for this trust zone (e.g. `example.cofide.dev`). Changing this forces a new trust zone to be created.
 
 ### Optional
 
-- `is_management_zone` (Boolean) Whether this is a management trust zone. Cannot be changed after creation.
-- `org_id` (String) The ID of the organization.
+- `is_management_zone` (Boolean) Whether this is a management trust zone. Changing this forces a new trust zone to be created.
+- `org_id` (String) The ID of the organization. Changing this forces a new trust zone to be created.
 
 ### Read-Only
 

@@ -15,9 +15,8 @@ import (
 )
 
 var (
-	_ resource.Resource                   = &TrustZoneResource{}
-	_ resource.ResourceWithImportState    = &TrustZoneResource{}
-	_ resource.ResourceWithValidateConfig = &TrustZoneResource{}
+	_ resource.Resource                = &TrustZoneResource{}
+	_ resource.ResourceWithImportState = &TrustZoneResource{}
 )
 
 type TrustZoneResource struct {
@@ -145,17 +144,11 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	trustZoneID := state.ID.ValueString()
 
-	trustZone := &trustzonepb.TrustZone{
-		Id:               &trustZoneID,
-		Name:             plan.Name.ValueString(),
-		TrustDomain:      plan.TrustDomain.ValueString(),
-		IsManagementZone: plan.IsManagementZone.ValueBool(),
-	}
-
-	if util.IsStringAttributeNonEmpty(plan.OrgID) {
-		trustZone.OrgId = plan.OrgID.ValueStringPointer()
+	trustZone, err := newUpdateRequest(plan, state)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating trust zone", fmt.Sprintf("Could not build trust zone update request: %s", err.Error()))
+		return
 	}
 
 	updateResp, err := t.client.TrustZoneV1Alpha1().UpdateTrustZone(ctx, trustZone)
@@ -187,6 +180,44 @@ func (t *TrustZoneResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
+// newUpdateRequest builds the trust zone sent to UpdateTrustZone. Connect
+// replaces the whole trust zone on update, so the computed fields that aren't
+// configurable (bundle endpoint URL and profile, JWT issuer) are carried over
+// from state; omitting them would clear them, which Connect rejects.
+func newUpdateRequest(plan, state TrustZoneModel) (*trustzonepb.TrustZone, error) {
+	trustZoneID := state.ID.ValueString()
+
+	trustZone := &trustzonepb.TrustZone{
+		Id:               &trustZoneID,
+		Name:             plan.Name.ValueString(),
+		TrustDomain:      plan.TrustDomain.ValueString(),
+		IsManagementZone: plan.IsManagementZone.ValueBool(),
+	}
+
+	if util.IsStringAttributeNonEmpty(plan.OrgID) {
+		trustZone.OrgId = plan.OrgID.ValueStringPointer()
+	}
+
+	if util.IsStringAttributeNonEmpty(state.BundleEndpointURL) {
+		trustZone.BundleEndpointUrl = state.BundleEndpointURL.ValueStringPointer()
+	}
+
+	if util.IsStringAttributeNonEmpty(state.JWTIssuer) {
+		trustZone.JwtIssuer = state.JWTIssuer.ValueStringPointer()
+	}
+
+	if util.IsStringAttributeNonEmpty(state.BundleEndpointProfile) {
+		profileName := state.BundleEndpointProfile.ValueString()
+		profile, ok := trustzonepb.BundleEndpointProfile_value[profileName]
+		if !ok {
+			return nil, fmt.Errorf("unknown bundle endpoint profile %q in state", profileName)
+		}
+		trustZone.BundleEndpointProfile = trustzonepb.BundleEndpointProfile(profile).Enum()
+	}
+
+	return trustZone, nil
+}
+
 func (t *TrustZoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state TrustZoneModel
 
@@ -210,20 +241,4 @@ func (t *TrustZoneResource) Delete(ctx context.Context, req resource.DeleteReque
 
 func (t *TrustZoneResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-func (t *TrustZoneResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data TrustZoneModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if !data.IsManagementZone.IsNull() {
-		resp.Diagnostics.AddWarning(
-			"is_management_zone is immutable",
-			"The is_management_zone field cannot be modified after creation. Create a new trust zone instead.",
-		)
-	}
 }
