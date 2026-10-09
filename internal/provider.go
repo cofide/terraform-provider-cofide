@@ -63,7 +63,7 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 		Description: "This project is the official Terraform provider for Cofide.",
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
-				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Can be configured via the `%s` environment variable or read from `~/.cofide/credentials` (JSON key: `access_token`).", consts.APITokenEnvVarKey),
+				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Can be configured via the `%s` environment variable or read from the credentials file written by `cofidectl connect login` for `connect_tls_grpc_target` (`~/.cofide/credentials.d/<target>.json`, falling back to the legacy `~/.cofide/credentials`; the directory can be overridden with the `%s` environment variable).", consts.APITokenEnvVarKey, credentials.DirectoryEnvVar),
 				Optional:    true,
 				Sensitive:   true,
 			},
@@ -107,14 +107,6 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if apiToken == "" {
 		apiToken = os.Getenv(consts.APITokenEnvVarKey)
 	}
-	if apiToken == "" {
-		token, err := credentials.LoadFromFile()
-		if err != nil {
-			tflog.Warn(ctx, "Failed to read credentials file", map[string]interface{}{"error": err.Error()})
-		} else {
-			apiToken = token
-		}
-	}
 
 	connectURL := config.ConnectURL.ValueString()
 	if connectURL == "" {
@@ -124,6 +116,18 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	connectTLSGRPCTarget := config.ConnectTLSGRPCTarget.ValueString()
 	if connectTLSGRPCTarget == "" && connectURL != "" {
 		connectTLSGRPCTarget = "connect." + connectURL
+	}
+
+	if apiToken == "" && connectTLSGRPCTarget != "" {
+		token, path, err := credentials.LoadFromFile(connectTLSGRPCTarget)
+		if err != nil {
+			tflog.Warn(ctx, "Failed to read credentials file", map[string]interface{}{"error": err.Error()})
+		} else {
+			if path != "" {
+				tflog.Debug(ctx, "Read API token from credentials file", map[string]interface{}{"credentials_path": path})
+			}
+			apiToken = token
+		}
 	}
 
 	connectTLSGRPCServerName := config.ConnectTLSGRPCServerName.ValueString()
@@ -137,18 +141,18 @@ func (p *CofideProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		}
 	}
 
-	if apiToken == "" {
-		resp.Diagnostics.AddError(
-			"Missing API Token Configuration",
-			"API token must be specified in provider configuration, via the COFIDE_API_TOKEN environment variable, or via the credentials file at ~/.cofide/credentials.",
-		)
-		return
-	}
-
 	if connectTLSGRPCTarget == "" {
 		resp.Diagnostics.AddError(
 			"Missing Connect API TLS gRPC target configuration",
 			"Connect TLS gRPC target must be specified in provider configuration",
+		)
+		return
+	}
+
+	if apiToken == "" {
+		resp.Diagnostics.AddError(
+			"Missing API Token Configuration",
+			"API token must be specified in provider configuration, via the COFIDE_API_TOKEN environment variable, or via the credentials file written by `cofidectl connect login` for the Connect TLS gRPC target. Run `cofidectl profile get-credentials-path` to see where it is expected.",
 		)
 		return
 	}

@@ -16,7 +16,7 @@ This project is the official Terraform provider for Cofide.
 
 ### Optional
 
-- `api_token` (String, Sensitive) API token used to communicate with the Cofide Connect API. Can be configured via the `COFIDE_API_TOKEN` environment variable or read from `~/.cofide/credentials` (JSON key: `access_token`).
+- `api_token` (String, Sensitive) API token used to communicate with the Cofide Connect API. Can be configured via the `COFIDE_API_TOKEN` environment variable or read from the credentials file written by `cofidectl connect login` for `connect_tls_grpc_target` (`~/.cofide/credentials.d/<target>.json`, falling back to the legacy `~/.cofide/credentials`; the directory can be overridden with the `COFIDE_CREDENTIALS_DIR` environment variable).
 - `connect_tls_grpc_server_name` (String) Optional override for the SNI when calling the Cofide Connect API.
 - `connect_tls_grpc_target` (String) Cofide Connect TLS gRPC target (usually host:port).
 - `connect_url` (String, Deprecated) Cofide Connect service URL. Alternatively, can be configured using the `COFIDE_CONNECT_URL` environment variable.

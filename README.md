@@ -84,7 +84,7 @@ To use this provider locally:
 
    - The `connect_tls_grpc_target` will be provided to you by Cofide, or use your local instance URL for development.
    - Instead of using the `api_token` attributes, you can set the `COFIDE_API_TOKEN` environment variable.
-   - To retrieve an API token, authenticate with Connect using `cofidectl connect login`. The token can be found in `~/.cofide/credentials`.
+   - To retrieve an API token, authenticate with Connect using `cofidectl connect login`. The provider reads the cached token automatically for the configured `connect_tls_grpc_target`; run `cofidectl profile get-credentials-path` to see where it is stored.
 
    - If you are running a local instance of Connect, update your `/etc/hosts` file to include:
      ```
