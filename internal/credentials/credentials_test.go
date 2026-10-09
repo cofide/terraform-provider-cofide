@@ -34,19 +34,8 @@ func TestLoadFromFile(t *testing.T) {
 			wantPath:  targetFile,
 		},
 		{
-			name: "target file preferred over legacy file",
-			files: map[string]string{
-				targetFile:    `{"access_token":"target-token"}`,
-				"credentials": `{"access_token":"legacy-token"}`,
-			},
-			wantToken: "target-token",
-			wantPath:  targetFile,
-		},
-		{
-			name:      "falls back to legacy file",
-			files:     map[string]string{"credentials": `{"access_token":"legacy-token"}`},
-			wantToken: "legacy-token",
-			wantPath:  "credentials",
+			name:  "legacy file is not used",
+			files: map[string]string{"credentials": `{"access_token":"legacy-token"}`},
 		},
 		{
 			name: "other target's file is not used",

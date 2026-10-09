@@ -17,9 +17,6 @@ const (
 	DirectoryEnvVar = "COFIDE_CREDENTIALS_DIR"
 	// credentialsSubdirectory holds one credentials file per Connect TLS gRPC target.
 	credentialsSubdirectory = "credentials.d"
-	// legacyCredentialsFile is the single credentials file, shared by every Connect target, used by
-	// earlier versions of cofidectl. It is read if there is no credentials file for the target.
-	legacyCredentialsFile = "credentials"
 )
 
 type credentialsFile struct {
@@ -27,9 +24,9 @@ type credentialsFile struct {
 }
 
 // LoadFromFile reads the API token cached by `cofidectl connect login` for the Connect TLS gRPC
-// target. It reads <dir>/credentials.d/<target>.json, falling back to the legacy <dir>/credentials
-// file if that does not exist, where <dir> is $COFIDE_CREDENTIALS_DIR, or ~/.cofide if unset.
-// It returns the path the token was read from, and ("", "", nil) if neither file exists.
+// target, from <dir>/credentials.d/<target>.json, where <dir> is $COFIDE_CREDENTIALS_DIR, or
+// ~/.cofide if unset. It returns the path the token was read from, and ("", "", nil) if the file
+// does not exist.
 func LoadFromFile(target string) (token, path string, err error) {
 	if target == "" {
 		return "", "", errors.New("a Connect TLS gRPC target is required to locate cached credentials")
@@ -43,24 +40,19 @@ func LoadFromFile(target string) (token, path string, err error) {
 		dir = filepath.Join(home, credentialsDirectory)
 	}
 
-	for _, path := range []string{
-		filepath.Join(dir, credentialsSubdirectory, credentialsFileName(target)),
-		filepath.Join(dir, legacyCredentialsFile),
-	} {
-		data, err := os.ReadFile(path)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		}
-		if err != nil {
-			return "", "", err
-		}
-		var cf credentialsFile
-		if err := json.Unmarshal(data, &cf); err != nil {
-			return "", "", fmt.Errorf("parsing %s: %w", path, err)
-		}
-		return cf.AccessToken, path, nil
+	path = filepath.Join(dir, credentialsSubdirectory, credentialsFileName(target))
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return "", "", nil
 	}
-	return "", "", nil
+	if err != nil {
+		return "", "", err
+	}
+	var cf credentialsFile
+	if err := json.Unmarshal(data, &cf); err != nil {
+		return "", "", fmt.Errorf("parsing %s: %w", path, err)
+	}
+	return cf.AccessToken, path, nil
 }
 
 // credentialsFileName returns the name of the credentials file for target, as cofidectl names it.

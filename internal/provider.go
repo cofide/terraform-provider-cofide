@@ -63,7 +63,7 @@ func (p *CofideProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 		Description: "This project is the official Terraform provider for Cofide.",
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
-				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Can be configured via the `%s` environment variable or read from the credentials file written by `cofidectl connect login` for `connect_tls_grpc_target` (`~/.cofide/credentials.d/<target>.json`, falling back to the legacy `~/.cofide/credentials`; the directory can be overridden with the `%s` environment variable).", consts.APITokenEnvVarKey, credentials.DirectoryEnvVar),
+				Description: fmt.Sprintf("API token used to communicate with the Cofide Connect API. Can be configured via the `%s` environment variable or read from the credentials file written by `cofidectl connect login` for `connect_tls_grpc_target` (`~/.cofide/credentials.d/<target>.json`; the directory can be overridden with the `%s` environment variable).", consts.APITokenEnvVarKey, credentials.DirectoryEnvVar),
 				Optional:    true,
 				Sensitive:   true,
 			},
