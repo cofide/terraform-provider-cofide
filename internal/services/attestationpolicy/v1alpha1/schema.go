@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -199,58 +200,12 @@ func (a *AttestationPolicyResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = ResourceSchema(ctx)
 }
 
-type exactlyOneOfValidator struct{}
-
-var _ resource.ConfigValidator = exactlyOneOfValidator{}
-
-func (v exactlyOneOfValidator) Description(ctx context.Context) string {
-	return "exactly one of 'kubernetes', 'static', or 'tpm_node' must be configured"
-}
-
-func (v exactlyOneOfValidator) MarkdownDescription(ctx context.Context) string {
-	return "exactly one of `kubernetes`, `static`, or `tpm_node` must be configured"
-}
-
-// variantAttributes are the policy variant attributes, of which exactly one must be configured.
-var variantAttributes = []string{"kubernetes", "static", "tpm_node"}
-
-// ValidateResource reads only the variant attributes, rather than the whole config into an AttestationPolicyModel,
-// so that an unknown value elsewhere in the config (e.g. a federations list built from a module variable, which is
-// unknown during validation) can't fail the conversion. While a variant is unknown, whether it's set can't be told,
-// so the check is left until its value is known.
-func (v exactlyOneOfValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	count := 0
-	for _, name := range variantAttributes {
-		var variant tftypes.Object
-		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(name), &variant)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		if variant.IsUnknown() {
-			return
-		}
-		if !variant.IsNull() {
-			count++
-		}
-	}
-
-	reason := ""
-	switch {
-	case count == 0:
-		reason = "none"
-	case count > 1:
-		reason = "multiple"
-	default:
-		return
-	}
-	resp.Diagnostics.AddError(
-		"Invalid configuration",
-		"Exactly one of kubernetes, static or tpm_node blocks must be configured, but "+reason+" were provided.",
-	)
-}
-
 func (a *AttestationPolicyResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		exactlyOneOfValidator{},
+		resourcevalidator.ExactlyOneOf(
+			path.MatchRoot("kubernetes"),
+			path.MatchRoot("static"),
+			path.MatchRoot("tpm_node"),
+		),
 	}
 }

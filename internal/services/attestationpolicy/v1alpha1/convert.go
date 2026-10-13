@@ -11,7 +11,26 @@ import (
 	spiretypes "github.com/spiffe/spire-api-sdk/proto/spire/api/types"
 )
 
-// modelToProto converts an AttestationPolicyModel to an equivalent AttestationPolicy protobuf.
+// The types of the model's objects and list elements, taken from the resource schema so they can't drift from it.
+// The data source schema has the same shape (see internal/schema_shape_test.go).
+var (
+	policyAttrTypes         = ResourceSchema(context.Background()).Type().(tftypes.ObjectType).AttrTypes
+	federationElemType      = policyAttrTypes["federations"].(tftypes.ListType).ElemType.(tftypes.ObjectType)
+	kubernetesType          = policyAttrTypes["kubernetes"].(tftypes.ObjectType)
+	labelSelectorType       = kubernetesType.AttrTypes["namespace_selector"].(tftypes.ObjectType)
+	matchExpressionElemType = labelSelectorType.AttrTypes["match_expressions"].(tftypes.ListType).ElemType.(tftypes.ObjectType)
+	staticType              = policyAttrTypes["static"].(tftypes.ObjectType)
+	tpmNodeType             = policyAttrTypes["tpm_node"].(tftypes.ObjectType)
+	tpmAttestationType      = tpmNodeType.AttrTypes["attestation"].(tftypes.ObjectType)
+)
+
+// isSet returns whether v has a known, non-null value.
+func isSet(v attr.Value) bool {
+	return !v.IsNull() && !v.IsUnknown()
+}
+
+// modelToProto converts an AttestationPolicyModel to an equivalent AttestationPolicy protobuf. It's called with a
+// plan at apply, when every configured value is known.
 func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestationpolicypb.AttestationPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -21,51 +40,62 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 		TrustZoneId: model.TrustZoneID.ValueString(),
 	}
 
-	if model.Federations != nil {
-		federations := make([]*attestationpolicypb.Federation, 0, len(model.Federations))
-		for _, federation := range model.Federations {
-			federations = append(federations, &attestationpolicypb.Federation{
+	if isSet(model.Federations) {
+		var federations []APFederationModel
+		diags.Append(model.Federations.ElementsAs(ctx, &federations, false)...)
+		proto.Federations = make([]*attestationpolicypb.Federation, 0, len(federations))
+		for _, federation := range federations {
+			proto.Federations = append(proto.Federations, &attestationpolicypb.Federation{
 				TrustZoneId: federation.TrustZoneID.ValueStringPointer(),
 			})
 		}
-		proto.Federations = federations
 	}
 
-	if model.Kubernetes != nil {
+	if isSet(model.Kubernetes) {
+		var k8s APKubernetesModel
+		diags.Append(model.Kubernetes.As(ctx, &k8s, basetypes.ObjectAsOptions{})...)
 		var dnsNameTemplates []string
-		diags.Append(model.Kubernetes.DnsNameTemplates.ElementsAs(ctx, &dnsNameTemplates, false)...)
+		diags.Append(k8s.DnsNameTemplates.ElementsAs(ctx, &dnsNameTemplates, false)...)
 		k8sPolicy := &attestationpolicypb.APKubernetes{
-			NamespaceSelector:    convertLabelSelector(ctx, model.Kubernetes.NamespaceSelector, &diags),
-			PodSelector:          convertLabelSelector(ctx, model.Kubernetes.PodSelector, &diags),
+			NamespaceSelector:    convertLabelSelector(ctx, k8s.NamespaceSelector, &diags),
+			PodSelector:          convertLabelSelector(ctx, k8s.PodSelector, &diags),
 			DnsNameTemplates:     dnsNameTemplates,
-			SpiffeIdPathTemplate: model.Kubernetes.SpiffeIDPathTemplate.ValueStringPointer(),
+			SpiffeIdPathTemplate: k8s.SpiffeIDPathTemplate.ValueStringPointer(),
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_Kubernetes{
 			Kubernetes: k8sPolicy,
 		}
 	}
 
-	if model.Static != nil {
+	if isSet(model.Static) {
+		var static APStaticModel
+		diags.Append(model.Static.As(ctx, &static, basetypes.ObjectAsOptions{})...)
 		var dnsNames []string
-		diags.Append(model.Static.DNSNames.ElementsAs(ctx, &dnsNames, false)...)
+		diags.Append(static.DNSNames.ElementsAs(ctx, &dnsNames, false)...)
 		staticPolicy := &attestationpolicypb.APStatic{
-			SpiffeIdPath: model.Static.SpiffeIDPath.ValueStringPointer(),
-			ParentIdPath: model.Static.ParentIdPath.ValueStringPointer(),
-			Selectors:    convertSelectors(model.Static.Selectors),
+			SpiffeIdPath: static.SpiffeIDPath.ValueStringPointer(),
+			ParentIdPath: static.ParentIdPath.ValueStringPointer(),
+			Selectors:    convertSelectors(static.Selectors),
 			DnsNames:     dnsNames,
-			StoreSvid:    !model.Static.StoreSvid.IsNull() && !model.Static.StoreSvid.IsUnknown() && model.Static.StoreSvid.ValueBool(),
+			StoreSvid:    isSet(static.StoreSvid) && static.StoreSvid.ValueBool(),
 		}
 		proto.Policy = &attestationpolicypb.AttestationPolicy_Static{
 			Static: staticPolicy,
 		}
 	}
 
-	if model.TPMNode != nil {
+	if isSet(model.TPMNode) {
+		var tpmNode APTPMNodeModel
+		diags.Append(model.TPMNode.As(ctx, &tpmNode, basetypes.ObjectAsOptions{})...)
+		var attestation TPMAttestationModel
+		if isSet(tpmNode.Attestation) {
+			diags.Append(tpmNode.Attestation.As(ctx, &attestation, basetypes.ObjectAsOptions{})...)
+		}
 		var selectorValues []string
-		diags.Append(model.TPMNode.SelectorValues.ElementsAs(ctx, &selectorValues, false)...)
+		diags.Append(tpmNode.SelectorValues.ElementsAs(ctx, &selectorValues, false)...)
 		tpmNodePolicy := &attestationpolicypb.APTPMNode{
 			Attestation: &attestationpolicypb.TPMAttestation{
-				EkHash: model.TPMNode.Attestation.EKHash.ValueStringPointer(),
+				EkHash: attestation.EKHash.ValueStringPointer(),
 			},
 			SelectorValues: selectorValues,
 		}
@@ -78,12 +108,18 @@ func modelToProto(ctx context.Context, model AttestationPolicyModel) (*attestati
 }
 
 // protoToModel converts an AttestationPolicy protobuf to an equivalent AttestationPolicyModel.
-func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolicyModel {
+func protoToModel(ctx context.Context, proto *attestationpolicypb.AttestationPolicy) (AttestationPolicyModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	model := AttestationPolicyModel{
 		ID:          optionalStringValue(proto.Id),
 		Name:        tftypes.StringValue(proto.GetName()),
 		OrgID:       optionalStringValue(proto.OrgId),
 		TrustZoneID: nonEmptyStringValue(proto.GetTrustZoneId()),
+		Federations: tftypes.ListNull(federationElemType),
+		Kubernetes:  tftypes.ObjectNull(kubernetesType.AttrTypes),
+		Static:      tftypes.ObjectNull(staticType.AttrTypes),
+		TPMNode:     tftypes.ObjectNull(tpmNodeType.AttrTypes),
 	}
 
 	if federations := proto.GetFederations(); federations != nil {
@@ -93,50 +129,69 @@ func protoToModel(proto *attestationpolicypb.AttestationPolicy) AttestationPolic
 				TrustZoneID: optionalStringValue(federation.TrustZoneId),
 			})
 		}
-		model.Federations = respFederations
+		model.Federations = listValueFrom(ctx, federationElemType, respFederations, &diags)
 	}
 
 	if k8s := proto.GetKubernetes(); k8s != nil {
-		model.Kubernetes = &APKubernetesModel{
-			NamespaceSelector:    convertProtoLabelSelector(k8s.NamespaceSelector),
-			PodSelector:          convertProtoLabelSelector(k8s.PodSelector),
+		model.Kubernetes = objectValueFrom(ctx, kubernetesType, APKubernetesModel{
+			NamespaceSelector:    convertProtoLabelSelector(ctx, k8s.NamespaceSelector, &diags),
+			PodSelector:          convertProtoLabelSelector(ctx, k8s.PodSelector, &diags),
 			DnsNameTemplates:     convertProtoSelectorValues(k8s.GetDnsNameTemplates()),
 			SpiffeIDPathTemplate: optionalStringValue(k8s.SpiffeIdPathTemplate),
-		}
+		}, &diags)
 	}
 
 	if static := proto.GetStatic(); static != nil {
-		model.Static = &APStaticModel{
+		model.Static = objectValueFrom(ctx, staticType, APStaticModel{
 			SpiffeIDPath: optionalStringValue(static.SpiffeIdPath),
 			ParentIdPath: optionalStringValue(static.ParentIdPath),
 			Selectors:    convertProtoSelectors(static.GetSelectors()),
 			DNSNames:     convertProtoSelectorValues(static.GetDnsNames()),
 			StoreSvid:    tftypes.BoolValue(static.GetStoreSvid()),
-		}
+		}, &diags)
 	}
 
 	if tpmNode := proto.GetTpmNode(); tpmNode != nil {
-		model.TPMNode = &APTPMNodeModel{
+		attestation := TPMAttestationModel{EKHash: tftypes.StringNull()}
+		if protoAttestation := tpmNode.GetAttestation(); protoAttestation != nil {
+			attestation.EKHash = optionalStringValue(protoAttestation.EkHash)
+		}
+		model.TPMNode = objectValueFrom(ctx, tpmNodeType, APTPMNodeModel{
+			Attestation:    objectValueFrom(ctx, tpmAttestationType, attestation, &diags),
 			SelectorValues: convertProtoSelectorValues(tpmNode.GetSelectorValues()),
-		}
-		if attestation := tpmNode.GetAttestation(); attestation != nil {
-			model.TPMNode.Attestation.EKHash = optionalStringValue(attestation.EkHash)
-		}
+		}, &diags)
 	}
 
-	return model
+	return model, diags
 }
 
-func convertLabelSelector(ctx context.Context, selector *APLabelSelectorModel, diags *diag.Diagnostics) *attestationpolicypb.APLabelSelector {
-	if selector == nil {
+// objectValueFrom converts value, a model struct, to an object of type t, appending any errors to diags.
+func objectValueFrom(ctx context.Context, t tftypes.ObjectType, value any, diags *diag.Diagnostics) tftypes.Object {
+	obj, d := tftypes.ObjectValueFrom(ctx, t.AttrTypes, value)
+	diags.Append(d...)
+	return obj
+}
+
+// listValueFrom converts elements, a slice of model structs, to a list of elemType, appending any errors to diags.
+func listValueFrom(ctx context.Context, elemType tftypes.ObjectType, elements any, diags *diag.Diagnostics) tftypes.List {
+	list, d := tftypes.ListValueFrom(ctx, elemType, elements)
+	diags.Append(d...)
+	return list
+}
+
+func convertLabelSelector(ctx context.Context, obj tftypes.Object, diags *diag.Diagnostics) *attestationpolicypb.APLabelSelector {
+	if !isSet(obj) {
 		return nil
 	}
+
+	var selector APLabelSelectorModel
+	diags.Append(obj.As(ctx, &selector, basetypes.ObjectAsOptions{})...)
 
 	result := &attestationpolicypb.APLabelSelector{
 		MatchLabels: make(map[string]string),
 	}
 
-	if !selector.MatchLabels.IsNull() {
+	if isSet(selector.MatchLabels) {
 		elements := selector.MatchLabels.Elements()
 		for k, v := range elements {
 			if str, ok := v.(tftypes.String); ok {
@@ -145,27 +200,32 @@ func convertLabelSelector(ctx context.Context, selector *APLabelSelectorModel, d
 		}
 	}
 
-	for _, expr := range selector.MatchExpressions {
-		matchExpr := &attestationpolicypb.APMatchExpression{
-			Key:      expr.Key.ValueString(),
-			Operator: expr.Operator.ValueString(),
+	if isSet(selector.MatchExpressions) {
+		var exprs []APMatchExpressionModel
+		diags.Append(selector.MatchExpressions.ElementsAs(ctx, &exprs, false)...)
+		for _, expr := range exprs {
+			matchExpr := &attestationpolicypb.APMatchExpression{
+				Key:      expr.Key.ValueString(),
+				Operator: expr.Operator.ValueString(),
+			}
+			var values []string
+			diags.Append(expr.Values.ElementsAs(ctx, &values, false)...)
+			matchExpr.Values = values
+			result.MatchExpressions = append(result.MatchExpressions, matchExpr)
 		}
-		var values []string
-		diags.Append(expr.Values.ElementsAs(ctx, &values, false)...)
-		matchExpr.Values = values
-		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
 	}
 
 	return result
 }
 
-func convertProtoLabelSelector(selector *attestationpolicypb.APLabelSelector) *APLabelSelectorModel {
+func convertProtoLabelSelector(ctx context.Context, selector *attestationpolicypb.APLabelSelector, diags *diag.Diagnostics) tftypes.Object {
 	if selector == nil {
-		return nil
+		return tftypes.ObjectNull(labelSelectorType.AttrTypes)
 	}
 
-	result := &APLabelSelectorModel{
-		MatchLabels: tftypes.MapNull(tftypes.StringType),
+	result := APLabelSelectorModel{
+		MatchLabels:      tftypes.MapNull(tftypes.StringType),
+		MatchExpressions: tftypes.ListNull(matchExpressionElemType),
 	}
 
 	// Convert match labels
@@ -178,16 +238,19 @@ func convertProtoLabelSelector(selector *attestationpolicypb.APLabelSelector) *A
 	}
 
 	// Convert match expressions
-	for _, expr := range selector.MatchExpressions {
-		matchExpr := APMatchExpressionModel{
-			Key:      tftypes.StringValue(expr.GetKey()),
-			Operator: tftypes.StringValue(expr.GetOperator()),
-			Values:   convertProtoSelectorValues(expr.GetValues()),
+	if len(selector.MatchExpressions) > 0 {
+		exprs := make([]APMatchExpressionModel, 0, len(selector.MatchExpressions))
+		for _, expr := range selector.MatchExpressions {
+			exprs = append(exprs, APMatchExpressionModel{
+				Key:      tftypes.StringValue(expr.GetKey()),
+				Operator: tftypes.StringValue(expr.GetOperator()),
+				Values:   convertProtoSelectorValues(expr.GetValues()),
+			})
 		}
-		result.MatchExpressions = append(result.MatchExpressions, matchExpr)
+		result.MatchExpressions = listValueFrom(ctx, matchExpressionElemType, exprs, diags)
 	}
 
-	return result
+	return objectValueFrom(ctx, labelSelectorType, result, diags)
 }
 
 // convertProtoSelectorValues converts a slice of strings from protobuf to a Terraform types.List.

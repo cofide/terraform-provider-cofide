@@ -70,7 +70,11 @@ func (r *AttestationPolicyResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	state := protoToModel(createResp)
+	state, diags := protoToModel(ctx, createResp)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -96,7 +100,11 @@ func (r *AttestationPolicyResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	newState := protoToModel(policy)
+	newState, diags := protoToModel(ctx, policy)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
@@ -138,7 +146,11 @@ func (r *AttestationPolicyResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	newState := protoToModel(updateResp)
+	newState, diags := protoToModel(ctx, updateResp)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 

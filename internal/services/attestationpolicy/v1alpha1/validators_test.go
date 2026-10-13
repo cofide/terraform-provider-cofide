@@ -49,39 +49,12 @@ func (testProvider) Resources(context.Context) []func() resource.Resource {
 func rawFromModel(t *testing.T, rSchema rschema.Schema, model AttestationPolicyModel) tftypes.Value {
 	t.Helper()
 
+	model = withTypedNulls(model)
 	plan := tfsdk.Plan{Schema: rSchema}
 	diags := plan.Set(t.Context(), &model)
 	require.False(t, diags.HasError(), "failed to build raw value from model: %v", diags)
 
 	return plan.Raw
-}
-
-// withUnknownAttributes returns raw with each of the named top-level attributes replaced by an unknown value of its
-// type, as Terraform sends during validation for a value it can't know until apply (e.g. one built from a module
-// variable). A model can't express this, as some of its fields (e.g. Federations) are Go types that can't hold
-// an unknown value.
-func withUnknownAttributes(t *testing.T, raw tftypes.Value, names ...string) tftypes.Value {
-	t.Helper()
-
-	unknown := map[string]bool{}
-	for _, name := range names {
-		unknown[name] = true
-	}
-
-	transformed, err := tftypes.Transform(raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
-		steps := p.Steps()
-		if len(steps) != 1 {
-			return v, nil
-		}
-		name, ok := steps[0].(tftypes.AttributeName)
-		if !ok || !unknown[string(name)] {
-			return v, nil
-		}
-		return tftypes.NewValue(v.Type(), tftypes.UnknownValue), nil
-	})
-	require.NoError(t, err)
-
-	return transformed
 }
 
 // validateResourceConfig drives the attestation policy resource's real
@@ -148,21 +121,28 @@ func attrPath(name string) string {
 	return tftypes.NewAttributePath().WithAttributeName(name).String()
 }
 
-// errNoVariant is the resource-level diagnostic exactlyOneOfValidator
-// produces when none of kubernetes/static/tpm_node is set.
+// variantsDetail is the detail of the diagnostics the exactly-one-variant
+// validator (resourcevalidator.ExactlyOneOf) produces.
+const variantsDetail = "Exactly one of these attributes must be configured: [kubernetes,static,tpm_node]"
+
+// errNoVariant is the resource-level diagnostic the exactly-one-variant
+// validator produces when none of kubernetes/static/tpm_node is set.
 func errNoVariant() wantDiagnostic {
 	return wantDiagnostic{
-		summary: "Invalid configuration",
-		detail:  "Exactly one of kubernetes, static or tpm_node blocks must be configured, but none were provided.",
+		summary: "Missing Attribute Configuration",
+		detail:  variantsDetail,
 	}
 }
 
-// errMultipleVariants is the resource-level diagnostic exactlyOneOfValidator
-// produces when more than one of kubernetes/static/tpm_node is set.
-func errMultipleVariants() wantDiagnostic {
+// errMultipleVariants is the diagnostic the exactly-one-variant validator
+// produces when more than one of kubernetes/static/tpm_node is set. It's
+// attached to the first of them that's set, in the order the validator
+// lists them.
+func errMultipleVariants(attribute string) wantDiagnostic {
 	return wantDiagnostic{
-		summary: "Invalid configuration",
-		detail:  "Exactly one of kubernetes, static or tpm_node blocks must be configured, but multiple were provided.",
+		attribute: attrPath(attribute),
+		summary:   "Invalid Attribute Combination",
+		detail:    variantsDetail,
 	}
 }
 
@@ -195,32 +175,34 @@ func errReadOnly(attribute string) wantDiagnostic {
 // fields set. Valid on its own: kubernetes has no Required nested
 // attributes, so this is enough to test the exactly-one-variant rule
 // without incidental "attribute is required" noise from other rules.
-func minimalKubernetes() *APKubernetesModel {
-	return &APKubernetesModel{
+func minimalKubernetes(t *testing.T) types.Object {
+	return mustObject(t, kubernetesType, APKubernetesModel{
+		NamespaceSelector:    types.ObjectNull(labelSelectorType.AttrTypes),
+		PodSelector:          types.ObjectNull(labelSelectorType.AttrTypes),
 		DnsNameTemplates:     types.ListNull(types.StringType),
 		SpiffeIDPathTemplate: types.StringNull(),
-	}
+	})
 }
 
 // minimalStatic is a `static` policy variant with the minimum content its
 // Required attributes (spiffe_id_path, parent_id_path, selectors) need.
-func minimalStatic() *APStaticModel {
-	return &APStaticModel{
+func minimalStatic(t *testing.T) types.Object {
+	return mustObject(t, staticType, APStaticModel{
 		SpiffeIDPath: types.StringValue("ns/default/sa/my-service-account"),
 		ParentIdPath: types.StringValue("spire/agent/join_token/abc123"),
 		Selectors:    types.ListValueMust(selectorElemType, []attr.Value{}),
 		DNSNames:     types.ListNull(types.StringType),
 		StoreSvid:    types.BoolNull(),
-	}
+	})
 }
 
 // minimalTPMNode is a `tpm_node` policy variant with the minimum content its
 // Required attribute (attestation.ek_hash) needs.
-func minimalTPMNode() *APTPMNodeModel {
-	return &APTPMNodeModel{
-		Attestation:    TPMAttestationModel{EKHash: types.StringValue("deadbeef")},
+func minimalTPMNode(t *testing.T) types.Object {
+	return mustObject(t, tpmNodeType, APTPMNodeModel{
+		Attestation:    mustObject(t, tpmAttestationType, TPMAttestationModel{EKHash: types.StringValue("deadbeef")}),
 		SelectorValues: types.ListNull(types.StringType),
-	}
+	})
 }
 
 // TestValidateResourceConfig exercises the attestation policy schema's
@@ -231,10 +213,8 @@ func TestValidateResourceConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		model AttestationPolicyModel
-		// unknown names top-level attributes whose value is unknown in the config.
-		unknown  []string
+		name     string
+		model    AttestationPolicyModel
 		wantErrs []wantDiagnostic
 	}{
 		{
@@ -242,7 +222,7 @@ func TestValidateResourceConfig(t *testing.T) {
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Kubernetes:  minimalKubernetes(),
+				Kubernetes:  minimalKubernetes(t),
 			},
 		},
 		{
@@ -250,7 +230,7 @@ func TestValidateResourceConfig(t *testing.T) {
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Static:      minimalStatic(),
+				Static:      minimalStatic(t),
 			},
 		},
 		{
@@ -258,7 +238,7 @@ func TestValidateResourceConfig(t *testing.T) {
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				TPMNode:     minimalTPMNode(),
+				TPMNode:     minimalTPMNode(t),
 			},
 		},
 		{
@@ -266,41 +246,41 @@ func TestValidateResourceConfig(t *testing.T) {
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Static:      minimalStatic(),
+				Federations: types.ListUnknown(federationElemType),
+				Static:      minimalStatic(t),
 			},
-			unknown: []string{"federations"},
 		},
 		{
 			name: "valid: unknown static policy",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
+				Static:      types.ObjectUnknown(staticType.AttrTypes),
 			},
-			unknown: []string{"static"},
 		},
 		{
 			name: "valid: unknown static policy alongside a kubernetes policy, not yet known to be multiple",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Kubernetes:  minimalKubernetes(),
+				Kubernetes:  minimalKubernetes(t),
+				Static:      types.ObjectUnknown(staticType.AttrTypes),
 			},
-			unknown: []string{"static"},
 		},
 		{
 			name: "invalid: no policy variant set, with unknown federations",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
+				Federations: types.ListUnknown(federationElemType),
 			},
-			unknown:  []string{"federations"},
 			wantErrs: []wantDiagnostic{errNoVariant()},
 		},
 		{
 			name: "invalid: trust_zone_id not set",
 			model: AttestationPolicyModel{
 				Name:       types.StringValue("test-policy"),
-				Kubernetes: minimalKubernetes(),
+				Kubernetes: minimalKubernetes(t),
 			},
 			wantErrs: []wantDiagnostic{errMissingRequired("trust_zone_id")},
 		},
@@ -310,7 +290,7 @@ func TestValidateResourceConfig(t *testing.T) {
 				Name:        types.StringValue("test-policy"),
 				OrgID:       types.StringValue("org-1"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Kubernetes:  minimalKubernetes(),
+				Kubernetes:  minimalKubernetes(t),
 			},
 			wantErrs: []wantDiagnostic{errReadOnly("org_id")},
 		},
@@ -327,21 +307,21 @@ func TestValidateResourceConfig(t *testing.T) {
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Kubernetes:  minimalKubernetes(),
-				Static:      minimalStatic(),
+				Kubernetes:  minimalKubernetes(t),
+				Static:      minimalStatic(t),
 			},
-			wantErrs: []wantDiagnostic{errMultipleVariants()},
+			wantErrs: []wantDiagnostic{errMultipleVariants("kubernetes")},
 		},
 		{
 			name: "invalid: all three policy variants set",
 			model: AttestationPolicyModel{
 				Name:        types.StringValue("test-policy"),
 				TrustZoneID: types.StringValue("tz-1"),
-				Kubernetes:  minimalKubernetes(),
-				Static:      minimalStatic(),
-				TPMNode:     minimalTPMNode(),
+				Kubernetes:  minimalKubernetes(t),
+				Static:      minimalStatic(t),
+				TPMNode:     minimalTPMNode(t),
 			},
-			wantErrs: []wantDiagnostic{errMultipleVariants()},
+			wantErrs: []wantDiagnostic{errMultipleVariants("kubernetes")},
 		},
 		{
 			name: "invalid: no policy variant, and trust_zone_id not set",
@@ -359,7 +339,7 @@ func TestValidateResourceConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rSchema := ResourceSchema(t.Context())
-			raw := withUnknownAttributes(t, rawFromModel(t, rSchema, tt.model), tt.unknown...)
+			raw := rawFromModel(t, rSchema, tt.model)
 
 			diags := validateResourceConfig(t, rSchema, raw)
 			errs := errorDiagnostics(diags)

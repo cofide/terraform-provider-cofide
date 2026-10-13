@@ -88,7 +88,11 @@ func (d *AttestationPolicyDataSource) Read(ctx context.Context, req datasource.R
 
 	// Use the shared conversion rather than an inline copy, so the data source
 	// cannot drift from the resource as policy fields are added.
-	state := protoToModel(policy)
+	state, diags := protoToModel(ctx, policy)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
