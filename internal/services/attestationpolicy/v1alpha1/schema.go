@@ -2,9 +2,9 @@ package v1alpha1
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -211,49 +211,46 @@ func (v exactlyOneOfValidator) MarkdownDescription(ctx context.Context) string {
 	return "exactly one of `kubernetes`, `static`, or `tpm_node` must be configured"
 }
 
+// variantAttributes are the policy variant attributes, of which exactly one must be configured.
+var variantAttributes = []string{"kubernetes", "static", "tpm_node"}
+
+// ValidateResource reads only the variant attributes, rather than the whole config into an AttestationPolicyModel,
+// so that an unknown value elsewhere in the config (e.g. a federations list built from a module variable, which is
+// unknown during validation) can't fail the conversion. While a variant is unknown, whether it's set can't be told,
+// so the check is left until its value is known.
 func (v exactlyOneOfValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data AttestationPolicyModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
+	count := 0
+	for _, name := range variantAttributes {
+		var variant tftypes.Object
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(name), &variant)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if variant.IsUnknown() {
+			return
+		}
+		if !variant.IsNull() {
+			count++
+		}
 	}
 
-	valid, reason := isExactlyOneNonNil(data.Kubernetes, data.Static, data.TPMNode)
-	if !valid {
-		resp.Diagnostics.AddError(
-			"Invalid configuration",
-			"Exactly one of kubernetes, static or tpm_node blocks must be configured, but "+reason+" were provided.",
-		)
+	reason := ""
+	switch {
+	case count == 0:
+		reason = "none"
+	case count > 1:
+		reason = "multiple"
+	default:
 		return
 	}
+	resp.Diagnostics.AddError(
+		"Invalid configuration",
+		"Exactly one of kubernetes, static or tpm_node blocks must be configured, but "+reason+" were provided.",
+	)
 }
 
 func (a *AttestationPolicyResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		exactlyOneOfValidator{},
 	}
-}
-
-// isExactlyOneNonNil returns true if the value of exactly one of the arguments is non-nil.
-// Otherwise, it returns false and a string reason of "none" or "multiple".
-func isExactlyOneNonNil(input ...any) (bool, string) {
-	count := 0
-	for _, v := range input {
-		// An interface value is not nil if it has a type, even if the underlying value is nil.
-		// We must use reflection to check if the underlying value is nil.
-		if v == nil {
-			continue
-		}
-		if !reflect.ValueOf(v).IsNil() {
-			count++
-		}
-	}
-	if count == 0 {
-		return false, "none"
-	}
-	if count > 1 {
-		return false, "multiple"
-	}
-	return true, ""
 }
