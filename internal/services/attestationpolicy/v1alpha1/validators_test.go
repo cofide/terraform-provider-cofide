@@ -56,6 +56,34 @@ func rawFromModel(t *testing.T, rSchema rschema.Schema, model AttestationPolicyM
 	return plan.Raw
 }
 
+// withUnknownAttributes returns raw with each of the named top-level attributes replaced by an unknown value of its
+// type, as Terraform sends during validation for a value it can't know until apply (e.g. one built from a module
+// variable). A model can't express this, as some of its fields (e.g. Federations) are Go types that can't hold
+// an unknown value.
+func withUnknownAttributes(t *testing.T, raw tftypes.Value, names ...string) tftypes.Value {
+	t.Helper()
+
+	unknown := map[string]bool{}
+	for _, name := range names {
+		unknown[name] = true
+	}
+
+	transformed, err := tftypes.Transform(raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+		steps := p.Steps()
+		if len(steps) != 1 {
+			return v, nil
+		}
+		name, ok := steps[0].(tftypes.AttributeName)
+		if !ok || !unknown[string(name)] {
+			return v, nil
+		}
+		return tftypes.NewValue(v.Type(), tftypes.UnknownValue), nil
+	})
+	require.NoError(t, err)
+
+	return transformed
+}
+
 // validateResourceConfig drives the attestation policy resource's real
 // ValidateResourceConfig RPC against raw, via an in-process protocol server.
 // Unlike hand-invoking specific validator instances, this exercises the
@@ -203,8 +231,10 @@ func TestValidateResourceConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		model    AttestationPolicyModel
+		name  string
+		model AttestationPolicyModel
+		// unknown names top-level attributes whose value is unknown in the config.
+		unknown  []string
 		wantErrs []wantDiagnostic
 	}{
 		{
@@ -230,6 +260,41 @@ func TestValidateResourceConfig(t *testing.T) {
 				TrustZoneID: types.StringValue("tz-1"),
 				TPMNode:     minimalTPMNode(),
 			},
+		},
+		{
+			name: "valid: static policy with unknown federations",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Static:      minimalStatic(),
+			},
+			unknown: []string{"federations"},
+		},
+		{
+			name: "valid: unknown static policy",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+			},
+			unknown: []string{"static"},
+		},
+		{
+			name: "valid: unknown static policy alongside a kubernetes policy, not yet known to be multiple",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+				Kubernetes:  minimalKubernetes(),
+			},
+			unknown: []string{"static"},
+		},
+		{
+			name: "invalid: no policy variant set, with unknown federations",
+			model: AttestationPolicyModel{
+				Name:        types.StringValue("test-policy"),
+				TrustZoneID: types.StringValue("tz-1"),
+			},
+			unknown:  []string{"federations"},
+			wantErrs: []wantDiagnostic{errNoVariant()},
 		},
 		{
 			name: "invalid: trust_zone_id not set",
@@ -294,7 +359,7 @@ func TestValidateResourceConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rSchema := ResourceSchema(t.Context())
-			raw := rawFromModel(t, rSchema, tt.model)
+			raw := withUnknownAttributes(t, rawFromModel(t, rSchema, tt.model), tt.unknown...)
 
 			diags := validateResourceConfig(t, rSchema, raw)
 			errs := errorDiagnostics(diags)
