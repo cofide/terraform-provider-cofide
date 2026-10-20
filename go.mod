@@ -1,6 +1,6 @@
 module github.com/cofide/terraform-provider-cofide
 
-go 1.26.8
+go 1.26.10
 
 require (
 	github.com/cofide/cofide-api-sdk v0.69.0
