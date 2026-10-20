@@ -3,7 +3,10 @@ package credentials
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 const testTarget = "connect.example.com:443"
@@ -16,10 +19,21 @@ func writeFile(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Wrote file %s", path)
+}
+
+// setUserConfigDir points os.UserConfigDir at a `dir`. It is used for
+// testing credential loading without affecting the user's real config
+// dir.
+func setUserConfigDir(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("XDG_CONFIG_HOME", dir) // Unix, including macOS
+	t.Setenv("AppData", dir)         // Windows
 }
 
 func TestLoadFromFile(t *testing.T) {
-	targetFile := filepath.Join("credentials.d", "connect.example.com%3A443.json")
+	credsDir := filepath.Join(appDirName, credentialsDirName)
+	targetFile := filepath.Join(credsDir, "connect.example.com%3A443.json")
 	tests := []struct {
 		name      string
 		files     map[string]string
@@ -28,23 +42,17 @@ func TestLoadFromFile(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name:      "target file",
-			files:     map[string]string{targetFile: `{"access_token":"target-token"}`},
+			name: "target file is used",
+			files: map[string]string{
+				targetFile: `{"access_token":"target-token"}`,
+				filepath.Join(credsDir, "other.example.com%3A443.json"): `{"access_token":"other-token"}`,
+			},
 			wantToken: "target-token",
 			wantPath:  targetFile,
 		},
 		{
-			name:  "legacy file is not used",
-			files: map[string]string{"credentials": `{"access_token":"legacy-token"}`},
-		},
-		{
-			name: "other target's file is not used",
-			files: map[string]string{
-				filepath.Join("credentials.d", "other.example.com%3A443.json"): `{"access_token":"other-token"}`,
-			},
-		},
-		{
-			name: "no files",
+			name:    "no files",
+			wantErr: true,
 		},
 		{
 			name:    "invalid JSON",
@@ -55,49 +63,60 @@ func TestLoadFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			t.Setenv(DirectoryEnvVar, dir)
+			setUserConfigDir(t, dir)
 			for name, content := range tt.files {
 				writeFile(t, filepath.Join(dir, name), content)
 			}
 
 			token, path, err := LoadFromFile(testTarget)
 			if tt.wantErr {
-				if err == nil {
-					t.Fatal("expected error, got nil")
-				}
-				return
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if token != tt.wantToken {
-				t.Errorf("expected token %q, got %q", tt.wantToken, token)
-			}
-			wantPath := ""
+			require.Equal(t, tt.wantToken, token)
 			if tt.wantPath != "" {
-				wantPath = filepath.Join(dir, tt.wantPath)
-			}
-			if path != wantPath {
-				t.Errorf("expected path %q, got %q", wantPath, path)
+				require.Equal(t, filepath.Join(dir, tt.wantPath), path)
 			}
 		})
 	}
 }
 
+// clearConfigEnv unsets the variables that influence the config dir, so
+// that only HOME is consulted. Not applicable on Windows.
+func clearConfigEnv(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("HOME is not used on Windows")
+	}
+	t.Setenv("XDG_CONFIG_HOME", "")
+}
+
 func TestLoadFromFile_homeDirectory(t *testing.T) {
+	clearConfigEnv(t)
 	home := t.TempDir()
-	t.Setenv(DirectoryEnvVar, "")
 	t.Setenv("HOME", home)
-	t.Setenv("USERPROFILE", home)
-	writeFile(t, filepath.Join(home, ".cofide", "credentials.d", "connect.example.com%3A443.json"), `{"access_token":"my-token"}`)
+	writeFile(t, filepath.Join(home, ".config", appDirName, credentialsDirName, "connect.example.com%3A443.json"), `{"access_token":"my-token"}`)
 
 	token, _, err := LoadFromFile(testTarget)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if token != "my-token" {
-		t.Fatalf("expected %q, got %q", "my-token", token)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "my-token", token)
+}
+
+func TestLoadFromFile_relativeXDGConfigHome(t *testing.T) {
+	clearConfigEnv(t)
+	t.Setenv("XDG_CONFIG_HOME", "relative/path")
+
+	_, _, err := LoadFromFile(testTarget)
+	require.Error(t, err)
+}
+
+func TestLoadFromFile_noHome(t *testing.T) {
+	clearConfigEnv(t)
+	t.Setenv("HOME", "")
+
+	_, _, err := LoadFromFile(testTarget)
+	require.Error(t, err)
 }
 
 func TestLoadFromFile_noTarget(t *testing.T) {
