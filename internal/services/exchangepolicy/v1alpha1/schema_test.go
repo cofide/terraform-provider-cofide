@@ -135,7 +135,49 @@ func TestOAuthASValidator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := validateObject(oauthAsValidator{}, tt.obj)
+			got := validateObject(oauthAsValidator(), tt.obj)
+			if tt.wantErr == "" {
+				assert.Empty(t, got)
+				return
+			}
+			assert.Equal(t, []string{tt.wantErr}, got)
+		})
+	}
+}
+
+func TestClientAssertionValidator(t *testing.T) {
+	clientAssertion := func(issuerURL, audiences attr.Value) types.Object {
+		return types.ObjectValueMust(clientAssertionAttrTypes, map[string]attr.Value{
+			"client_id":  types.StringValue("client"),
+			"issuer_url": issuerURL,
+			"audiences":  audiences,
+			"timeout":    types.Int64Null(),
+		})
+	}
+	nullURL := types.StringNull()
+	nullAud := types.ListNull(types.StringType)
+	url := types.StringValue("https://example.com")
+	aud := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("https://example.com/token")})
+
+	const missing = "At least one of issuer_url or audiences is required when client_assertion is set."
+
+	tests := []struct {
+		name    string
+		obj     types.Object
+		wantErr string
+	}{
+		{name: "null object is allowed", obj: types.ObjectNull(clientAssertionAttrTypes)},
+		{name: "unknown object is allowed", obj: types.ObjectUnknown(clientAssertionAttrTypes)},
+		{name: "issuer url only", obj: clientAssertion(url, nullAud)},
+		{name: "audiences only", obj: clientAssertion(nullURL, aud)},
+		{name: "issuer url and audiences non-null", obj: clientAssertion(url, aud)},
+		{name: "unknown audiences count as non-null", obj: clientAssertion(nullURL, types.ListUnknown(types.StringType))},
+		{name: "issuer url and audiences both null", obj: clientAssertion(nullURL, nullAud), wantErr: missing},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateObject(clientAssertionValidator(), tt.obj)
 			if tt.wantErr == "" {
 				assert.Empty(t, got)
 				return

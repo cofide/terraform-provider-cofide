@@ -41,8 +41,8 @@ assert_not_empty() {
 assert_not_empty "allow_policy_id"
 
 policy_count=$(echo "$outputs" | jq '.exchange_policy_ids.value | length')
-if [[ "$policy_count" != "6" ]]; then
-  echo "ERROR: expected 6 exchange policies, got $policy_count" >&2
+if [[ "$policy_count" != "8" ]]; then
+  echo "ERROR: expected 8 exchange policies, got $policy_count" >&2
   exit 1
 fi
 
@@ -63,6 +63,8 @@ for out in outbound_issuer_resource outbound_issuer_data_source outbound_issuer_
   assert_jq_eq ".$out.value.oauth_as.timeout" "30"
   assert_jq_eq ".$out.value.oauth_as.audiences | length" "1"
   assert_jq_eq ".$out.value.oauth_as.audiences[0]" "https://external-api.example.com"
+  assert_jq_eq ".$out.value.spiffe" "null"
+  assert_jq_eq ".$out.value.client_assertion" "null"
 done
 
 # outbound_issuer.spiffe round-trips through the resource, the single-policy
@@ -71,7 +73,30 @@ done
 for out in spiffe_issuer_resource spiffe_issuer_data_source spiffe_issuer_from_list; do
   assert_jq_eq ".$out.value.spiffe != null" "true"
   assert_jq_eq ".$out.value.oauth_as" "null"
+  assert_jq_eq ".$out.value.client_assertion" "null"
 done
+
+# outbound_issuer.client_assertion round-trips through the resource, the
+# single-policy data source and the list data source.
+for out in client_assertion_issuer_resource client_assertion_issuer_data_source client_assertion_issuer_from_list; do
+  assert_jq_eq ".$out.value.client_assertion.client_id" "oauth-client-123"
+  assert_jq_eq ".$out.value.client_assertion.issuer_url" "https://as.example.com"
+  assert_jq_eq ".$out.value.client_assertion.timeout" "30"
+  assert_jq_eq ".$out.value.client_assertion.audiences | length" "1"
+  assert_jq_eq ".$out.value.client_assertion.audiences[0]" "https://as.example.com/oauth2/token"
+  assert_jq_eq ".$out.value.oauth_as" "null"
+  assert_jq_eq ".$out.value.spiffe" "null"
+done
+
+# A client assertion policy may omit client_id when it has an external hook.
+# The omitted fields read back as null, and the hook is retained.
+for out in client_assertion_hook_issuer_resource client_assertion_hook_issuer_data_source client_assertion_hook_issuer_from_list; do
+  assert_jq_eq ".$out.value.client_assertion.client_id" "null"
+  assert_jq_eq ".$out.value.client_assertion.issuer_url" "null"
+  assert_jq_eq ".$out.value.client_assertion.timeout" "null"
+  assert_jq_eq ".$out.value.client_assertion.audiences[0]" "https://as.example.com/oauth2/token"
+done
+assert_jq_eq ".client_assertion_hook_names.value | join(\",\")" "client-id-mapper"
 
 # A policy with neither field set reports both as null.
 assert_jq_eq ".allow_policy_outbound_issuer.value" "null"
