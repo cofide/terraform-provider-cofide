@@ -170,6 +170,7 @@ func TestClientAssertionValidator(t *testing.T) {
 		{name: "unknown object is allowed", obj: types.ObjectUnknown(clientAssertionAttrTypes)},
 		{name: "issuer url only", obj: clientAssertion(url, nullAud)},
 		{name: "audiences only", obj: clientAssertion(nullURL, aud)},
+		{name: "empty audience list", obj: clientAssertion(nullURL, types.ListValueMust(types.StringType, []attr.Value{})), wantErr: missing},
 		{name: "issuer url and audiences non-null", obj: clientAssertion(url, aud)},
 		{name: "unknown audiences count as non-null", obj: clientAssertion(nullURL, types.ListUnknown(types.StringType))},
 		{name: "issuer url and audiences both null", obj: clientAssertion(nullURL, nullAud), wantErr: missing},

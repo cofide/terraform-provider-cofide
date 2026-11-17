@@ -87,7 +87,17 @@ func (v atLeastOneAttrValidator) ValidateObject(_ context.Context, req validator
 	attrs := req.ConfigValue.Attributes()
 	for _, name := range v.attrs {
 		if a, ok := attrs[name]; ok && !a.IsNull() {
-			return
+			if a.IsUnknown() {
+				return
+			}
+			// Reject an empty list as unset
+			if l, ok := a.(tftypes.List); ok {
+				if len(l.Elements()) > 0 {
+					return
+				}
+			} else {
+				return
+			}
 		}
 	}
 	resp.Diagnostics.AddAttributeError(
