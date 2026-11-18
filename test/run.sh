@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script can be used to run the test Terraform configurations in this
 # directory against a local development deployment of Connect. It applies then
