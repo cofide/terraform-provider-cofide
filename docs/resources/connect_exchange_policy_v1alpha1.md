@@ -201,8 +201,20 @@ Required:
 
 Optional:
 
+- `client_assertion` (Attributes) Mint a JWT client assertion for an OAuth client registered in an external authorisation server and return it instead of issuing an access token. At least one of `issuer_url` or `audiences` is required. `client_id` is required unless the policy has `external_hooks`. (see [below for nested schema](#nestedatt--outbound_issuer--client_assertion))
 - `oauth_as` (Attributes) Use an external OAuth 2.0 authorisation server as the outbound issuer. At least one of `issuer_url` or `token_url` is required. (see [below for nested schema](#nestedatt--outbound_issuer--oauth_as))
 - `spiffe` (Attributes) Setting this field to an empty object marks the policy as OIDC to SPIFFE exchange. The issued SVID's SPIFFE ID is derived from `outbound_identity` and the JWT-SVID audience from the exchange request. (see [below for nested schema](#nestedatt--outbound_issuer--spiffe))
+
+<a id="nestedatt--outbound_issuer--client_assertion"></a>
+### Nested Schema for `outbound_issuer.client_assertion`
+
+Optional:
+
+- `audiences` (List of String) Sets the assertion's `aud` claim directly, skipping token endpoint discovery.
+- `client_id` (String) The OAuth client ID (i.e. `iss` and `sub` claims) of the minted assertion. An external hook may override them.
+- `issuer_url` (String) Issuer URL of the external authorisation server. Its token endpoint is discovered and used as the assertion's `aud` claim. Not used when `audiences` is set.
+- `timeout` (Number) Timeout for token endpoint discovery, in seconds. Has no effect when `audiences` is set.
+
 
 <a id="nestedatt--outbound_issuer--oauth_as"></a>
 ### Nested Schema for `outbound_issuer.oauth_as`

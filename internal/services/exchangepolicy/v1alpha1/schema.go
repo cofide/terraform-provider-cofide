@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -56,41 +57,67 @@ func (v exactlyOneVariantValidator) ValidateObject(_ context.Context, req valida
 	}
 }
 
-// oauthAsValidator enforces that at least one of issuer_url or token_url is
-// configured. It lives on the oauth_as object rather than on the two URL
+// atLeastOneAttrValidator enforces that at least one of the named attributes of
+// an object is configured. It lives on the object rather than on the individual
 // attributes because a per-attribute AtLeastOneOf validator only fires when the
-// attribute it is attached to is non-null, so it would not catch both being
-// omitted. grant_type is not checked here: it is Required in the schema, so
-// Terraform enforces it whenever oauth_as is set.
+// attribute it is attached to is non-null, so it would not catch all of them
+// being omitted. Other required attributes are enforced by the schema.
 //
 // Unknown values count as set, since their eventual value is not knowable at
 // validation time.
-type oauthAsValidator struct{}
-
-func (oauthAsValidator) Description(_ context.Context) string {
-	return "At least one of issuer_url or token_url must be set."
+type atLeastOneAttrValidator struct {
+	// name is the attribute name of the object, used in diagnostics.
+	name string
+	// attrs is the list of attributes that at least one of must be set.
+	attrs []string
 }
 
-func (oauthAsValidator) MarkdownDescription(ctx context.Context) string {
-	return oauthAsValidator{}.Description(ctx)
+func (v atLeastOneAttrValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("At least one of %s must be set.", strings.Join(v.attrs, " or "))
 }
 
-func (oauthAsValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v atLeastOneAttrValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v atLeastOneAttrValidator) ValidateObject(_ context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
 	attrs := req.ConfigValue.Attributes()
-	isSet := func(name string) bool {
-		attr, ok := attrs[name]
-		return ok && !attr.IsNull()
+	for _, name := range v.attrs {
+		if a, ok := attrs[name]; ok && !a.IsNull() {
+			if a.IsUnknown() {
+				return
+			}
+			// Reject an empty list as unset
+			if l, ok := a.(tftypes.List); ok {
+				if len(l.Elements()) > 0 {
+					return
+				}
+			} else {
+				return
+			}
+		}
 	}
-	if !isSet("issuer_url") && !isSet("token_url") {
-		resp.Diagnostics.AddAttributeError(
-			req.Path,
-			"Invalid oauth_as configuration",
-			"At least one of issuer_url or token_url is required when oauth_as is set.",
-		)
-	}
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		fmt.Sprintf("Invalid %s configuration", v.name),
+		fmt.Sprintf("At least one of %s is required when %s is set.", strings.Join(v.attrs, " or "), v.name),
+	)
+}
+
+// oauthAsValidator requires one of issuer_url or token_url. grant_type is not
+// checked here: it is Required in the schema.
+func oauthAsValidator() validator.Object {
+	return atLeastOneAttrValidator{name: "oauth_as", attrs: []string{"issuer_url", "token_url"}}
+}
+
+// clientAssertionValidator requires one of issuer_url or audiences. client_id is
+// not checked here: it is only required when the policy has no external hooks,
+// which the Connect API validates.
+func clientAssertionValidator() validator.Object {
+	return atLeastOneAttrValidator{name: "client_assertion", attrs: []string{"issuer_url", "audiences"}}
 }
 
 func ResourceSchema() schema.Schema {
@@ -170,7 +197,7 @@ func ResourceSchema() schema.Schema {
 						Description: "Use an external OAuth 2.0 authorisation server as the outbound issuer. At least one of `issuer_url` or `token_url` is required.",
 						Optional:    true,
 						Validators: []validator.Object{
-							oauthAsValidator{},
+							oauthAsValidator(),
 						},
 						Attributes: map[string]schema.Attribute{
 							"grant_type": schema.StringAttribute{
@@ -212,6 +239,40 @@ func ResourceSchema() schema.Schema {
 						Description: "Setting this field to an empty object marks the policy as OIDC to SPIFFE exchange. The issued SVID's SPIFFE ID is derived from `outbound_identity` and the JWT-SVID audience from the exchange request.",
 						Optional:    true,
 						Attributes:  map[string]schema.Attribute{},
+					},
+					"client_assertion": schema.SingleNestedAttribute{
+						Description: "Mint a JWT client assertion for an OAuth client registered in an external authorisation server and return it instead of issuing an access token. At least one of `issuer_url` or `audiences` is required. `client_id` is required unless the policy has `external_hooks`.",
+						Optional:    true,
+						Validators: []validator.Object{
+							clientAssertionValidator(),
+						},
+						Attributes: map[string]schema.Attribute{
+							"client_id": schema.StringAttribute{
+								Description: "The OAuth client ID (i.e. `iss` and `sub` claims) of the minted assertion. An external hook may override them.",
+								Optional:    true,
+							},
+							"issuer_url": schema.StringAttribute{
+								Description: "Issuer URL of the external authorisation server. Its token endpoint is discovered and used as the assertion's `aud` claim. Not used when `audiences` is set.",
+								Optional:    true,
+								Computed:    true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"audiences": schema.ListAttribute{
+								Description: "Sets the assertion's `aud` claim directly, skipping token endpoint discovery.",
+								Optional:    true,
+								Computed:    true,
+								ElementType: tftypes.StringType,
+								PlanModifiers: []planmodifier.List{
+									listplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"timeout": schema.Int64Attribute{
+								Description: "Timeout for token endpoint discovery, in seconds. Has no effect when `audiences` is set.",
+								Optional:    true,
+							},
+						},
 					},
 				},
 			},

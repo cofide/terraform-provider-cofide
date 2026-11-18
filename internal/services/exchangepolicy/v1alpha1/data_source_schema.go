@@ -121,6 +121,29 @@ func exchangePolicyNestedAttributes() map[string]schema.Attribute {
 					Computed:    true,
 					Attributes:  map[string]schema.Attribute{},
 				},
+				"client_assertion": schema.SingleNestedAttribute{
+					Description: "JWT client assertion minted for an OAuth client registered in an external authorisation server.",
+					Computed:    true,
+					Attributes: map[string]schema.Attribute{
+						"client_id": schema.StringAttribute{
+							Description: "The OAuth client ID (i.e. `iss` and `sub` claims) of the minted assertion.",
+							Computed:    true,
+						},
+						"issuer_url": schema.StringAttribute{
+							Description: "Issuer URL of the external authorisation server.",
+							Computed:    true,
+						},
+						"audiences": schema.ListAttribute{
+							Description: "The assertion's `aud` claim.",
+							Computed:    true,
+							ElementType: tftypes.StringType,
+						},
+						"timeout": schema.Int64Attribute{
+							Description: "Timeout for token endpoint discovery, in seconds.",
+							Computed:    true,
+						},
+					},
+				},
 			},
 		},
 		"outbound_identity": schema.StringAttribute{

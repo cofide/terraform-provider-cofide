@@ -128,8 +128,20 @@ Read-Only:
 
 Read-Only:
 
+- `client_assertion` (Attributes) JWT client assertion minted for an OAuth client registered in an external authorisation server. (see [below for nested schema](#nestedatt--outbound_issuer--client_assertion))
 - `oauth_as` (Attributes) External OAuth 2.0 authorisation server used as the outbound issuer. (see [below for nested schema](#nestedatt--outbound_issuer--oauth_as))
 - `spiffe` (Attributes) OIDC to SPIFFE exchange policy configuration. Presence marks the policy as an OIDC to SPIFFE exchange. (see [below for nested schema](#nestedatt--outbound_issuer--spiffe))
+
+<a id="nestedatt--outbound_issuer--client_assertion"></a>
+### Nested Schema for `outbound_issuer.client_assertion`
+
+Read-Only:
+
+- `audiences` (List of String) The assertion's `aud` claim.
+- `client_id` (String) The OAuth client ID (i.e. `iss` and `sub` claims) of the minted assertion.
+- `issuer_url` (String) Issuer URL of the external authorisation server.
+- `timeout` (Number) Timeout for token endpoint discovery, in seconds.
+
 
 <a id="nestedatt--outbound_issuer--oauth_as"></a>
 ### Nested Schema for `outbound_issuer.oauth_as`
