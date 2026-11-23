@@ -49,9 +49,17 @@ var oauthAsAttrTypes = map[string]attr.Type{
 // exchange request.
 var spiffeAttrTypes = map[string]attr.Type{}
 
+var clientAssertionAttrTypes = map[string]attr.Type{
+	"client_id":  tftypes.StringType,
+	"issuer_url": tftypes.StringType,
+	"audiences":  tftypes.ListType{ElemType: tftypes.StringType},
+	"timeout":    tftypes.Int64Type,
+}
+
 var outboundIssuerAttrTypes = map[string]attr.Type{
-	"oauth_as": tftypes.ObjectType{AttrTypes: oauthAsAttrTypes},
-	"spiffe":   tftypes.ObjectType{AttrTypes: spiffeAttrTypes},
+	"oauth_as":         tftypes.ObjectType{AttrTypes: oauthAsAttrTypes},
+	"spiffe":           tftypes.ObjectType{AttrTypes: spiffeAttrTypes},
+	"client_assertion": tftypes.ObjectType{AttrTypes: clientAssertionAttrTypes},
 }
 
 var externalHookAttrTypes = map[string]attr.Type{
@@ -125,6 +133,12 @@ func modelToProto(ctx context.Context, model ExchangePolicyModel) (*exchangepoli
 			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_OauthAs{OauthAs: oauthAsProto}
 		} else if spiffe, ok := issuerAttrs["spiffe"].(tftypes.Object); ok && !spiffe.IsNull() && !spiffe.IsUnknown() {
 			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_Spiffe{Spiffe: &exchangepolicypb.OutboundSPIFFE{}}
+		} else if ca, ok := issuerAttrs["client_assertion"].(tftypes.Object); ok && !ca.IsNull() && !ca.IsUnknown() {
+			caProto, err := clientAssertionToProto(ca)
+			if err != nil {
+				return nil, err
+			}
+			proto.OutboundIssuer = &exchangepolicypb.ExchangePolicy_ClientAssertion{ClientAssertion: caProto}
 		}
 	}
 
@@ -200,13 +214,21 @@ func outboundIssuerFromProto(proto *exchangepolicypb.ExchangePolicy) tftypes.Obj
 	switch v := proto.GetOutboundIssuer().(type) {
 	case *exchangepolicypb.ExchangePolicy_OauthAs:
 		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
-			"oauth_as": oauthAsFromProto(v.OauthAs),
-			"spiffe":   tftypes.ObjectNull(spiffeAttrTypes),
+			"oauth_as":         oauthAsFromProto(v.OauthAs),
+			"spiffe":           tftypes.ObjectNull(spiffeAttrTypes),
+			"client_assertion": tftypes.ObjectNull(clientAssertionAttrTypes),
 		})
 	case *exchangepolicypb.ExchangePolicy_Spiffe:
 		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
-			"oauth_as": tftypes.ObjectNull(oauthAsAttrTypes),
-			"spiffe":   tftypes.ObjectValueMust(spiffeAttrTypes, map[string]attr.Value{}),
+			"oauth_as":         tftypes.ObjectNull(oauthAsAttrTypes),
+			"spiffe":           tftypes.ObjectValueMust(spiffeAttrTypes, map[string]attr.Value{}),
+			"client_assertion": tftypes.ObjectNull(clientAssertionAttrTypes),
+		})
+	case *exchangepolicypb.ExchangePolicy_ClientAssertion:
+		return tftypes.ObjectValueMust(outboundIssuerAttrTypes, map[string]attr.Value{
+			"oauth_as":         tftypes.ObjectNull(oauthAsAttrTypes),
+			"spiffe":           tftypes.ObjectNull(spiffeAttrTypes),
+			"client_assertion": clientAssertionFromProto(v.ClientAssertion),
 		})
 	default:
 		return tftypes.ObjectNull(outboundIssuerAttrTypes)
@@ -257,6 +279,57 @@ func oauthAsToProto(obj tftypes.Object) (*exchangepolicypb.OutboundOAuthAS, erro
 	}
 	if v, ok := attrs["token_url"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
 		pb.TokenUrl = v.ValueString()
+	}
+	if v, ok := attrs["audiences"].(tftypes.List); ok && !v.IsNull() && !v.IsUnknown() {
+		for _, elem := range v.Elements() {
+			if s, ok := elem.(tftypes.String); ok {
+				pb.Audiences = append(pb.Audiences, s.ValueString())
+			}
+		}
+	}
+	if v, ok := attrs["timeout"].(tftypes.Int64); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.Timeout = durationpb.New(time.Duration(v.ValueInt64()) * time.Second)
+	}
+	return pb, nil
+}
+
+// clientAssertionFromProto converts an OutboundClientAssertion protobuf to a
+// tftypes.Object.
+func clientAssertionFromProto(pb *exchangepolicypb.OutboundClientAssertion) tftypes.Object {
+	clientID := tftypes.StringNull()
+	if pb.GetClientId() != "" {
+		clientID = tftypes.StringValue(pb.GetClientId())
+	}
+	issuerURL := tftypes.StringNull()
+	if pb.GetIssuerUrl() != "" {
+		issuerURL = tftypes.StringValue(pb.GetIssuerUrl())
+	}
+	audiences := make([]attr.Value, len(pb.GetAudiences()))
+	for i, a := range pb.GetAudiences() {
+		audiences[i] = tftypes.StringValue(a)
+	}
+	timeout := tftypes.Int64Null()
+	if pb.GetTimeout() != nil {
+		timeout = tftypes.Int64Value(int64(pb.GetTimeout().AsDuration().Seconds()))
+	}
+	return tftypes.ObjectValueMust(clientAssertionAttrTypes, map[string]attr.Value{
+		"client_id":  clientID,
+		"issuer_url": issuerURL,
+		"audiences":  tftypes.ListValueMust(tftypes.StringType, audiences),
+		"timeout":    timeout,
+	})
+}
+
+// clientAssertionToProto converts a tftypes.Object representing a
+// client_assertion config to an OutboundClientAssertion protobuf.
+func clientAssertionToProto(obj tftypes.Object) (*exchangepolicypb.OutboundClientAssertion, error) {
+	attrs := obj.Attributes()
+	pb := &exchangepolicypb.OutboundClientAssertion{}
+	if v, ok := attrs["client_id"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.ClientId = v.ValueString()
+	}
+	if v, ok := attrs["issuer_url"].(tftypes.String); ok && !v.IsNull() && !v.IsUnknown() {
+		pb.IssuerUrl = v.ValueString()
 	}
 	if v, ok := attrs["audiences"].(tftypes.List); ok && !v.IsNull() && !v.IsUnknown() {
 		for _, elem := range v.Elements() {
